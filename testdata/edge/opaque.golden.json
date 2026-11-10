@@ -1,0 +1,108 @@
+{
+  "file": "opaque.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Op.Anchor",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "8:1-8:16",
+      "name_at": "8:3-8:13",
+      "body": "8:1-8:59",
+      "body_bytes": "46-104",
+      "body_text": "**$Op.Anchor.** Defined so references resolve: $Op.Anchor.",
+      "hash_input": "Defined so references resolve: $Op.Anchor.",
+      "hash": "fbae3903f6d263ceac30ff39dd14396681c21c1ecd18211edc2a520461bc0627",
+      "shape_hash": "9aeb72f42677a88a268bdb1ce03d1cc6ce21dbcfb506ed183dc61ecf84b0522d",
+      "body_lines": 1
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Op.Anchor",
+      "at": "8:3-8:13",
+      "lsp": "7:2",
+      "container": "paragraph 8:1-8:59",
+      "within": "Op.Anchor"
+    },
+    {
+      "role": "reference",
+      "text": "$Op.Anchor",
+      "at": "8:48-8:58",
+      "lsp": "7:47",
+      "container": "paragraph 8:1-8:59",
+      "within": "Op.Anchor",
+      "state": "resolved",
+      "target": "opaque.spec.md:8"
+    },
+    {
+      "role": "reference",
+      "text": "$Op.Anchor",
+      "at": "22:42-22:52",
+      "lsp": "21:41",
+      "container": "paragraph 22:1-22:65",
+      "state": "resolved",
+      "target": "opaque.spec.md:8"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [
+    {
+      "kind": "front_matter",
+      "text": "---\ntitle: $Op.Anchor\nref: §1\n---",
+      "at": "1:1-4:4"
+    },
+    {
+      "kind": "code_span",
+      "text": "`$Op.Anchor §1`",
+      "at": "10:13-10:29"
+    },
+    {
+      "kind": "code_span",
+      "text": "``a ` $Op.Anchor``",
+      "at": "10:51-10:69"
+    },
+    {
+      "kind": "code_block",
+      "text": "```\n$Op.Anchor in a fenced block §1\n```",
+      "at": "12:1-14:4"
+    },
+    {
+      "kind": "code_block",
+      "text": "$Op.Anchor in an indented block",
+      "at": "16:5-16:36"
+    },
+    {
+      "kind": "html_block",
+      "text": "<div>\n$Op.Anchor in an HTML block\n</div>",
+      "at": "18:1-20:7"
+    },
+    {
+      "kind": "raw_html",
+      "text": "<span title=\"$Op.Anchor\">",
+      "at": "22:8-22:33"
+    },
+    {
+      "kind": "raw_html",
+      "text": "</span>",
+      "at": "22:52-22:59"
+    },
+    {
+      "kind": "html_block",
+      "text": "<!-- comment $Op.Anchor -->",
+      "at": "24:1-24:28"
+    },
+    {
+      "kind": "autolink",
+      "text": "<https://x.test/$Op.Anchor>",
+      "at": "26:13-26:40"
+    }
+  ],
+  "diagnostics": []
+}

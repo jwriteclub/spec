@@ -1,0 +1,76 @@
+{
+  "file": "encoding-crlf.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Enc.Crlf",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "crlf",
+      "label": "3:1-3:22",
+      "name_at": "3:3-3:12",
+      "title_at": "3:14-3:18",
+      "body": "3:1-4:51",
+      "body_bytes": "10-102",
+      "body_text": "**$Enc.Crlf (crlf).** Lines end in CRLF;\r\nthe body spans two lines and references $Enc.Crlf.",
+      "hash_input": "Lines end in CRLF; the body spans two lines and references $Enc.Crlf.",
+      "hash": "30c19340cc78e1e0303cbcef871d34770fb3afd303ddde31795db21b5dd05ded",
+      "shape_hash": "09e41071ce20e6d773ec561c16c75b2ae8b04e6df9c60dee3308a1dabd486a53",
+      "body_lines": 2
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Enc.Crlf",
+      "at": "3:3-3:12",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-4:51",
+      "within": "Enc.Crlf"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Crlf",
+      "at": "4:41-4:50",
+      "lsp": "3:40",
+      "container": "paragraph 3:1-4:51",
+      "within": "Enc.Crlf",
+      "state": "resolved",
+      "target": "encoding-crlf.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Crlf",
+      "at": "8:13-8:22",
+      "lsp": "7:11",
+      "container": "paragraph 8:1-8:23",
+      "state": "resolved",
+      "target": "encoding-crlf.spec.md:3"
+    }
+  ],
+  "sections": [
+    {
+      "number": "1",
+      "title": "Section",
+      "level": 2,
+      "heading": "6:1-6:14",
+      "range": "6:1-8:23"
+    }
+  ],
+  "section_refs": [
+    {
+      "text": "§1",
+      "at": "8:5-8:8",
+      "number": "1",
+      "container": "paragraph 8:1-8:23",
+      "state": "resolved",
+      "target": "§encoding-crlf:1"
+    }
+  ],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [],
+  "diagnostics": []
+}

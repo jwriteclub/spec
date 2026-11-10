@@ -1,0 +1,30 @@
+[38;5;189m [1;38;5;231m Review proposal k3x7a · by agent-7[m[m                                                                
+[38;5;189m [38;5;146m Required primary · 1 selected fix · 1 undecided · 0 skipped[m[m                                       
+[38;5;189m  why: players stall on fragments longer than 5 s, so bound the fragment length[m                     
+[38;5;189m  check: [38;5;146mthe bound is consistent with $Frame.Order; the prose and the extra queue should follow it[m[m  
+[38;5;189m [m                                                                                                   
+[38;5;189m   [1;38;5;231m[1] change $Frame.Timing in demo.spec.md[m  [38;5;146mRequired with Apply[m[m                                    
+[38;5;189m [38;5;146m     the change itself[m[m                                                                             
+[38;5;189m    - [38;5;203m**$Frame.Timing (fragment timing).** Every fragment MUST have a duration [m[38;5;203;9ma[m[38;5;203;9mb[m[38;5;203;9mo[m[38;5;203;9mv[m[38;5;203;9me[m[38;5;203m [m[38;5;203;9mz[m[38;5;203;9me[m[38;5;203;9mr[m[38;5;203;9mo[m[38;5;203m in [m[m       
+[38;5;189m      [38;5;203m$Time.Media.[m[m                                                                                  
+[38;5;189m    + [38;5;115m**$Frame.Timing (fragment timing).** Every fragment MUST have a duration [m[1;38;5;115mof at[m[38;5;115m [m[1;38;5;115mmost 5[m[38;5;115m [m[1;38;5;115ms[m[38;5;115m in [m[m   
+[38;5;189m      [38;5;115m$Time.Media.[m[m                                                                                  
+[38;5;189m      [38;5;146mChecked by: TestFragment.[m[m                                                                     
+[38;5;189m [m                                                                                                   
+[38;5;189m   [1;38;5;231m[2] inconsistent missing_update in demo.spec.md[m  [38;5;146mSelected for application[m[m                        
+[38;5;189m      The prose should mention the new bound so readers see it.[m                                     
+[38;5;189m    - [38;5;203mProse that mentions $Frame.Order for the reader.[m[m                                              
+[38;5;189m    + [38;5;115mProse that mentions $Frame.[m[1;38;5;115mOrder and the 5 s bound[m[38;5;115m for the reader.[m[m                            
+[38;5;189m [m                                                                                                   
+[38;5;189m ▶ [1;48;5;53m[3] cosmetic numeric_mismatch in other.spec.md $Extra.Limit[m  [38;5;146mUndecided[m[m                           
+[38;5;189m      Align the queue size with the fragment bound.[m                                                 
+[38;5;189m    - [38;5;203mMUST hold at most [m[38;5;203;9m8[m[38;5;203m items[m[m                                                                     
+[38;5;189m    + [38;5;115mMUST hold at most [m[1;38;5;115m5[m[38;5;115m items[m[m                                                                     
+[38;5;189m [m                                                                                                   
+[38;5;189m [1;38;5;231m Notes (shown, not applied)[m[m                                                                        
+[38;5;189m    - cosmetic ambiguity in demo.spec.md $Frame.Order (no edit proposed): order of arrival or of[m    
+[38;5;189m      media time?[m                                                                                   
+[38;5;189m[38;5;189;48;5;235m[38;5;189;48;5;235m demo.spec.md       [m[38;5;189;48;5;235mNo baseline[m[38;5;189;48;5;235m 1:1 [m[m[38;5;104;48;5;235m|[m[38;5;189;48;5;235m [m[38;5;189;48;5;235m[m[38;5;189;48;5;235m                                             [m[38;5;104;48;5;235m|[m[38;5;185;48;5;236m  0   [m[38;5;80;48;5;23m  1  [m[38;5;212;48;5;53m  1  [m[m
+[38;5;189m[7;38;5;235m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[m[7;38;5;235m▄[m[7;38;5;235m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[m[7;38;5;235m▄[m[7;38;5;236m▄▄▄▄▄▄[m[7;38;5;23m▄▄▄▄▄[m[7;38;5;53m▄▄▄▄▄[m[m
+[38;5;189m[38;5;235;48;5;115m y [m[38;5;189m Accept[m          [38;5;102m[[m[38;5;80me[m[38;5;102m][m[38;5;189m Edit[m              [38;5;189;48;5;60m A [m[38;5;189m Apply[m           [38;5;102m[[m[38;5;60mr[m[38;5;102m][m[38;5;60m Recheck[m          [38;5;189;48;5;60m ↑ [m[38;5;189m Prev[m         [m
+[38;5;189m[38;5;102m[[m[38;5;80mn[m[38;5;102m][m[38;5;189m Skip[m            [38;5;102m[[m[38;5;80mf[m[38;5;102m][m[38;5;189m Feedback[m          [38;5;189;48;5;60m R [m[38;5;189m Reject[m          [38;5;203;48;5;60mEsc[m[38;5;189m Close[m            [38;5;189;48;5;60m ↓ [m[38;5;189m Next[m         [m

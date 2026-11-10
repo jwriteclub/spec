@@ -1,0 +1,124 @@
+{
+  "file": "encoding-unicode.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Enc.Uni",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "ünïcödé",
+      "label": "3:1-3:28",
+      "name_at": "3:3-3:11",
+      "title_at": "3:13-3:24",
+      "body": "3:1-3:57",
+      "body_bytes": "11-67",
+      "body_text": "**$Enc.Uni (ünïcödé).** Non-ASCII before references.",
+      "hash_input": "Non-ASCII before references.",
+      "hash": "f1c07791a0061ed985e36721a2ce44c9688094614daa8200a3e0753ac6f52c94",
+      "shape_hash": "f1c07791a0061ed985e36721a2ce44c9688094614daa8200a3e0753ac6f52c94",
+      "body_lines": 1
+    },
+    {
+      "name": "Enc.Space",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "10:1-10:16",
+      "name_at": "10:3-10:13",
+      "body": "10:1-10:84",
+      "body_bytes": "225-308",
+      "body_text": "**$Enc.Space.** Ideographic space　and no-break space are whitespace in the hash.",
+      "hash_input": "Ideographic space and no-break space are whitespace in the hash.",
+      "hash": "38bd9f91426e4623998169f6a1eed7fe6f7c3d6c6d9cb1cb75acbdb761c4f335",
+      "shape_hash": "38bd9f91426e4623998169f6a1eed7fe6f7c3d6c6d9cb1cb75acbdb761c4f335",
+      "section": "1",
+      "body_lines": 1
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Enc.Uni",
+      "at": "3:3-3:11",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-3:57",
+      "within": "Enc.Uni"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Uni",
+      "at": "5:4-5:12",
+      "lsp": "4:2",
+      "container": "paragraph 5:1-6:43",
+      "state": "resolved",
+      "target": "encoding-unicode.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Uni",
+      "at": "5:27-5:35",
+      "lsp": "4:23",
+      "container": "paragraph 5:1-6:43",
+      "state": "resolved",
+      "target": "encoding-unicode.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Uni",
+      "at": "5:51-5:59",
+      "lsp": "4:45",
+      "container": "paragraph 5:1-6:43",
+      "state": "resolved",
+      "target": "encoding-unicode.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Uni",
+      "at": "6:10-6:18",
+      "lsp": "5:5",
+      "container": "paragraph 5:1-6:43",
+      "state": "resolved",
+      "target": "encoding-unicode.spec.md:3"
+    },
+    {
+      "role": "definition",
+      "text": "$Enc.Space",
+      "at": "10:3-10:13",
+      "lsp": "9:2",
+      "container": "paragraph 10:1-10:84",
+      "within": "Enc.Space"
+    }
+  ],
+  "sections": [
+    {
+      "number": "1",
+      "title": "Ünïcode section",
+      "level": 2,
+      "heading": "8:1-8:24",
+      "range": "8:1-10:84"
+    }
+  ],
+  "section_refs": [
+    {
+      "text": "§1",
+      "at": "6:24-6:27",
+      "number": "1",
+      "container": "paragraph 5:1-6:43",
+      "state": "resolved",
+      "target": "§encoding-unicode:1"
+    },
+    {
+      "text": "§1",
+      "at": "6:39-6:42",
+      "number": "1",
+      "container": "paragraph 5:1-6:43",
+      "state": "resolved",
+      "target": "§encoding-unicode:1"
+    }
+  ],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [],
+  "diagnostics": []
+}

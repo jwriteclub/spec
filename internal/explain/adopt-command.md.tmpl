@@ -1,0 +1,43 @@
+<!-- Copyright 2026 Christopher O'Connell -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+# spec adopt
+
+`spec` checks a project's specification and keeps code, tests and models tied to it. This page is
+the starting point for a coding agent; the topics below have the detail.
+
+## Specs as spec uses them
+
+- A spec is plain GitHub-flavored Markdown in `*.spec.md` files; `spec.toml` configures the set.
+- Each guarantee is one named invariant, `**$Frame.Timing (title).**`, stated with MUST.
+  Definitions fix the vocabulary, `**Def $Time.Media (title).**`. The name is the identity, and
+  other text cites it as `$Frame.Timing`.
+- Sections are numbered (`## 1. Frames`, `### 1.2 Timing`) and cited as `§1.2`, or `§stem:1.2` in
+  another file.
+- Every invariant names its checker on a `Checked by:` line: a test, a property test, a TLA+ model
+  or a runtime check. Tests cite it as `// Spec: $Name "quoted text"`, and TLA+ models tag each
+  invariant with `\* Spec: $Name "quoted text"`; `spec lint` checks the models and their tags.
+- Prose is edited freely. Adding, changing or removing an anchor is a proposal: a model checks it
+  for contradictions with the rest of the spec, and the user approves or rejects it. `spec analyze`
+  checks the spec's consistency (numbers, citations, then logic).
+- A commit that changes an anchor carries the `Spec-Change:` trailer lines `spec status` prints.
+
+## Start
+
+In a project with no `spec.toml`, in the directory that will hold it (usually the repository root):
+
+    spec init --name NAME      write spec.toml, a skeleton NAME.spec.md (an existing one is kept)
+                               and a .spec/ line in .gitignore; print a CLAUDE.md section to show
+                               the user (do not add it yourself)
+    spec lint                  check the spec files; fix until it exits 0
+    spec doctor                check the project, git, configuration and inference provider
+
+`spec init` does not run `git init` and does not install the commit-msg hook; see
+`spec explain integrations`. To add specs to a project that has none, follow `spec explain adopt`:
+survey, then ask the user before writing. Before editing any `*.spec.md`, read `spec explain agent`.
+In commands, write names without `$` (`spec show Frame.Timing`): the shell expands `$Frame`.
+
+## Documentation
+
+{{range .Lines}}    {{.}}
+{{end}}

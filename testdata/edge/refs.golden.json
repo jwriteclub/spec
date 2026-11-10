@@ -1,0 +1,325 @@
+{
+  "file": "refs.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Frame.Timing",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "frame timing",
+      "label": "3:1-3:34",
+      "name_at": "3:3-3:16",
+      "title_at": "3:18-3:30",
+      "body": "3:1-3:82",
+      "body_bytes": "14-95",
+      "body_text": "**$Frame.Timing (frame timing).** Every frame is timed; see $Frame.Timing itself.",
+      "hash_input": "Every frame is timed; see $Frame.Timing itself.",
+      "hash": "1a0a508b2f005e630705033015a5539c16947baab38fb45e494d00e28686b783",
+      "shape_hash": "33d6db3c20c69875436ef5ee10614b573020b40924f79c8a1ec2422318246786",
+      "body_lines": 1
+    },
+    {
+      "name": "Time.Media",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "media time",
+      "label": "5:1-5:34",
+      "name_at": "5:7-5:18",
+      "title_at": "5:20-5:30",
+      "body": "5:1-5:66",
+      "body_bytes": "97-162",
+      "body_text": "**Def $Time.Media (media time).** Media time is counted in ticks.",
+      "hash_input": "Media time is counted in ticks.",
+      "hash": "3ffde4f921e780c83ebb8b013e25c7b7ad89ff22eee4f9d97719cdd4340569de",
+      "shape_hash": "3ffde4f921e780c83ebb8b013e25c7b7ad89ff22eee4f9d97719cdd4340569de",
+      "body_lines": 1
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Frame.Timing",
+      "at": "3:3-3:16",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-3:82",
+      "within": "Frame.Timing"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "3:61-3:74",
+      "lsp": "2:60",
+      "container": "paragraph 3:1-3:82",
+      "within": "Frame.Timing",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "definition",
+      "text": "$Time.Media",
+      "at": "5:7-5:18",
+      "lsp": "4:6",
+      "container": "paragraph 5:1-5:66",
+      "within": "Time.Media"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "9:65-9:76",
+      "lsp": "8:64",
+      "container": "paragraph 9:1-10:43",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "17:27-17:40",
+      "lsp": "16:26",
+      "container": "paragraph 17:1-18:65",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "17:44-17:55",
+      "lsp": "16:43",
+      "container": "paragraph 17:1-18:65",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "17:59-17:72",
+      "lsp": "16:58",
+      "container": "paragraph 17:1-18:65",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "17:75-17:86",
+      "lsp": "16:74",
+      "container": "paragraph 17:1-18:65",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "18:2-18:15",
+      "lsp": "17:1",
+      "container": "paragraph 17:1-18:65",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "18:23-18:34",
+      "lsp": "17:22",
+      "container": "paragraph 17:1-18:65",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "22:18-22:31",
+      "lsp": "21:17",
+      "container": "paragraph 22:1-26:46",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "23:4-23:17",
+      "lsp": "22:3",
+      "container": "paragraph 22:1-26:46",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Not.Defined",
+      "at": "26:12-26:24",
+      "lsp": "25:11",
+      "container": "paragraph 22:1-26:46",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "30:27-30:40",
+      "lsp": "29:26",
+      "container": "paragraph 30:1-33:38",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "32:27-32:38",
+      "lsp": "31:26",
+      "container": "paragraph 30:1-33:38",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "33:18-33:31",
+      "lsp": "32:17",
+      "container": "paragraph 30:1-33:38",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "39:3-39:16",
+      "lsp": "38:2",
+      "container": "table_cell 39:3-39:16",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "39:23-39:34",
+      "lsp": "38:22",
+      "container": "table_cell 39:19-39:34",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "44:11-44:24",
+      "lsp": "43:10",
+      "container": "paragraph 44:1-44:81",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "44:25-44:36",
+      "lsp": "43:24",
+      "container": "paragraph 44:1-44:81",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "44:41-44:54",
+      "lsp": "43:40",
+      "container": "paragraph 44:1-44:81",
+      "state": "resolved",
+      "target": "refs.spec.md:3"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "44:56-44:67",
+      "lsp": "43:55",
+      "container": "paragraph 44:1-44:81",
+      "state": "resolved",
+      "target": "refs.spec.md:5"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [
+    {
+      "text": "$HOME",
+      "at": "12:18-12:23"
+    },
+    {
+      "text": "$PATH",
+      "at": "12:24-12:29"
+    },
+    {
+      "text": "$5.00",
+      "at": "12:30-12:35"
+    },
+    {
+      "text": "$1",
+      "at": "12:36-12:38"
+    },
+    {
+      "text": "$USD",
+      "at": "12:39-12:43"
+    },
+    {
+      "text": "$Frame.timing",
+      "at": "24:1-24:14"
+    },
+    {
+      "text": "$Frame_x",
+      "at": "25:1-25:9"
+    },
+    {
+      "text": "$Frame.Timing.x",
+      "at": "25:39-25:54"
+    }
+  ],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [
+    {
+      "kind": "code_span",
+      "text": "`$Frame`",
+      "at": "24:34-24:42"
+    },
+    {
+      "kind": "code_span",
+      "text": "`.timing`",
+      "at": "24:55-24:64"
+    },
+    {
+      "kind": "link_destination",
+      "text": "](https://example.test/$Time.Media \"title $Time.Media\")",
+      "at": "30:40-30:95"
+    },
+    {
+      "kind": "autolink",
+      "text": "<https://example.test/$Frame.Timing>",
+      "at": "31:23-31:59"
+    },
+    {
+      "kind": "link_destination",
+      "text": "](img/$Frame.Timing.png)",
+      "at": "32:42-32:66"
+    },
+    {
+      "kind": "link_destination",
+      "text": "][ref]",
+      "at": "33:31-33:37"
+    },
+    {
+      "kind": "link_destination",
+      "text": "[ref]: https://example.test/$Time.Media \"ref title $Time.Med…",
+      "at": "35:1-35:64"
+    },
+    {
+      "kind": "code_span",
+      "text": "`$Frame.Timing`",
+      "at": "40:3-40:18"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "26:12-26:24",
+      "message": "$Not.Defined is not defined anywhere in the project"
+    }
+  ]
+}

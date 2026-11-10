@@ -1,0 +1,34 @@
+lensd.spec.md              │105 │ exited. If the rendition has no reader when a generation ends, the replacement may still start;                       │Review · 1 awaiting
+ §0 Definitions            │106 │ $Hub.IdleStop stops it. Checked by: rendition tests with a fake ffmpeg (one that ignores end of                       │
+  §0.1 Time                │107 │ input, one that ignores stop); TLA+ Transcoders Inv_ReplacementHoldsSlot, Inv_ReplacementNever429,                    ││ Proposal
+   ◦ $Time.Media           │108 │ Inv_ExitBounded; TLA+ TrackSegments Inv_NoGap (mutant reader skipping after eviction must fail);                      ││ cosmetic ambiguity
+   ◦ $Time.Wall            │109 │ runtime: the stuck watchdog. Known violated today (a SIGKILLed generation ends the rendition; a skip                  ││ $Frame.Forward
+   ◦ $Time.Elapsed         │110 │ or eviction keeps feeding the same generation; the exit timer is 5 s).                                                ││ lensd.spec.md:115
+  §0.2 Intervals and nearne│111                                                                                                                         ││ say which clock: the stamps are wall time
+   ◦ $Interval             │112│  **$Frame.Forward (time only moves forward).** Within a track, decode times MUST strictly increase                     ││
+   ◦ $Interval.Gap         │113││ (follows from $Frame.Timing). PROGRAM-DATE-TIME (wall time ($Time.Wall) from NVR keyframe stamps;                     ││ │ Suggested fix
+ §1 Frames, segments and tr│114│  for live tracks, lensd's clock at the first frame plus media time) MUST NOT go backwards between                      ││ │ $Frame.Forward
+  • $Frame.Timing          │115│  consecutive segments (equal is allowed); a recording gap moves it forward. If an NVR keyframe stamp                   ││ │ lensd.spec.md:115
+  • $Frame.SegmentShape    │116│  goes backwards, lensd MUST clamp, log, and put EXT-X-DISCONTINUITY before that segment. Checked by:                   ││ │ segments → segments by $Time.Wall
+  • $Frame.Numbering       │117│  muxer and keyframe-stamp tests across a 32-bit wrap and a backwards NVR clock.                                        ││ │ pending
+  • $Frame.OneWriter       │118                                                                                                                         ││ │
+  • $Frame.CleanGeneration │119 │ **$Frame.InitFixed (init never changes).** A published init segment MUST NOT change. A change of                      │
+  • $Frame.Forward 1       │120 │ SPS/PPS (resolution, profile) MUST stop the track; the next request starts a new one. Checked by:                     │
+  • $Frame.InitFixed       │121 │ test feeding a mid-stream SPS change.                                                                                 │
+ §2 HLS hub (transcoders, i│122                                                                                                                         │
+  • $Hub.TranscoderCap     │123   ## 2. HLS hub (transcoders, idle, memory)                                                                             │
+  • $Hub.TakenOver         │124                                                                                                                         │
+  • $Hub.IdleStop          │125 │ **$Hub.TranscoderCap (transcoder cap).** Running rendition ffmpegs (started and not yet exited) MUST                  │
+  • $Hub.BlockingAnswer    │126 │ be at most max_transcoders; the check and the reservation MUST be one atomic step, and a request                      │
+  • $Hub.MemoryBound       │127 │ that would exceed the cap MUST get 429 (the browser falls back to a smaller rendition or the                          │
+ §3 Live relay             │128 │ substream). Source tracks do not count. A generation still exiting counts (bounded by                                 │
+  • $Relay.OneSession      │129 │ $Frame.CleanGeneration's 1 s), so a new request may briefly get 429; a replacement generation never                   │
+  • $Relay.NoOrphans       │130 │ does. Checked by: concurrent transcoder cap test; TLA+ Transcoders Inv_Cap (mutant with a non-atomic                  │
+  • $Relay.Reconnect       │131 │ check and reserve must fail).                                                                                         │
+ §4 Recorder sessions (leas│132                                                                                                                         │
+  • $Sdk.LeaseCap          │133 │ **$Hub.TakenOver (taken over).** A recording track is taken over when its lease is preempted by                       │
+  • $Sdk.NvrAgrees         │134 │ another lensd viewer ($Sdk.Preempt). From the instant lensd detects it ($Time.Elapsed), requests for                  │
+ lensd.spec.md                Uncommitted 115:1 | $Frame.Forward                                                                                                                                           |  0     0    1
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ y  Accept                      [e] Edit                          A  Commit                      ^F  Format                       ↑  Prev                    Ret Go To                    Esc  Editor
+[n] Dismiss                     [f] Feedback                     [c] Message                     [r] Removed                      ↓  Next                    ^R  Hide                     ⇧Tab Next Pane

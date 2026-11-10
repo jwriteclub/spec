@@ -1,0 +1,30 @@
+      (alarm log,
+ 42   recording search, keyframe stamps inside recordings) are that NVR's local clock and are
+      converted with
+ 43   that NVR's UTC offset, which lensd learns from the NVR, before being stored or compared.
+      Assumption: the
+ 44   offset is fixed (the site has no daylight saving) and is learned once (see Accepted
+      behaviour).
+ 45
+ 46│  **Def $Time.Elapsed (elapsed time).** Timeouts, graces and watchdogs are measured on lensd's
+   │  own monotonic
+ 47│  clock (`time.Since` of a `time.Now()` value), never by subtracting wall times that came from
+   │  an NVR.
+ 48
+ 49   ### 0.2 Intervals and nearness
+ 50
+ 51   **Def $Interval (interval).** An interval [Start, End] is closed, with Start <= End. Zero
+      length
+ 52   (Start = End) is valid: one instant.
+ 53
+ 54   **Def $Interval.Gap (gap, within).** For intervals A and B with A.Start <= B.Start, gap(A, B)
+      = B.Start - A.End,
+ 55   negative when they overlap. "Within d" means gap <= d; "more than d apart" means gap > d.
+      Every bound in
+ 56   this spec states whether it is inclusive; the default is inclusive at the top ("at most N",
+      "<= 5 s").
+ 57   A fetch window [from, to) is half-open, so an event on a boundary belongs to exactly one
+ lensd.spec.md     No baseline 46:1 | $Time.Elapsed                                |  1     0    0
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+^G  Help  ^O  Save ^W  Where Is ^K  Cut   ^Z  Undo ^T  Follow ^B  Back   ^C  Copy     ^^  Outline
+^X  Exit  ^Q  Open ^P  Propose  ^U  Paste ^Y  Redo ^R  Checks ^F  Format ^N  Analyze ⇧Tab Next Pane

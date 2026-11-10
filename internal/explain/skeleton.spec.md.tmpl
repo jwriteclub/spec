@@ -1,0 +1,28 @@
+{{- /* Copyright 2026 Christopher O'Connell. SPDX-License-Identifier: Apache-2.0. Template comment; not rendered. */ -}}
+# {{.Name}} specification
+
+What {{.Name}} guarantees. Definitions fix the vocabulary; invariants state what MUST hold, and each
+invariant names what checks it. `spec explain markup` has the exact rules; run `spec lint` after every
+edit. The two anchors below are examples: rewrite their text and rename them, for instance with
+`spec rename Example.Rule Area.Name`.
+
+## 1. Definitions
+
+**Def $Example.Term (example term).** A definition fixes the meaning of a word that invariants use,
+precisely enough to settle an argument: a request is one HTTP exchange, from the first byte received
+to the last byte sent.
+
+## 2. Invariants
+
+**$Example.Rule (example rule).** An invariant states one property that MUST hold, in the words of
+the definitions: every $Example.Term MUST finish within 30 s of its first byte.
+Checked by: the test, model or runtime check that verifies it, for example
+`internal/example/example_test.go:TestRequestDeadline`.
+
+### 2.1 Reference forms
+
+- An anchor: $Example.Rule. In shell commands, leave out the sigil: `spec show Example.Rule`.
+- A section in this file: §1, or with a space after the sign: § 2.
+- A subsection: §2.1.
+- A section in a named file (its file name minus `.spec.md`): §{{.Name}}:1.
+- Never references: anything in code (`$Example.Rule`, `§1`), an escaped \$Example.Rule, and `#2.1`.

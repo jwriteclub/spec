@@ -1,0 +1,50 @@
+# Copyright 2026 Christopher O'Connell
+# SPDX-License-Identifier: Apache-2.0
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+    - misspell
+    - unconvert
+    - bodyclose
+
+linters-settings:
+  errcheck:
+    exclude-functions:
+      # Common deferred close/cleanup patterns where errors are unrecoverable
+      - (io.Closer).Close
+      - (*os.File).Close
+      - (*os.File).Sync
+      - (*database/sql.Tx).Rollback
+      # Hash.Write never returns an error (per hash.Hash contract)
+      - (hash.Hash).Write
+      - (*hash/crc32.digest).Write
+      # rand.Read never returns an error in Go 1.24+
+      - crypto/rand.Read
+      - io/ioutil.ReadAll
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment  # too noisy, marginal benefit
+      - shadow          # TODO: re-enable and fix. Currently ~40 findings, mostly benign := scoping
+
+issues:
+  exclude-dirs:
+    - vendor
+  exclude-rules:
+    # Test files get relaxed errcheck — test helpers often ignore errors
+    # when the test will fail on the next assertion anyway
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unparam
+  max-issues-per-linter: 50
+  max-same-issues: 10

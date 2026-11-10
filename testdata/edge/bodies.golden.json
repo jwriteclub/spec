@@ -1,0 +1,275 @@
+{
+  "file": "bodies.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Body.Plain",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "3:1-3:17",
+      "name_at": "3:3-3:14",
+      "body": "3:1-4:20",
+      "body_bytes": "10-65",
+      "body_text": "**$Body.Plain.** A single paragraph\nspanning two lines.",
+      "hash_input": "A single paragraph spanning two lines.",
+      "hash": "b6eeebfa69aa9a82ad7fb9a9867722d0f0a4d880be7af12c8484c14ef42af654",
+      "shape_hash": "b6eeebfa69aa9a82ad7fb9a9867722d0f0a4d880be7af12c8484c14ef42af654",
+      "body_lines": 2
+    },
+    {
+      "name": "Body.List",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "6:1-6:16",
+      "name_at": "6:3-6:13",
+      "body": "6:1-8:6",
+      "body_bytes": "67-123",
+      "body_text": "**$Body.List.** Followed directly by a list:\n- one\n- two",
+      "hash_input": "Followed directly by a list: - one - two",
+      "hash": "7b11f0006a1a4dab43d8941e6c7f5932265ec898a0c322476c9313cfefc5ca5a",
+      "shape_hash": "7b11f0006a1a4dab43d8941e6c7f5932265ec898a0c322476c9313cfefc5ca5a",
+      "body_lines": 3
+    },
+    {
+      "name": "Body.Loose",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "10:1-10:17",
+      "name_at": "10:3-10:14",
+      "body": "10:1-15:37",
+      "body_bytes": "125-227",
+      "body_text": "**$Body.Loose.** Followed directly by a loose list:\n- one\n\n- two\n\n  A continued paragraph in item two.",
+      "hash_input": "Followed directly by a loose list: - one - two A continued paragraph in item two.",
+      "hash": "3af25cedeba8fb6dd1bb8dd09010dffee768250905164579f53936f7e4356a06",
+      "shape_hash": "3af25cedeba8fb6dd1bb8dd09010dffee768250905164579f53936f7e4356a06",
+      "body_lines": 6
+    },
+    {
+      "name": "Body.Ordered",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "19:1-19:19",
+      "name_at": "19:3-19:16",
+      "body": "19:1-21:22",
+      "body_bytes": "265-399",
+      "body_text": "**$Body.Ordered.** An ordered list starting at 2 cannot interrupt a paragraph:\n2. so this line is paragraph text\n3. and so is this one",
+      "hash_input": "An ordered list starting at 2 cannot interrupt a paragraph: 2. so this line is paragraph text 3. and so is this one",
+      "hash": "e1ed1357d2ff128e035d92b5bdeb659522e4055506f68d92399bbfd96e1c0dff",
+      "shape_hash": "e1ed1357d2ff128e035d92b5bdeb659522e4055506f68d92399bbfd96e1c0dff",
+      "body_lines": 3
+    },
+    {
+      "name": "Body.OrderedOne",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "23:1-23:22",
+      "name_at": "23:3-23:19",
+      "body": "23:1-25:10",
+      "body_bytes": "401-476",
+      "body_text": "**$Body.OrderedOne.** An ordered list starting at 1 can:\n1. first\n2. second",
+      "hash_input": "An ordered list starting at 1 can: 1. first 2. second",
+      "hash": "6a761e743ff819d6986742b2d1acb932bec8c9bd2f83459db8564aff1a625caf",
+      "shape_hash": "6a761e743ff819d6986742b2d1acb932bec8c9bd2f83459db8564aff1a625caf",
+      "body_lines": 3
+    },
+    {
+      "name": "Body.Lazy",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "27:1-27:16",
+      "name_at": "27:3-27:13",
+      "body": "27:1-30:11",
+      "body_bytes": "478-560",
+      "body_text": "**$Body.Lazy.** Lazy continuation:\n- item\nlazy line belongs to the item\n- item two",
+      "hash_input": "Lazy continuation: - item lazy line belongs to the item - item two",
+      "hash": "1f845c137b2e2d5cfa83b33925b3d47d1f8cc24db00dc97c1ae2ee48e303df90",
+      "shape_hash": "1f845c137b2e2d5cfa83b33925b3d47d1f8cc24db00dc97c1ae2ee48e303df90",
+      "body_lines": 4
+    },
+    {
+      "name": "Body.Quote",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "32:1-32:17",
+      "name_at": "32:3-32:14",
+      "body": "32:1-35:7",
+      "body_bytes": "562-637",
+      "body_text": "**$Body.Quote.** Followed by a blockquote:\n> quoted\nlazy quoted line\n> more",
+      "hash_input": "Followed by a blockquote: > quoted lazy quoted line > more",
+      "hash": "9ee65eb5ef6a999b291f31a6245b9c5aa340296b99486d90719418cb27c1ad73",
+      "shape_hash": "9ee65eb5ef6a999b291f31a6245b9c5aa340296b99486d90719418cb27c1ad73",
+      "body_lines": 4
+    },
+    {
+      "name": "Body.Fence",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "37:1-37:17",
+      "name_at": "37:3-37:14",
+      "body": "37:1-37:69",
+      "body_bytes": "639-707",
+      "body_text": "**$Body.Fence.** Followed by a fence, which is not part of the body:",
+      "hash_input": "Followed by a fence, which is not part of the body:",
+      "hash": "e7af273837a8977dc0d133023b3ac30fc4b0e428c4a24d0230874972abdced14",
+      "shape_hash": "e7af273837a8977dc0d133023b3ac30fc4b0e428c4a24d0230874972abdced14",
+      "code_after": true,
+      "body_lines": 1
+    },
+    {
+      "name": "Body.Blank",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "42:1-42:17",
+      "name_at": "42:3-42:14",
+      "body": "42:1-42:40",
+      "body_bytes": "726-765",
+      "body_text": "**$Body.Blank.** Blank-line separation:",
+      "hash_input": "Blank-line separation:",
+      "hash": "5e88fa961aa61848b276b0e09275f51eb15ba803c67a0e7f43f997d168f67a17",
+      "shape_hash": "5e88fa961aa61848b276b0e09275f51eb15ba803c67a0e7f43f997d168f67a17",
+      "body_lines": 1
+    },
+    {
+      "name": "Body.Code",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "46:1-46:16",
+      "name_at": "46:3-46:13",
+      "body": "46:1-47:13",
+      "body_bytes": "786-864",
+      "body_text": "**$Body.Code.** A code span `a  b` keeps its spaces; other   runs\n   collapse.",
+      "hash_input": "A code span `a  b` keeps its spaces; other runs collapse.",
+      "hash": "c8a4c0b7aa36e3c0ee28756d69945c01594d35a2a8f1853a3a74245c4160176e",
+      "shape_hash": "c8a4c0b7aa36e3c0ee28756d69945c01594d35a2a8f1853a3a74245c4160176e",
+      "body_lines": 2
+    },
+    {
+      "name": "Body.ListCode",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "49:1-49:20",
+      "name_at": "49:3-49:17",
+      "body": "49:1-54:6",
+      "body_bytes": "866-966",
+      "body_text": "**$Body.ListCode.** A list whose last item ends with a fence:\n- item\n\n  ```\n  code in the item\n  ```",
+      "hash_input": "A list whose last item ends with a fence: - item ``` code in the item\n ```",
+      "hash": "5cd5883ebe335ef4a2ec48697f51f2c0bc421b6e2c3ec74ccb95a75a9b91941a",
+      "shape_hash": "5cd5883ebe335ef4a2ec48697f51f2c0bc421b6e2c3ec74ccb95a75a9b91941a",
+      "body_lines": 6
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Body.Plain",
+      "at": "3:3-3:14",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-4:20",
+      "within": "Body.Plain"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.List",
+      "at": "6:3-6:13",
+      "lsp": "5:2",
+      "container": "paragraph 6:1-6:45",
+      "within": "Body.List"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Loose",
+      "at": "10:3-10:14",
+      "lsp": "9:2",
+      "container": "paragraph 10:1-10:52",
+      "within": "Body.Loose"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Ordered",
+      "at": "19:3-19:16",
+      "lsp": "18:2",
+      "container": "paragraph 19:1-21:22",
+      "within": "Body.Ordered"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.OrderedOne",
+      "at": "23:3-23:19",
+      "lsp": "22:2",
+      "container": "paragraph 23:1-23:57",
+      "within": "Body.OrderedOne"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Lazy",
+      "at": "27:3-27:13",
+      "lsp": "26:2",
+      "container": "paragraph 27:1-27:35",
+      "within": "Body.Lazy"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Quote",
+      "at": "32:3-32:14",
+      "lsp": "31:2",
+      "container": "paragraph 32:1-32:43",
+      "within": "Body.Quote"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Fence",
+      "at": "37:3-37:14",
+      "lsp": "36:2",
+      "container": "paragraph 37:1-37:69",
+      "within": "Body.Fence"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Blank",
+      "at": "42:3-42:14",
+      "lsp": "41:2",
+      "container": "paragraph 42:1-42:40",
+      "within": "Body.Blank"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.Code",
+      "at": "46:3-46:13",
+      "lsp": "45:2",
+      "container": "paragraph 46:1-47:13",
+      "within": "Body.Code"
+    },
+    {
+      "role": "definition",
+      "text": "$Body.ListCode",
+      "at": "49:3-49:17",
+      "lsp": "48:2",
+      "container": "paragraph 49:1-49:62",
+      "within": "Body.ListCode"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [
+    {
+      "kind": "code_block",
+      "text": "```go\nx := 1\n```",
+      "at": "38:1-40:4"
+    },
+    {
+      "kind": "code_span",
+      "text": "`a  b`",
+      "at": "46:29-46:35"
+    },
+    {
+      "kind": "code_block",
+      "text": "```\n  code in the item\n  ```",
+      "at": "52:3-54:6"
+    }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,30 @@
+lensd.spec.md E0 W1 H0 │  1   # lensd specification
+ §0 Definitions        │  2
+  §0.1 Time            │  3   What lensd guarantees, as definitions (`**Def $Name (title).**`) and
+   ◦ $Time.Media       │      invariants
+   ◦ $Time.Wall        │  4   (`**$Name (title).**`). Normative statements use
+   ◦ $Time.Elapsed     │  5   MUST. Every invariant names what checks it: a TLA+ model in spec/tla/
+  §0.2 Intervals and ne│      (each with a deliberately broken
+   ◦ $Interval         │  6   "mutant" that TLC must reject), a Go test, or a runtime check. Go
+   ◦ $Interval.Gap     │      tests cite what they check with a
+ §1 Frames, segments an│  7   comment directly above the test:
+  • $Frame.Timing      │  8
+  • $Frame.SegmentShape│  9       // Spec: $Frame.Timing §1 "quoted text from this file"
+  • $Frame.Numbering   │ 10
+  • $Frame.OneWriter   │ 11   and code may cite the invariant it enforces (`// $Sdk.NvrAgrees:
+  • $Frame.CleanGenerat│      ...`). A spec change and the matching test
+  • $Frame.Forward     │ 12   or model change go in the same commit. Values marked (code: …) also
+  • $Frame.InitFixed   │      exist as constants; changing one
+ §2 HLS hub (transcoder│ 13   means changing the other. Liveness is stated as bounded-time rules on
+  • $Hub.TranscoderCap │      lensd's own clock ($Time.Elapsed),
+  • $Hub.TakenOver     │ 14   not as TLA+ liveness properties. Trace verification (checking runtime
+  • $Hub.IdleStop      │      traces against the models) is out
+  • $Hub.BlockingAnswer│ 15   of scope.
+  • $Hub.MemoryBound   │ 16
+ §3 Live relay         │ 17   ## Context (for readers without the code)
+  • $Relay.OneSession  │ 18
+  • $Relay.NoOrphans   │ 19   lensd is a Go web gateway for two NVRs at one site. It relays live
+ lensd.spec.md      No baseline 1:1 |                                              |  1     0    0
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+^G  Help          ^Q  Open            ^R  Checks           ^^  Outline           Ret Go To
+^X  Exit          ^P  Propose         ^N  Analyze         ⇧Tab Next Pane         Esc Editor

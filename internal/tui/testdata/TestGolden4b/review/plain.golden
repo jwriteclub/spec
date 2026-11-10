@@ -1,0 +1,30 @@
+  Review proposal k3x7a · by agent-7
+  Required primary · 1 selected fix · 1 undecided · 0 skipped
+  why: players stall on fragments longer than 5 s, so bound the fragment length
+  check: the bound is consistent with $Frame.Order; the prose and the extra queue should follow it
+
+   [1] change $Frame.Timing in demo.spec.md  Required with Apply
+      the change itself
+    - **$Frame.Timing (fragment timing).** Every fragment MUST have a duration above zero in
+      $Time.Media.
+    + **$Frame.Timing (fragment timing).** Every fragment MUST have a duration of at most 5 s in
+      $Time.Media.
+      Checked by: TestFragment.
+
+   [2] inconsistent missing_update in demo.spec.md  Selected for application
+      The prose should mention the new bound so readers see it.
+    - Prose that mentions $Frame.Order for the reader.
+    + Prose that mentions $Frame.Order and the 5 s bound for the reader.
+
+ ▶ [3] cosmetic numeric_mismatch in other.spec.md $Extra.Limit  Undecided
+      Align the queue size with the fragment bound.
+    - MUST hold at most 8 items
+    + MUST hold at most 5 items
+
+  Notes (shown, not applied)
+    - cosmetic ambiguity in demo.spec.md $Frame.Order (no edit proposed): order of arrival or of
+      media time?
+ demo.spec.md       No baseline 1:1 |                                              |  0     1    1
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ y  Accept          [e] Edit               A  Apply           [r] Recheck           ↑  Prev
+[n] Skip            [f] Feedback           R  Reject          Esc Close             ↓  Next

@@ -1,0 +1,53 @@
+{
+  "file": "encoding-invalid.spec.md",
+  "valid_utf8": false,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Enc.Invalid",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "3:1-3:18",
+      "name_at": "3:3-3:15",
+      "body": "3:1-3:49",
+      "body_bytes": "11-59",
+      "body_text": "**$Enc.Invalid.** Bad byte \ufffd here; $Enc.Invalid.",
+      "hash_input": "Bad byte \ufffd here; $Enc.Invalid.",
+      "hash": "ecea9ec106961dece836c90828fc661007337a69eefe3e415fe0e864ccf2b944",
+      "shape_hash": "0eea7ccc7f3fffa6a1577e17f15334529cbe6db886a291eab1224b81b03b52aa",
+      "body_lines": 1
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Enc.Invalid",
+      "at": "3:3-3:15",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-3:49",
+      "within": "Enc.Invalid"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Invalid",
+      "at": "3:36-3:48",
+      "lsp": "2:35",
+      "container": "paragraph 3:1-3:49",
+      "within": "Enc.Invalid"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [],
+  "diagnostics": [
+    {
+      "code": "file-not-utf8",
+      "severity": "error",
+      "at": "3:28-3:29",
+      "message": "file is not valid UTF-8 (first bad byte at offset 38); it is left out of the project until fixed"
+    }
+  ]
+}

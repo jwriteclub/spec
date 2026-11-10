@@ -1,0 +1,30 @@
+  1   # lensd specification
+  2
+  3   What lensd guarantees, as definitions (`**Def $Name (title).**`) and invariants
+  4   (`**$Name (title).**`). Normative statements use
+  5   MUST. Every invariant names what checks it: a TLA+ model in spec/tla/ (each with a
+      deliberately broken
+  6   "mutant" that TLC must reject), a Go test, or a runtime check. Go tests cite what they check
+      with a
+  7   comment directly above the test:
+  8
+  9       // Spec: $Frame.Timing §1 "quoted text from this file"
+ 10
+ 11   and code may cite the invariant it enforces (`// $Sdk.NvrAgrees: ...`). A spec change and the
+      matching test
+ 12   or model change go in the same commit. Values marked (code: …) also exist as constants;
+      changing one
+ 13   means changing the other. Liveness is stated as bounded-time rules on lensd's own clock
+      ($Time.Elapsed),
+ 14   not as TLA+ liveness properties. Trace verification (checking runtime traces against the
+      models) is out
+ 15   of scope.
+ 16
+ 17   ## Context (for readers without the code)
+ 18
+ 19   lensd is a Go web gateway for two NVRs at one site. It relays live RTSP from the NVR (one
+ 20   session per camera shared by all viewers), plays recordings through a vendor SDK helper
+ lensd.spec.md      No baseline 1:1 |                                              |  1     0    0
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+^G  Help  ^O  Save ^W  Where Is ^K  Cut   ^Z  Undo ^T  Follow ^B  Back   ^C  Copy     ^^  Outline
+^X  Exit  ^Q  Open ^P  Propose  ^U  Paste ^Y  Redo ^R  Checks ^F  Format ^N  Analyze ⇧Tab Next Pane

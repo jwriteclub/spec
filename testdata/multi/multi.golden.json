@@ -1,0 +1,246 @@
+{
+  "project": "streamhub",
+  "files": [
+    "hls.spec.md",
+    "index.spec.md",
+    "rws.spec.md"
+  ],
+  "anchors": [
+    {
+      "name": "Hls.Part",
+      "kind": "def",
+      "at": "hls.spec.md:7:7",
+      "hash": "828c6fda"
+    },
+    {
+      "name": "Hls.KeyframeStart",
+      "kind": "inv",
+      "at": "hls.spec.md:10:3",
+      "hash": "a43c7511"
+    },
+    {
+      "name": "Hls.PartDuration",
+      "kind": "inv",
+      "at": "hls.spec.md:16:3",
+      "hash": "a503a7dd"
+    },
+    {
+      "name": "Hls.Generation",
+      "kind": "def",
+      "at": "hls.spec.md:25:7",
+      "hash": "c63311e2"
+    },
+    {
+      "name": "Hls.WatchdogKills",
+      "kind": "inv",
+      "at": "hls.spec.md:29:3",
+      "hash": "26a0cb02"
+    },
+    {
+      "name": "Index.Record",
+      "kind": "def",
+      "at": "index.spec.md:7:7",
+      "hash": "58f92e56"
+    },
+    {
+      "name": "Index.Monotonic",
+      "kind": "inv",
+      "at": "index.spec.md:11:3",
+      "hash": "5de784eb"
+    },
+    {
+      "name": "Index.TailInterval",
+      "kind": "inv",
+      "at": "index.spec.md:19:3",
+      "hash": "131d55f2"
+    },
+    {
+      "name": "Index.Backfill",
+      "kind": "inv",
+      "at": "index.spec.md:22:3",
+      "hash": "e3a9ed29"
+    },
+    {
+      "name": "Rws.Session",
+      "kind": "def",
+      "at": "rws.spec.md:9:7",
+      "hash": "03b84d21"
+    },
+    {
+      "name": "Rws.OnePerCamera",
+      "kind": "inv",
+      "at": "rws.spec.md:12:3",
+      "hash": "32035450"
+    },
+    {
+      "name": "Rws.FanOut",
+      "kind": "inv",
+      "at": "rws.spec.md:20:3",
+      "hash": "f0f2726d"
+    },
+    {
+      "name": "Rws.IdleStop",
+      "kind": "inv",
+      "at": "rws.spec.md:26:3",
+      "hash": "3b544fc9"
+    }
+  ],
+  "refs": [
+    {
+      "at": "hls.spec.md:8:76",
+      "text": "$Rws.Session",
+      "state": "resolved",
+      "target": "rws.spec.md:9:7",
+      "within": "Hls.Part"
+    },
+    {
+      "at": "hls.spec.md:16:42",
+      "text": "$Hls.Part",
+      "state": "resolved",
+      "target": "hls.spec.md:7:7",
+      "within": "Hls.PartDuration"
+    },
+    {
+      "at": "hls.spec.md:27:51",
+      "text": "$Index.Record",
+      "state": "resolved",
+      "target": "index.spec.md:7:7",
+      "within": "Hls.Generation"
+    },
+    {
+      "at": "hls.spec.md:29:63",
+      "text": "$Hls.Generation",
+      "state": "resolved",
+      "target": "hls.spec.md:25:7",
+      "within": "Hls.WatchdogKills"
+    },
+    {
+      "at": "index.spec.md:9:1",
+      "text": "$Rws.Session",
+      "state": "resolved",
+      "target": "rws.spec.md:9:7",
+      "within": "Index.Record"
+    },
+    {
+      "at": "index.spec.md:19:95",
+      "text": "$Index.Record",
+      "state": "resolved",
+      "target": "index.spec.md:7:7",
+      "within": "Index.TailInterval"
+    },
+    {
+      "at": "index.spec.md:23:1",
+      "text": "$Index.Record",
+      "state": "resolved",
+      "target": "index.spec.md:7:7",
+      "within": "Index.Backfill"
+    },
+    {
+      "at": "rws.spec.md:12:61",
+      "text": "$Rws.Session",
+      "state": "resolved",
+      "target": "rws.spec.md:9:7",
+      "within": "Rws.OnePerCamera"
+    },
+    {
+      "at": "rws.spec.md:20:54",
+      "text": "$Rws.Session",
+      "state": "resolved",
+      "target": "rws.spec.md:9:7",
+      "within": "Rws.FanOut"
+    },
+    {
+      "at": "rws.spec.md:26:34",
+      "text": "$Rws.Session",
+      "state": "resolved",
+      "target": "rws.spec.md:9:7",
+      "within": "Rws.IdleStop"
+    },
+    {
+      "at": "rws.spec.md:30:76",
+      "text": "$Rws.OnePerCamera",
+      "state": "resolved",
+      "target": "rws.spec.md:12:3"
+    }
+  ],
+  "section_refs": [
+    {
+      "at": "hls.spec.md:12:1",
+      "text": "§2",
+      "state": "resolved",
+      "target": "§hls:2 hls.spec.md:14:1"
+    },
+    {
+      "at": "hls.spec.md:12:23",
+      "text": "§3",
+      "state": "resolved",
+      "target": "§hls:3 hls.spec.md:19:1"
+    },
+    {
+      "at": "hls.spec.md:21:92",
+      "text": "§3.1",
+      "state": "resolved",
+      "target": "§hls:3.1 hls.spec.md:23:1"
+    },
+    {
+      "at": "hls.spec.md:27:93",
+      "text": "§index:1",
+      "state": "resolved",
+      "target": "§index:1 index.spec.md:5:1"
+    },
+    {
+      "at": "hls.spec.md:30:84",
+      "text": "§rws:2.1",
+      "state": "resolved",
+      "target": "§rws:2.1 rws.spec.md:24:1"
+    },
+    {
+      "at": "index.spec.md:17:12",
+      "text": "§hls:1",
+      "state": "resolved",
+      "target": "§hls:1 hls.spec.md:5:1"
+    },
+    {
+      "at": "index.spec.md:24:45",
+      "text": "§3.1",
+      "state": "resolved",
+      "target": "§hls:3.1 hls.spec.md:23:1"
+    },
+    {
+      "at": "rws.spec.md:10:69",
+      "text": "§2",
+      "state": "resolved",
+      "target": "§rws:2 rws.spec.md:16:1"
+    },
+    {
+      "at": "rws.spec.md:18:101",
+      "text": "§3.1",
+      "state": "resolved",
+      "target": "§hls:3.1 hls.spec.md:23:1"
+    },
+    {
+      "at": "rws.spec.md:27:38",
+      "text": "§hls:1",
+      "state": "resolved",
+      "target": "§hls:1 hls.spec.md:5:1"
+    },
+    {
+      "at": "rws.spec.md:27:73",
+      "text": "§index:2",
+      "state": "resolved",
+      "target": "§index:2 index.spec.md:14:1"
+    }
+  ],
+  "sections": [
+    "§hls:1",
+    "§hls:2",
+    "§hls:3",
+    "§hls:3.1",
+    "§index:1",
+    "§index:2",
+    "§rws:1",
+    "§rws:2",
+    "§rws:2.1"
+  ],
+  "lint": []
+}

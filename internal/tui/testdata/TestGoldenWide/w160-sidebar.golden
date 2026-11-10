@@ -1,0 +1,34 @@
+lensd.spec.md          │105 │ exited. If the rendition has no reader when a generation ends, the          │Review · 1 awaiting
+ §0 Definitions        │    │ replacement may still start;                                                │
+  §0.1 Time            │106 │ $Hub.IdleStop stops it. Checked by: rendition tests with a fake ffmpeg (one ││ Proposal
+   ◦ $Time.Media       │    │ that ignores end of                                                         ││ cosmetic ambiguity
+   ◦ $Time.Wall        │107 │ input, one that ignores stop); TLA+ Transcoders Inv_ReplacementHoldsSlot,   ││ $Frame.Forward
+   ◦ $Time.Elapsed     │    │ Inv_ReplacementNever429,                                                    ││ lensd.spec.md:115
+  §0.2 Intervals and ne│108 │ Inv_ExitBounded; TLA+ TrackSegments Inv_NoGap (mutant reader skipping after ││ say which clock: the stamps are wall time
+   ◦ $Interval         │    │ eviction must fail);                                                        ││
+   ◦ $Interval.Gap     │109 │ runtime: the stuck watchdog. Known violated today (a SIGKILLed generation   ││ │ Suggested fix
+ §1 Frames, segments an│    │ ends the rendition; a skip                                                  ││ │ $Frame.Forward
+  • $Frame.Timing      │110 │ or eviction keeps feeding the same generation; the exit timer is 5 s).      ││ │ lensd.spec.md:115
+  • $Frame.SegmentShape│111                                                                               ││ │ segments → segments by $Time.Wall
+  • $Frame.Numbering   │112│  **$Frame.Forward (time only moves forward).** Within a track, decode times  ││ │ pending
+  • $Frame.OneWriter   │   │  MUST strictly increase                                                      ││ │
+  • $Frame.CleanGenerat│113││ (follows from $Frame.Timing). PROGRAM-DATE-TIME (wall time ($Time.Wall)     │
+  • $Frame.Forward 1   │   ││ from NVR keyframe stamps;                                                   │
+  • $Frame.InitFixed   │114│  for live tracks, lensd's clock at the first frame plus media time) MUST NOT │
+ §2 HLS hub (transcoder│   │  go backwards between                                                        │
+  • $Hub.TranscoderCap │115│  consecutive segments (equal is allowed); a recording gap moves it forward.  │
+  • $Hub.TakenOver     │   │  If an NVR keyframe stamp                                                    │
+  • $Hub.IdleStop      │116│  goes backwards, lensd MUST clamp, log, and put EXT-X-DISCONTINUITY before   │
+  • $Hub.BlockingAnswer│   │  that segment. Checked by:                                                   │
+  • $Hub.MemoryBound   │117│  muxer and keyframe-stamp tests across a 32-bit wrap and a backwards NVR     │
+ §3 Live relay         │   │  clock.                                                                      │
+  • $Relay.OneSession  │118                                                                               │
+  • $Relay.NoOrphans   │119 │ **$Frame.InitFixed (init never changes).** A published init segment MUST    │
+  • $Relay.Reconnect   │    │ NOT change. A change of                                                     │
+ §4 Recorder sessions (│120 │ SPS/PPS (resolution, profile) MUST stop the track; the next request starts  │
+  • $Sdk.LeaseCap      │    │ a new one. Checked by:                                                      │
+  • $Sdk.NvrAgrees     │121 │ test feeding a mid-stream SPS change.                                       │
+ lensd.spec.md                Uncommitted 115:1 | $Frame.Forward                                                                               |  0     0    1
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ y  Accept             [e] Edit                 A  Commit             ^F  Format              ↑  Prev            Ret Go To            Esc  Editor
+[n] Dismiss            [f] Feedback            [c] Message            [r] Removed             ↓  Next            ^R  Hide             ⇧Tab Next Pane

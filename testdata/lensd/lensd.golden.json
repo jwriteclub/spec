@@ -1,0 +1,1031 @@
+{
+  "file": "lensd.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Time.Media",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "media time",
+      "label": "32:1-32:34",
+      "name_at": "32:7-32:18",
+      "title_at": "32:20-32:30",
+      "body": "32:1-38:52",
+      "body_bytes": "1682-2353",
+      "hash": "c7cc3394",
+      "section": "0.1",
+      "first_line": "**Def $Time.Media (media time).** Media time is an integer count of 90 kHz ticks (RTP timestamps on …",
+      "body_lines": 7
+    },
+    {
+      "name": "Time.Wall",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "wall time",
+      "label": "40:1-40:32",
+      "name_at": "40:7-40:17",
+      "title_at": "40:19-40:28",
+      "body": "40:1-44:96",
+      "body_bytes": "2355-2870",
+      "hash": "ab0b93b8",
+      "section": "0.1",
+      "first_line": "**Def $Time.Wall (wall time).** Wall time is an absolute instant (Go `time.Time`), comparable across…",
+      "body_lines": 5
+    },
+    {
+      "name": "Time.Elapsed",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "elapsed time",
+      "label": "46:1-46:38",
+      "name_at": "46:7-46:20",
+      "title_at": "46:22-46:34",
+      "body": "46:1-47:101",
+      "body_bytes": "2872-3079",
+      "hash": "b9ff785d",
+      "section": "0.1",
+      "first_line": "**Def $Time.Elapsed (elapsed time).** Timeouts, graces and watchdogs are measured on lensd's own mon…",
+      "body_lines": 2
+    },
+    {
+      "name": "Interval",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "interval",
+      "label": "51:1-51:30",
+      "name_at": "51:7-51:16",
+      "title_at": "51:18-51:26",
+      "body": "51:1-52:37",
+      "body_bytes": "3113-3246",
+      "hash": "5a359d5f",
+      "section": "0.2",
+      "first_line": "**Def $Interval (interval).** An interval [Start, End] is closed, with Start <= End. Zero length",
+      "body_lines": 2
+    },
+    {
+      "name": "Interval.Gap",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "gap, within",
+      "label": "54:1-54:37",
+      "name_at": "54:7-54:20",
+      "title_at": "54:22-54:33",
+      "body": "54:1-57:97",
+      "body_bytes": "3248-3665",
+      "hash": "979fb7ee",
+      "section": "0.2",
+      "first_line": "**Def $Interval.Gap (gap, within).** For intervals A and B with A.Start <= B.Start, gap(A, B) = B.St…",
+      "body_lines": 4
+    },
+    {
+      "name": "Frame.Timing",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "fragment timing",
+      "label": "65:1-65:37",
+      "name_at": "65:3-65:16",
+      "title_at": "65:18-65:33",
+      "body": "65:1-72:61",
+      "body_bytes": "3978-4757",
+      "hash": "2f1235c1",
+      "section": "1",
+      "first_line": "**$Frame.Timing (fragment timing).** Every fragment written to a Track, and so every fragment a",
+      "body_lines": 8
+    },
+    {
+      "name": "Frame.SegmentShape",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "segment shape",
+      "label": "74:1-74:41",
+      "name_at": "74:3-74:22",
+      "title_at": "74:24-74:37",
+      "body": "74:1-82:44",
+      "body_bytes": "4759-5619",
+      "hash": "abe1f970",
+      "section": "1",
+      "first_line": "**$Frame.SegmentShape (segment shape).** Every published segment MUST start with a keyframe, contain…",
+      "body_lines": 9
+    },
+    {
+      "name": "Frame.Numbering",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "numbering",
+      "label": "84:1-84:34",
+      "name_at": "84:3-84:19",
+      "title_at": "84:21-84:30",
+      "body": "84:1-86:66",
+      "body_bytes": "5621-5891",
+      "hash": "a2c74c37",
+      "section": "1",
+      "first_line": "**$Frame.Numbering (numbering).** Segment numbers MUST be contiguous and increasing, and the playlis…",
+      "body_lines": 3
+    },
+    {
+      "name": "Frame.OneWriter",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "one writer",
+      "label": "88:1-88:35",
+      "name_at": "88:3-88:19",
+      "title_at": "88:21-88:31",
+      "body": "88:1-90:90",
+      "body_bytes": "5893-6196",
+      "hash": "f31ddf00",
+      "section": "1",
+      "first_line": "**$Frame.OneWriter (one writer).** WriteFrame called after the Track's Close or Stop has returned MU…",
+      "body_lines": 3
+    },
+    {
+      "name": "Frame.CleanGeneration",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "each generation starts clean",
+      "label": "92:1-92:59",
+      "name_at": "92:3-92:25",
+      "title_at": "92:27-92:55",
+      "body": "92:1-106:20",
+      "body_bytes": "6198-7643",
+      "hash": "e91c099a",
+      "section": "1",
+      "first_line": "**$Frame.CleanGeneration (each generation starts clean).** Each ffmpeg generation of a rendition MUS…",
+      "body_lines": 15
+    },
+    {
+      "name": "Frame.Forward",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "time only moves forward",
+      "label": "108:1-108:46",
+      "name_at": "108:3-108:17",
+      "title_at": "108:19-108:42",
+      "body": "108:1-113:39",
+      "body_bytes": "7645-8203",
+      "hash": "21ed4dec",
+      "section": "1",
+      "first_line": "**$Frame.Forward (time only moves forward).** Within a track, decode times MUST strictly increase (f…",
+      "body_lines": 6
+    },
+    {
+      "name": "Frame.InitFixed",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "init never changes",
+      "label": "115:1-115:43",
+      "name_at": "115:3-115:19",
+      "title_at": "115:21-115:39",
+      "body": "115:1-117:25",
+      "body_bytes": "8205-8437",
+      "hash": "9177abe9",
+      "section": "1",
+      "first_line": "**$Frame.InitFixed (init never changes).** A published init segment MUST NOT change. A change of SPS…",
+      "body_lines": 3
+    },
+    {
+      "name": "Hub.TranscoderCap",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "transcoder cap",
+      "label": "121:1-121:41",
+      "name_at": "121:3-121:21",
+      "title_at": "121:23-121:37",
+      "body": "121:1-126:76",
+      "body_bytes": "8482-9089",
+      "hash": "63f34093",
+      "section": "2",
+      "first_line": "**$Hub.TranscoderCap (transcoder cap).** Running rendition ffmpegs (started and not yet exited) MUST…",
+      "body_lines": 6
+    },
+    {
+      "name": "Hub.TakenOver",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "taken over",
+      "label": "128:1-128:33",
+      "name_at": "128:3-128:17",
+      "title_at": "128:19-128:29",
+      "body": "128:1-131:106",
+      "body_bytes": "9091-9511",
+      "hash": "2e87cec2",
+      "section": "2",
+      "first_line": "**$Hub.TakenOver (taken over).** A recording track is taken over when its lease is preempted by anot…",
+      "body_lines": 4
+    },
+    {
+      "name": "Hub.IdleStop",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "idle tracks stop",
+      "label": "133:1-133:38",
+      "name_at": "133:3-133:16",
+      "title_at": "133:18-133:34",
+      "body": "133:1-135:70",
+      "body_bytes": "9513-9794",
+      "hash": "cc504275",
+      "section": "2",
+      "first_line": "**$Hub.IdleStop (idle tracks stop).** A track with no reader MUST be stopped within its idle limit p…",
+      "body_lines": 3
+    },
+    {
+      "name": "Hub.BlockingAnswer",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "blocking requests answer",
+      "label": "137:1-137:52",
+      "name_at": "137:3-137:22",
+      "title_at": "137:24-137:48",
+      "body": "137:1-139:64",
+      "body_bytes": "9796-10073",
+      "hash": "e48e3314",
+      "section": "2",
+      "first_line": "**$Hub.BlockingAnswer (blocking requests answer).** A blocking LL-HLS request (`_HLS_msn`/`_HLS_part…",
+      "body_lines": 3
+    },
+    {
+      "name": "Hub.MemoryBound",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "memory bound",
+      "label": "141:1-141:37",
+      "name_at": "141:3-141:19",
+      "title_at": "141:21-141:33",
+      "body": "141:1-144:100",
+      "body_bytes": "10075-10488",
+      "hash": "becfb09d",
+      "section": "2",
+      "first_line": "**$Hub.MemoryBound (memory bound).** All tracks share one fixed-size arena; kept segment bytes MUST …",
+      "body_lines": 4
+    },
+    {
+      "name": "Relay.OneSession",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "one session per camera",
+      "label": "148:1-148:48",
+      "name_at": "148:3-148:20",
+      "title_at": "148:22-148:44",
+      "body": "148:1-151:106",
+      "body_bytes": "10508-10925",
+      "hash": "3bcc4c9e",
+      "section": "3",
+      "first_line": "**$Relay.OneSession (one session per camera).** At any instant there MUST be at most one open RTSP s…",
+      "body_lines": 4
+    },
+    {
+      "name": "Relay.NoOrphans",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "no orphans",
+      "label": "153:1-153:35",
+      "name_at": "153:3-153:19",
+      "title_at": "153:21-153:31",
+      "body": "153:1-156:176",
+      "body_bytes": "10927-11417",
+      "hash": "af5ff580",
+      "section": "3",
+      "first_line": "**$Relay.NoOrphans (no orphans).** A stream that has a consumer MUST be the hub's current entry for …",
+      "body_lines": 4
+    },
+    {
+      "name": "Relay.Reconnect",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "reconnect",
+      "label": "158:1-158:34",
+      "name_at": "158:3-158:19",
+      "title_at": "158:21-158:30",
+      "body": "158:1-162:89",
+      "body_bytes": "11419-11924",
+      "hash": "b2eb4398",
+      "section": "3",
+      "first_line": "**$Relay.Reconnect (reconnect).** A stream with consumers MUST have an open session or be reconnecti…",
+      "body_lines": 5
+    },
+    {
+      "name": "Sdk.LeaseCap",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "leases fit the cap",
+      "label": "166:1-166:40",
+      "name_at": "166:3-166:16",
+      "title_at": "166:18-166:36",
+      "body": "166:1-168:38",
+      "body_bytes": "11960-12208",
+      "hash": "3bd95c73",
+      "section": "4",
+      "first_line": "**$Sdk.LeaseCap (leases fit the cap).** Per NVR, leases held, including preempted but not yet releas…",
+      "body_lines": 3
+    },
+    {
+      "name": "Sdk.NvrAgrees",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "the NVR agrees",
+      "label": "170:1-170:37",
+      "name_at": "170:3-170:17",
+      "title_at": "170:19-170:33",
+      "body": "170:1-178:53",
+      "body_bytes": "12210-13079",
+      "hash": "39379cf4",
+      "section": "4",
+      "first_line": "**$Sdk.NvrAgrees (the NVR agrees).** The NVR MUST never see more than sdk_sessions_per_nvr playbacks…",
+      "body_lines": 9
+    },
+    {
+      "name": "Sdk.ViewersFirst",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "viewers beat analysis",
+      "label": "180:1-180:47",
+      "name_at": "180:3-180:20",
+      "title_at": "180:22-180:43",
+      "body": "180:1-183:7",
+      "body_bytes": "13081-13386",
+      "hash": "a89a789d",
+      "section": "4",
+      "first_line": "**$Sdk.ViewersFirst (viewers beat analysis).** No step may preempt on behalf of analysis, and no ste…",
+      "body_lines": 4
+    },
+    {
+      "name": "Sdk.Preempt",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "preempt exactly as needed",
+      "label": "185:1-185:46",
+      "name_at": "185:3-185:15",
+      "title_at": "185:17-185:42",
+      "body": "185:1-190:11",
+      "body_bytes": "13388-13922",
+      "hash": "b14e0900",
+      "section": "4",
+      "first_line": "**$Sdk.Preempt (preempt exactly as needed).** At each step where a viewer finds the NVR full, it MUS…",
+      "body_lines": 6
+    },
+    {
+      "name": "Sdk.BoundedWait",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "bounded waits",
+      "label": "192:1-192:38",
+      "name_at": "192:3-192:19",
+      "title_at": "192:21-192:34",
+      "body": "192:1-193:105",
+      "body_bytes": "13924-14139",
+      "hash": "502abcef",
+      "section": "4",
+      "first_line": "**$Sdk.BoundedWait (bounded waits).** A viewer's Acquire MUST succeed or fail within 15 s (code: ses…",
+      "body_lines": 2
+    },
+    {
+      "name": "Sdk.NoSilentPlayer",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "no silent black players",
+      "label": "195:1-195:51",
+      "name_at": "195:3-195:22",
+      "title_at": "195:24-195:47",
+      "body": "195:1-197:88",
+      "body_bytes": "14141-14444",
+      "hash": "00fb5fb2",
+      "section": "4",
+      "first_line": "**$Sdk.NoSilentPlayer (no silent black players).** A recording lease that has received no frame with…",
+      "body_lines": 3
+    },
+    {
+      "name": "Motion.Watermarks",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "watermarks are honest",
+      "label": "205:1-205:48",
+      "name_at": "205:3-205:21",
+      "title_at": "205:23-205:44",
+      "body": "205:1-212:35",
+      "body_bytes": "14719-15462",
+      "hash": "72499eba",
+      "section": "5",
+      "first_line": "**$Motion.Watermarks (watermarks are honest).** A watermark MUST advance over a window [from, to) on…",
+      "body_lines": 8
+    },
+    {
+      "name": "Motion.Merged",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "intervals are merged",
+      "label": "214:1-214:43",
+      "name_at": "214:3-214:17",
+      "title_at": "214:19-214:39",
+      "body": "214:1-236:13",
+      "body_bytes": "15464-17340",
+      "hash": "5a5955f6",
+      "section": "5",
+      "first_line": "**$Motion.Merged (intervals are merged).**",
+      "body_lines": 23
+    },
+    {
+      "name": "Auth.Gated",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "everything is gated",
+      "label": "240:1-240:39",
+      "name_at": "240:3-240:14",
+      "title_at": "240:16-240:35",
+      "body": "240:1-247:62",
+      "body_bytes": "17357-18107",
+      "hash": "053bc73c",
+      "section": "6",
+      "first_line": "**$Auth.Gated (everything is gated).** With auth enabled, every request except to /saml/acs,",
+      "body_lines": 8
+    },
+    {
+      "name": "Auth.OneDecision",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "one decision",
+      "label": "249:1-249:38",
+      "name_at": "249:3-249:20",
+      "title_at": "249:22-249:34",
+      "body": "249:1-252:87",
+      "body_bytes": "18109-18505",
+      "hash": "3b5907d9",
+      "section": "6",
+      "first_line": "**$Auth.OneDecision (one decision).** allow(email, groups, cfg) is one function: denied_emails first…",
+      "body_lines": 4
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "reference",
+      "text": "$Time.Elapsed",
+      "at": "13:90-13:103",
+      "lsp": "12:89",
+      "container": "paragraph 11:1-15:10",
+      "state": "resolved",
+      "target": "lensd.spec.md:46"
+    },
+    {
+      "role": "definition",
+      "text": "$Time.Media",
+      "at": "32:7-32:18",
+      "lsp": "31:6",
+      "container": "paragraph 32:1-38:52",
+      "within": "Time.Media"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "37:76-37:89",
+      "lsp": "36:75",
+      "container": "paragraph 32:1-38:52",
+      "within": "Time.Media",
+      "state": "resolved",
+      "target": "lensd.spec.md:65"
+    },
+    {
+      "role": "definition",
+      "text": "$Time.Wall",
+      "at": "40:7-40:17",
+      "lsp": "39:6",
+      "container": "paragraph 40:1-44:96",
+      "within": "Time.Wall"
+    },
+    {
+      "role": "definition",
+      "text": "$Time.Elapsed",
+      "at": "46:7-46:20",
+      "lsp": "45:6",
+      "container": "paragraph 46:1-47:101",
+      "within": "Time.Elapsed"
+    },
+    {
+      "role": "definition",
+      "text": "$Interval",
+      "at": "51:7-51:16",
+      "lsp": "50:6",
+      "container": "paragraph 51:1-52:37",
+      "within": "Interval"
+    },
+    {
+      "role": "definition",
+      "text": "$Interval.Gap",
+      "at": "54:7-54:20",
+      "lsp": "53:6",
+      "container": "paragraph 54:1-57:97",
+      "within": "Interval.Gap"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Timing",
+      "at": "65:3-65:16",
+      "lsp": "64:2",
+      "container": "paragraph 65:1-71:99",
+      "within": "Frame.Timing"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "67:79-67:90",
+      "lsp": "66:78",
+      "container": "paragraph 65:1-71:99",
+      "within": "Frame.Timing",
+      "state": "resolved",
+      "target": "lensd.spec.md:32"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.SegmentShape",
+      "at": "74:3-74:22",
+      "lsp": "73:2",
+      "container": "paragraph 74:1-82:44",
+      "within": "Frame.SegmentShape"
+    },
+    {
+      "role": "reference",
+      "text": "$Hub.MemoryBound",
+      "at": "76:53-76:69",
+      "lsp": "75:52",
+      "container": "paragraph 74:1-82:44",
+      "within": "Frame.SegmentShape",
+      "state": "resolved",
+      "target": "lensd.spec.md:141"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Numbering",
+      "at": "84:3-84:19",
+      "lsp": "83:2",
+      "container": "paragraph 84:1-86:66",
+      "within": "Frame.Numbering"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.OneWriter",
+      "at": "88:3-88:19",
+      "lsp": "87:2",
+      "container": "paragraph 88:1-90:90",
+      "within": "Frame.OneWriter"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.CleanGeneration",
+      "at": "92:3-92:25",
+      "lsp": "91:2",
+      "container": "paragraph 92:1-106:20",
+      "within": "Frame.CleanGeneration"
+    },
+    {
+      "role": "reference",
+      "text": "$Hub.IdleStop",
+      "at": "101:58-101:71",
+      "lsp": "100:57",
+      "container": "paragraph 92:1-106:20",
+      "within": "Frame.CleanGeneration",
+      "state": "resolved",
+      "target": "lensd.spec.md:133"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Forward",
+      "at": "108:3-108:17",
+      "lsp": "107:2",
+      "container": "paragraph 108:1-113:39",
+      "within": "Frame.Forward"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "109:6-109:19",
+      "lsp": "108:5",
+      "container": "paragraph 108:1-113:39",
+      "within": "Frame.Forward",
+      "state": "resolved",
+      "target": "lensd.spec.md:65"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.InitFixed",
+      "at": "115:3-115:19",
+      "lsp": "114:2",
+      "container": "paragraph 115:1-117:25",
+      "within": "Frame.InitFixed"
+    },
+    {
+      "role": "definition",
+      "text": "$Hub.TranscoderCap",
+      "at": "121:3-121:21",
+      "lsp": "120:2",
+      "container": "paragraph 121:1-126:76",
+      "within": "Hub.TranscoderCap"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.CleanGeneration",
+      "at": "124:58-124:80",
+      "lsp": "123:57",
+      "container": "paragraph 121:1-126:76",
+      "within": "Hub.TranscoderCap",
+      "state": "resolved",
+      "target": "lensd.spec.md:92"
+    },
+    {
+      "role": "definition",
+      "text": "$Hub.TakenOver",
+      "at": "128:3-128:17",
+      "lsp": "127:2",
+      "container": "paragraph 128:1-131:106",
+      "within": "Hub.TakenOver"
+    },
+    {
+      "role": "reference",
+      "text": "$Sdk.Preempt",
+      "at": "129:15-129:27",
+      "lsp": "128:14",
+      "container": "paragraph 128:1-131:106",
+      "within": "Hub.TakenOver",
+      "state": "resolved",
+      "target": "lensd.spec.md:185"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Elapsed",
+      "at": "129:65-129:78",
+      "lsp": "128:64",
+      "container": "paragraph 128:1-131:106",
+      "within": "Hub.TakenOver",
+      "state": "resolved",
+      "target": "lensd.spec.md:46"
+    },
+    {
+      "role": "reference",
+      "text": "$Sdk.Preempt",
+      "at": "131:63-131:75",
+      "lsp": "130:62",
+      "container": "paragraph 128:1-131:106",
+      "within": "Hub.TakenOver",
+      "state": "resolved",
+      "target": "lensd.spec.md:185"
+    },
+    {
+      "role": "definition",
+      "text": "$Hub.IdleStop",
+      "at": "133:3-133:16",
+      "lsp": "132:2",
+      "container": "paragraph 133:1-135:70",
+      "within": "Hub.IdleStop"
+    },
+    {
+      "role": "definition",
+      "text": "$Hub.BlockingAnswer",
+      "at": "137:3-137:22",
+      "lsp": "136:2",
+      "container": "paragraph 137:1-139:64",
+      "within": "Hub.BlockingAnswer"
+    },
+    {
+      "role": "definition",
+      "text": "$Hub.MemoryBound",
+      "at": "141:3-141:19",
+      "lsp": "140:2",
+      "container": "paragraph 141:1-144:100",
+      "within": "Hub.MemoryBound"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.SegmentShape",
+      "at": "144:1-144:20",
+      "lsp": "143:0",
+      "container": "paragraph 141:1-144:100",
+      "within": "Hub.MemoryBound",
+      "state": "resolved",
+      "target": "lensd.spec.md:74"
+    },
+    {
+      "role": "definition",
+      "text": "$Relay.OneSession",
+      "at": "148:3-148:20",
+      "lsp": "147:2",
+      "container": "paragraph 148:1-151:106",
+      "within": "Relay.OneSession"
+    },
+    {
+      "role": "definition",
+      "text": "$Relay.NoOrphans",
+      "at": "153:3-153:19",
+      "lsp": "152:2",
+      "container": "paragraph 153:1-156:176",
+      "within": "Relay.NoOrphans"
+    },
+    {
+      "role": "definition",
+      "text": "$Relay.Reconnect",
+      "at": "158:3-158:19",
+      "lsp": "157:2",
+      "container": "paragraph 158:1-162:89",
+      "within": "Relay.Reconnect"
+    },
+    {
+      "role": "reference",
+      "text": "$Relay.OneSession",
+      "at": "162:70-162:87",
+      "lsp": "161:69",
+      "container": "paragraph 158:1-162:89",
+      "within": "Relay.Reconnect",
+      "state": "resolved",
+      "target": "lensd.spec.md:148"
+    },
+    {
+      "role": "definition",
+      "text": "$Sdk.LeaseCap",
+      "at": "166:3-166:16",
+      "lsp": "165:2",
+      "container": "paragraph 166:1-168:38",
+      "within": "Sdk.LeaseCap"
+    },
+    {
+      "role": "reference",
+      "text": "$Sdk.NvrAgrees",
+      "at": "167:24-167:38",
+      "lsp": "166:23",
+      "container": "paragraph 166:1-168:38",
+      "within": "Sdk.LeaseCap",
+      "state": "resolved",
+      "target": "lensd.spec.md:170"
+    },
+    {
+      "role": "definition",
+      "text": "$Sdk.NvrAgrees",
+      "at": "170:3-170:17",
+      "lsp": "169:2",
+      "container": "paragraph 170:1-178:53",
+      "within": "Sdk.NvrAgrees"
+    },
+    {
+      "role": "definition",
+      "text": "$Sdk.ViewersFirst",
+      "at": "180:3-180:20",
+      "lsp": "179:2",
+      "container": "paragraph 180:1-183:7",
+      "within": "Sdk.ViewersFirst"
+    },
+    {
+      "role": "definition",
+      "text": "$Sdk.Preempt",
+      "at": "185:3-185:15",
+      "lsp": "184:2",
+      "container": "paragraph 185:1-190:11",
+      "within": "Sdk.Preempt"
+    },
+    {
+      "role": "reference",
+      "text": "$Sdk.BoundedWait",
+      "at": "188:53-188:69",
+      "lsp": "187:52",
+      "container": "paragraph 185:1-190:11",
+      "within": "Sdk.Preempt",
+      "state": "resolved",
+      "target": "lensd.spec.md:192"
+    },
+    {
+      "role": "definition",
+      "text": "$Sdk.BoundedWait",
+      "at": "192:3-192:19",
+      "lsp": "191:2",
+      "container": "paragraph 192:1-193:105",
+      "within": "Sdk.BoundedWait"
+    },
+    {
+      "role": "definition",
+      "text": "$Sdk.NoSilentPlayer",
+      "at": "195:3-195:22",
+      "lsp": "194:2",
+      "container": "paragraph 195:1-197:88",
+      "within": "Sdk.NoSilentPlayer"
+    },
+    {
+      "role": "definition",
+      "text": "$Motion.Watermarks",
+      "at": "205:3-205:21",
+      "lsp": "204:2",
+      "container": "paragraph 205:1-212:35",
+      "within": "Motion.Watermarks"
+    },
+    {
+      "role": "definition",
+      "text": "$Motion.Merged",
+      "at": "214:3-214:17",
+      "lsp": "213:2",
+      "container": "paragraph 214:1-214:43",
+      "within": "Motion.Merged"
+    },
+    {
+      "role": "reference",
+      "text": "$Interval.Gap",
+      "at": "215:50-215:63",
+      "lsp": "214:49",
+      "container": "list_item 215:1-216:26",
+      "within": "Motion.Merged",
+      "state": "resolved",
+      "target": "lensd.spec.md:54"
+    },
+    {
+      "role": "reference",
+      "text": "$Interval",
+      "at": "217:73-217:82",
+      "lsp": "216:72",
+      "container": "list_item 217:1-218:21",
+      "within": "Motion.Merged",
+      "state": "resolved",
+      "target": "lensd.spec.md:51"
+    },
+    {
+      "role": "definition",
+      "text": "$Auth.Gated",
+      "at": "240:3-240:14",
+      "lsp": "239:2",
+      "container": "paragraph 240:1-247:62",
+      "within": "Auth.Gated"
+    },
+    {
+      "role": "reference",
+      "text": "$Auth.OneDecision",
+      "at": "242:82-242:99",
+      "lsp": "241:81",
+      "container": "paragraph 240:1-247:62",
+      "within": "Auth.Gated",
+      "state": "resolved",
+      "target": "lensd.spec.md:249"
+    },
+    {
+      "role": "definition",
+      "text": "$Auth.OneDecision",
+      "at": "249:3-249:20",
+      "lsp": "248:2",
+      "container": "paragraph 249:1-252:87",
+      "within": "Auth.OneDecision"
+    },
+    {
+      "role": "reference",
+      "text": "$Hub.TakenOver",
+      "at": "257:76-257:90",
+      "lsp": "256:75",
+      "container": "list_item 256:1-258:31",
+      "state": "resolved",
+      "target": "lensd.spec.md:128"
+    },
+    {
+      "role": "reference",
+      "text": "$Sdk.ViewersFirst",
+      "at": "259:76-259:93",
+      "lsp": "258:75",
+      "container": "list_item 259:1-260:9",
+      "state": "resolved",
+      "target": "lensd.spec.md:180"
+    },
+    {
+      "role": "reference",
+      "text": "$Hub.BlockingAnswer",
+      "at": "263:85-263:104",
+      "lsp": "262:84",
+      "container": "list_item 261:1-263:106",
+      "state": "resolved",
+      "target": "lensd.spec.md:137"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Forward",
+      "at": "266:36-266:50",
+      "lsp": "265:35",
+      "container": "list_item 266:1-267:29",
+      "state": "resolved",
+      "target": "lensd.spec.md:108"
+    }
+  ],
+  "sections": [
+    {
+      "number": "0",
+      "title": "Definitions",
+      "level": 2,
+      "heading": "28:1-28:18",
+      "range": "28:1-57:97"
+    },
+    {
+      "number": "0.1",
+      "title": "Time",
+      "level": 3,
+      "heading": "30:1-30:13",
+      "range": "30:1-47:101"
+    },
+    {
+      "number": "0.2",
+      "title": "Intervals and nearness",
+      "level": 3,
+      "heading": "49:1-49:31",
+      "range": "49:1-57:97"
+    },
+    {
+      "number": "1",
+      "title": "Frames, segments and tracks",
+      "level": 2,
+      "heading": "59:1-59:34",
+      "range": "59:1-117:25"
+    },
+    {
+      "number": "2",
+      "title": "HLS hub (transcoders, idle, memory)",
+      "level": 2,
+      "heading": "119:1-119:42",
+      "range": "119:1-144:100"
+    },
+    {
+      "number": "3",
+      "title": "Live relay",
+      "level": 2,
+      "heading": "146:1-146:17",
+      "range": "146:1-162:89"
+    },
+    {
+      "number": "4",
+      "title": "Recorder sessions (leases)",
+      "level": 2,
+      "heading": "164:1-164:33",
+      "range": "164:1-197:88"
+    },
+    {
+      "number": "5",
+      "title": "Motion index",
+      "level": 2,
+      "heading": "199:1-199:19",
+      "range": "199:1-236:13"
+    },
+    {
+      "number": "6",
+      "title": "Sign-in",
+      "level": 2,
+      "heading": "238:1-238:14",
+      "range": "238:1-252:87"
+    }
+  ],
+  "section_refs": [],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [
+    {
+      "kind": "code_span",
+      "text": "`**Def $Name (title).**`",
+      "at": "3:40-3:64"
+    },
+    {
+      "kind": "code_span",
+      "text": "`**$Name (title).**`",
+      "at": "4:2-4:22"
+    },
+    {
+      "kind": "code_block",
+      "text": "// Spec: $Frame.Timing §1 \"quoted text from this file\"",
+      "at": "9:5-9:60"
+    },
+    {
+      "kind": "code_span",
+      "text": "`// $Sdk.NvrAgrees: ...`",
+      "at": "11:46-11:70"
+    },
+    {
+      "kind": "code_span",
+      "text": "`tfdt`",
+      "at": "38:19-38:25"
+    },
+    {
+      "kind": "code_span",
+      "text": "`time.Time`",
+      "at": "40:70-40:81"
+    },
+    {
+      "kind": "code_span",
+      "text": "`==`",
+      "at": "41:65-41:69"
+    },
+    {
+      "kind": "code_span",
+      "text": "`time.Since`",
+      "at": "47:8-47:20"
+    },
+    {
+      "kind": "code_span",
+      "text": "`time.Now()`",
+      "at": "47:26-47:38"
+    },
+    {
+      "kind": "code_span",
+      "text": "`_HLS_msn`",
+      "at": "137:80-137:90"
+    },
+    {
+      "kind": "code_span",
+      "text": "`_HLS_part`",
+      "at": "137:91-137:102"
+    }
+  ],
+  "diagnostics": []
+}

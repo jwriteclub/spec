@@ -1,0 +1,60 @@
+{
+  "file": "opaque-toml.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Toml.Anchor",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "5:1-5:18",
+      "name_at": "5:3-5:15",
+      "body": "5:1-5:72",
+      "body_bytes": "30-101",
+      "body_text": "**$Toml.Anchor.** After TOML front matter; $Op.Anchor here is dangling.",
+      "hash_input": "After TOML front matter; $Op.Anchor here is dangling.",
+      "hash": "70c16da56060831d748f8e877a94603d73026429120b43634195ecfef82d341c",
+      "shape_hash": "07b424aec9374e38311233518d580d8dddd354fd3566cf1fa50027794eba79ce",
+      "body_lines": 1
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Toml.Anchor",
+      "at": "5:3-5:15",
+      "lsp": "4:2",
+      "container": "paragraph 5:1-5:72",
+      "within": "Toml.Anchor"
+    },
+    {
+      "role": "reference",
+      "text": "$Op.Anchor",
+      "at": "5:44-5:54",
+      "lsp": "4:43",
+      "container": "paragraph 5:1-5:72",
+      "within": "Toml.Anchor",
+      "state": "dangling"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [
+    {
+      "kind": "front_matter",
+      "text": "+++\ntitle = \"$Op.Anchor\"\n+++",
+      "at": "1:1-3:4"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "5:44-5:54",
+      "message": "$Op.Anchor is not defined anywhere in the project"
+    }
+  ]
+}

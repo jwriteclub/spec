@@ -1,0 +1,580 @@
+{
+  "file": "definitions.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [
+    {
+      "name": "Frame.Timing",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "3:1-3:19",
+      "name_at": "3:3-3:16",
+      "body": "3:1-3:60",
+      "body_bytes": "15-74",
+      "body_text": "**$Frame.Timing.** Plain invariant, period inside the bold.",
+      "hash_input": "Plain invariant, period inside the bold.",
+      "hash": "be390ff258e4bd97bc866055c74049465863dbd191c308f0491e77893f46b787",
+      "shape_hash": "be390ff258e4bd97bc866055c74049465863dbd191c308f0491e77893f46b787",
+      "body_lines": 1
+    },
+    {
+      "name": "Frame.Shape",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "segment shape",
+      "label": "5:1-5:34",
+      "name_at": "5:3-5:15",
+      "title_at": "5:17-5:30",
+      "body": "5:1-5:48",
+      "body_bytes": "76-123",
+      "body_text": "**$Frame.Shape (segment shape).** With a title.",
+      "hash_input": "With a title.",
+      "hash": "f2ed65a271c9ac1eb98972327ca8e2c6ed0afaa1ae65b3eb63d41ac3eb43605b",
+      "shape_hash": "f2ed65a271c9ac1eb98972327ca8e2c6ed0afaa1ae65b3eb63d41ac3eb43605b",
+      "body_lines": 1
+    },
+    {
+      "name": "Time.Media",
+      "kind": "def",
+      "form": "paragraph",
+      "label": "7:1-7:21",
+      "name_at": "7:7-7:18",
+      "body": "7:1-7:35",
+      "body_bytes": "125-159",
+      "body_text": "**Def $Time.Media.** A definition.",
+      "hash_input": "A definition.",
+      "hash": "b48c3b90254075aa2f5bb8c3b00bb8e5e0cb7e4bca76c0d0e0e9e008b8d8c261",
+      "shape_hash": "b48c3b90254075aa2f5bb8c3b00bb8e5e0cb7e4bca76c0d0e0e9e008b8d8c261",
+      "body_lines": 1
+    },
+    {
+      "name": "Time.Wall",
+      "kind": "def",
+      "form": "paragraph",
+      "title": "wall time",
+      "label": "9:1-9:32",
+      "name_at": "9:7-9:17",
+      "title_at": "9:19-9:28",
+      "body": "9:1-9:59",
+      "body_bytes": "161-219",
+      "body_text": "**Def $Time.Wall (wall time).** A definition with a title.",
+      "hash_input": "A definition with a title.",
+      "hash": "aba8c7e475efc3e0e36b669f16e38be0f38511fadd5dbac88250871f22152912",
+      "shape_hash": "aba8c7e475efc3e0e36b669f16e38be0f38511fadd5dbac88250871f22152912",
+      "body_lines": 1
+    },
+    {
+      "name": "Frame.Under",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "11:1-11:18",
+      "name_at": "11:3-11:15",
+      "body": "11:1-11:37",
+      "body_bytes": "221-257",
+      "body_text": "__$Frame.Under.__ Underscore strong.",
+      "hash_input": "Underscore strong.",
+      "hash": "ff8ea1112568ddd95e8d496fc9195aef410247f355e802086174a63ef0615431",
+      "shape_hash": "ff8ea1112568ddd95e8d496fc9195aef410247f355e802086174a63ef0615431",
+      "body_lines": 1
+    },
+    {
+      "name": "Frame.NoPeriod",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "13:1-13:20",
+      "name_at": "13:3-13:18",
+      "body": "13:1-13:63",
+      "body_bytes": "259-321",
+      "body_text": "**$Frame.NoPeriod** A label without a period is still a label.",
+      "hash_input": "A label without a period is still a label.",
+      "hash": "efa5f001a52bd13c202eb67e87cc2a9a234178bbbf1a3a88e3661c2f5683b234",
+      "shape_hash": "efa5f001a52bd13c202eb67e87cc2a9a234178bbbf1a3a88e3661c2f5683b234",
+      "body_lines": 1
+    },
+    {
+      "name": "Frame.Outside",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "15:1-15:19",
+      "name_at": "15:3-15:17",
+      "body": "15:1-15:57",
+      "body_bytes": "323-379",
+      "body_text": "**$Frame.Outside**. The period may sit outside the bold.",
+      "hash_input": "The period may sit outside the bold.",
+      "hash": "c62e9f26fdb481ed32df4a80fd8bb2978b3d946eb8d74624f1fb74afd5880aa4",
+      "shape_hash": "c62e9f26fdb481ed32df4a80fd8bb2978b3d946eb8d74624f1fb74afd5880aa4",
+      "body_lines": 1
+    },
+    {
+      "name": "Frame.Titled",
+      "kind": "inv",
+      "form": "paragraph",
+      "title": "depends on $Time.Media",
+      "label": "17:1-17:44",
+      "name_at": "17:3-17:16",
+      "title_at": "17:18-17:40",
+      "body": "17:1-17:70",
+      "body_bytes": "381-450",
+      "body_text": "**$Frame.Titled (depends on $Time.Media).** A title with a reference.",
+      "hash_input": "A title with a reference.",
+      "hash": "87dd3988cfd4ea2568a7cddeb9106cca1fe1a75a65a235d99fcfb1fa0185b2ce",
+      "shape_hash": "87dd3988cfd4ea2568a7cddeb9106cca1fe1a75a65a235d99fcfb1fa0185b2ce",
+      "body_lines": 1
+    },
+    {
+      "name": "Frame.Timing",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "33:1-33:18",
+      "name_at": "33:3-33:16",
+      "body": "33:1-33:113",
+      "body_bytes": "743-855",
+      "body_text": "**$Frame.Timing** and **$Time.Media.** Only the first bold counts, and it is a valid label: this is a duplicate.",
+      "hash_input": "and **$Time.Media.** Only the first bold counts, and it is a valid label: this is a duplicate.",
+      "hash": "9385e81b57df79e77e72c4802424caa1e9e48c4117fa7c6eef17515faddbe1ed",
+      "shape_hash": "7f2e2dcf74e52b4c08944a3ebc28e9b42b01130d2431b6158e7a0d5fbd79054d",
+      "body_lines": 1
+    },
+    {
+      "name": "Relay.OneSession",
+      "kind": "inv",
+      "form": "section",
+      "title": "one session per camera",
+      "label": "49:1-49:46",
+      "name_at": "49:5-49:22",
+      "title_at": "49:24-49:46",
+      "body": "49:1-61:13",
+      "body_bytes": "1031-1320",
+      "body_text": "### $Relay.OneSession: one session per camera\n\nBody of a section-form anchor, referencing $Frame.Timing.\n\n**$Relay.Inner.** Nested in a section-form body.\n\n#### Sub heading inside the body\n\nStill the body of $Relay.OneSession.\n\n#### $Relay.Deeper: a nested section-form label\n\nAlso nested.",
+      "hash_input": "Body of a section-form anchor, referencing $Frame.Timing. **$Relay.Inner.** Nested in a section-form body. #### Sub heading inside the body Still the body of $Relay.OneSession. #### $Relay.Deeper: a nested section-form label Also nested.",
+      "hash": "c617f82033a3a9908403039261924b23b79fab81636ee7e6bde5d7405f203d57",
+      "shape_hash": "8c9a9f24a941f9e7b679c828d6fa0fb37383d670a3f7cdd39a8123fe61673ef8",
+      "body_lines": 13
+    },
+    {
+      "name": "Relay.Term",
+      "kind": "def",
+      "form": "section",
+      "label": "63:1-63:20",
+      "name_at": "63:9-63:20",
+      "body": "63:1-65:43",
+      "body_bytes": "1322-1385",
+      "body_text": "### Def $Relay.Term\n\nA section-form definition without a title.",
+      "hash_input": "A section-form definition without a title.",
+      "hash": "36578ed0b138ea5450c91f4668cf4c6036cc74c597f4a4348aca749871ab72ff",
+      "shape_hash": "36578ed0b138ea5450c91f4668cf4c6036cc74c597f4a4348aca749871ab72ff",
+      "body_lines": 3
+    },
+    {
+      "name": "Frame.SetextForm",
+      "kind": "inv",
+      "form": "section",
+      "title": "a setext section-form anchor",
+      "label": "74:1-75:48",
+      "name_at": "74:1-74:18",
+      "title_at": "74:20-74:48",
+      "body": "74:1-77:38",
+      "body_bytes": "1504-1638",
+      "body_text": "$Frame.SetextForm: a setext section-form anchor\n-----------------------------------------------\n\nIts body runs to the end of the file.",
+      "hash_input": "Its body runs to the end of the file.",
+      "hash": "1a92561bc1c7bc345c1e63fb3dda828f07ba3129054bf12516cce454d6bf57b7",
+      "shape_hash": "1a92561bc1c7bc345c1e63fb3dda828f07ba3129054bf12516cce454d6bf57b7",
+      "body_lines": 4
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Frame.Timing",
+      "at": "3:3-3:16",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-3:60",
+      "within": "Frame.Timing"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Shape",
+      "at": "5:3-5:15",
+      "lsp": "4:2",
+      "container": "paragraph 5:1-5:48",
+      "within": "Frame.Shape"
+    },
+    {
+      "role": "definition",
+      "text": "$Time.Media",
+      "at": "7:7-7:18",
+      "lsp": "6:6",
+      "container": "paragraph 7:1-7:35",
+      "within": "Time.Media"
+    },
+    {
+      "role": "definition",
+      "text": "$Time.Wall",
+      "at": "9:7-9:17",
+      "lsp": "8:6",
+      "container": "paragraph 9:1-9:59",
+      "within": "Time.Wall"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Under",
+      "at": "11:3-11:15",
+      "lsp": "10:2",
+      "container": "paragraph 11:1-11:37",
+      "within": "Frame.Under"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.NoPeriod",
+      "at": "13:3-13:18",
+      "lsp": "12:2",
+      "container": "paragraph 13:1-13:63",
+      "within": "Frame.NoPeriod"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Outside",
+      "at": "15:3-15:17",
+      "lsp": "14:2",
+      "container": "paragraph 15:1-15:57",
+      "within": "Frame.Outside"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Titled",
+      "at": "17:3-17:16",
+      "lsp": "16:2",
+      "container": "paragraph 17:1-17:70",
+      "within": "Frame.Titled"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "17:29-17:40",
+      "lsp": "16:28",
+      "in_title": true,
+      "container": "paragraph 17:1-17:70",
+      "within": "Frame.Titled",
+      "state": "resolved",
+      "target": "definitions.spec.md:7"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "19:21-19:34",
+      "lsp": "18:20",
+      "container": "paragraph 19:1-19:76",
+      "state": "ambiguous",
+      "target": "2 candidates"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Shape",
+      "at": "19:63-19:75",
+      "lsp": "18:62",
+      "container": "paragraph 19:1-19:76",
+      "state": "resolved",
+      "target": "definitions.spec.md:5"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Bad",
+      "at": "25:14-25:24",
+      "lsp": "24:13",
+      "container": "paragraph 25:1-25:41",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Bad",
+      "at": "27:8-27:18",
+      "lsp": "26:7",
+      "container": "paragraph 27:1-27:39",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "31:3-31:16",
+      "lsp": "30:2",
+      "container": "paragraph 31:1-31:53",
+      "state": "ambiguous",
+      "target": "2 candidates"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.Timing",
+      "at": "33:3-33:16",
+      "lsp": "32:2",
+      "container": "paragraph 33:1-33:113",
+      "within": "Frame.Timing"
+    },
+    {
+      "role": "reference",
+      "text": "$Time.Media",
+      "at": "33:25-33:36",
+      "lsp": "32:24",
+      "container": "paragraph 33:1-33:113",
+      "within": "Frame.Timing",
+      "state": "resolved",
+      "target": "definitions.spec.md:7"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.InList",
+      "at": "37:5-37:18",
+      "lsp": "36:4",
+      "container": "list_item 37:1-37:37",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.InQuote",
+      "at": "39:5-39:19",
+      "lsp": "38:4",
+      "container": "blockquote 39:1-39:39",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.InCell",
+      "at": "43:5-43:18",
+      "lsp": "42:4",
+      "container": "table_cell 43:3-43:21",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.InListHeading",
+      "at": "45:5-45:25",
+      "lsp": "44:4",
+      "container": "heading 45:3-45:25",
+      "state": "dangling"
+    },
+    {
+      "role": "definition",
+      "text": "$Relay.OneSession",
+      "at": "49:5-49:22",
+      "lsp": "48:4",
+      "container": "heading 49:1-49:46",
+      "within": "Relay.OneSession"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Timing",
+      "at": "51:44-51:57",
+      "lsp": "50:43",
+      "container": "paragraph 51:1-51:58",
+      "within": "Relay.OneSession",
+      "state": "ambiguous",
+      "target": "2 candidates"
+    },
+    {
+      "role": "reference",
+      "text": "$Relay.Inner",
+      "at": "53:3-53:15",
+      "lsp": "52:2",
+      "container": "paragraph 53:1-53:49",
+      "within": "Relay.OneSession",
+      "state": "dangling"
+    },
+    {
+      "role": "reference",
+      "text": "$Relay.OneSession",
+      "at": "57:19-57:36",
+      "lsp": "56:18",
+      "container": "paragraph 57:1-57:37",
+      "within": "Relay.OneSession",
+      "state": "resolved",
+      "target": "definitions.spec.md:49"
+    },
+    {
+      "role": "reference",
+      "text": "$Relay.Deeper",
+      "at": "59:6-59:19",
+      "lsp": "58:5",
+      "container": "heading 59:1-59:48",
+      "within": "Relay.OneSession",
+      "state": "dangling"
+    },
+    {
+      "role": "definition",
+      "text": "$Relay.Term",
+      "at": "63:9-63:20",
+      "lsp": "62:8",
+      "container": "heading 63:1-63:20",
+      "within": "Relay.Term"
+    },
+    {
+      "role": "reference",
+      "text": "$Frame.Setext",
+      "at": "69:3-69:16",
+      "lsp": "68:2",
+      "container": "heading 69:1-70:4",
+      "state": "dangling"
+    },
+    {
+      "role": "definition",
+      "text": "$Frame.SetextForm",
+      "at": "74:1-74:18",
+      "lsp": "73:0",
+      "container": "heading 74:1-75:48",
+      "within": "Frame.SetextForm"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [
+    {
+      "text": "$frame.timing",
+      "at": "23:3-23:16"
+    },
+    {
+      "text": "$HTTP",
+      "at": "29:3-29:8"
+    }
+  ],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [],
+  "diagnostics": [
+    {
+      "code": "def-duplicate",
+      "severity": "error",
+      "at": "3:3-3:16",
+      "message": "$Frame.Timing is defined 2 times; names must be unique across the project. Rename all but one",
+      "related": [
+        "definitions.spec.md 33:3-33:16: also defined here"
+      ]
+    },
+    {
+      "code": "def-malformed",
+      "severity": "error",
+      "at": "23:1-23:19",
+      "message": "malformed definition label; write **$Name.**, **$Name (title).** or **Def $Name (title).** (names are dotted CamelCase segments with at least one lowercase letter)"
+    },
+    {
+      "code": "def-malformed",
+      "severity": "error",
+      "at": "25:1-25:27",
+      "message": "malformed definition label; write **$Name.**, **$Name (title).** or **Def $Name (title).** (names are dotted CamelCase segments with at least one lowercase letter)"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "25:14-25:24",
+      "message": "$Frame.Bad is not defined anywhere in the project"
+    },
+    {
+      "code": "def-malformed",
+      "severity": "error",
+      "at": "27:1-27:21",
+      "message": "malformed definition label; write **$Name.**, **$Name (title).** or **Def $Name (title).** (names are dotted CamelCase segments with at least one lowercase letter)"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "27:8-27:18",
+      "message": "$Frame.Bad is not defined anywhere in the project"
+    },
+    {
+      "code": "def-malformed",
+      "severity": "error",
+      "at": "29:1-29:11",
+      "message": "malformed definition label; write **$Name.**, **$Name (title).** or **Def $Name (title).** (names are dotted CamelCase segments with at least one lowercase letter)"
+    },
+    {
+      "code": "def-malformed",
+      "severity": "error",
+      "at": "31:1-31:31",
+      "message": "malformed definition label; write **$Name.**, **$Name (title).** or **Def $Name (title).** (names are dotted CamelCase segments with at least one lowercase letter)"
+    },
+    {
+      "code": "def-duplicate",
+      "severity": "error",
+      "at": "33:3-33:16",
+      "message": "$Frame.Timing is defined 2 times; names must be unique across the project. Rename all but one",
+      "related": [
+        "definitions.spec.md 3:3-3:16: also defined here"
+      ]
+    },
+    {
+      "code": "def-nested",
+      "severity": "error",
+      "at": "37:3-37:21",
+      "message": "definitions must be top-level paragraphs: **$Frame.InList** opens a paragraph inside a list item, so it is read as a reference. To define $Frame.InList, move the label into its own paragraph at the top level of the file (not indented, not in a list, quote or table)"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "37:5-37:18",
+      "message": "$Frame.InList is not defined anywhere in the project"
+    },
+    {
+      "code": "def-nested",
+      "severity": "error",
+      "at": "39:3-39:22",
+      "message": "definitions must be top-level paragraphs: **$Frame.InQuote** opens a paragraph inside a blockquote, so it is read as a reference. To define $Frame.InQuote, move the label into its own paragraph at the top level of the file (not indented, not in a list, quote or table)"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "39:5-39:19",
+      "message": "$Frame.InQuote is not defined anywhere in the project"
+    },
+    {
+      "code": "def-nested",
+      "severity": "error",
+      "at": "43:3-43:21",
+      "message": "definitions must be top-level paragraphs: **$Frame.InCell** opens a paragraph inside a table cell, so it is read as a reference. To define $Frame.InCell, move the label into its own paragraph at the top level of the file (not indented, not in a list, quote or table)"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "43:5-43:18",
+      "message": "$Frame.InCell is not defined anywhere in the project"
+    },
+    {
+      "code": "def-nested",
+      "severity": "error",
+      "at": "45:3-45:25",
+      "message": "definitions must be top-level: $Frame.InListHeading is defined in a heading inside a list item. Move the heading out to the top level of the file"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "45:5-45:25",
+      "message": "$Frame.InListHeading is not defined anywhere in the project"
+    },
+    {
+      "code": "def-nested",
+      "severity": "error",
+      "at": "53:1-53:18",
+      "message": "$Relay.Inner is defined inside the body of section-form anchor $Relay.OneSession; definitions cannot nest. Move it below the next heading of level 3 or less (### or fewer #), which ends $Relay.OneSession's body, or turn $Relay.OneSession into a paragraph-form anchor"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "53:3-53:15",
+      "message": "$Relay.Inner is not defined anywhere in the project"
+    },
+    {
+      "code": "def-nested",
+      "severity": "error",
+      "at": "59:1-59:48",
+      "message": "$Relay.Deeper is defined inside the body of section-form anchor $Relay.OneSession; definitions cannot nest. Move it below the next heading of level 3 or less (### or fewer #), which ends $Relay.OneSession's body, or turn $Relay.OneSession into a paragraph-form anchor"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "59:6-59:19",
+      "message": "$Relay.Deeper is not defined anywhere in the project"
+    },
+    {
+      "code": "ref-dangling",
+      "severity": "error",
+      "at": "69:3-69:16",
+      "message": "$Frame.Setext is not defined anywhere in the project"
+    }
+  ]
+}

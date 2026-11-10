@@ -1,0 +1,55 @@
+{
+  "file": "encoding-bom.spec.md",
+  "valid_utf8": true,
+  "bom": true,
+  "anchors": [
+    {
+      "name": "Enc.Bom",
+      "kind": "inv",
+      "form": "paragraph",
+      "label": "3:1-3:14",
+      "name_at": "3:3-3:11",
+      "body": "3:1-3:61",
+      "body_bytes": "10-70",
+      "body_text": "**$Enc.Bom.** Offsets include the three BOM bytes; $Enc.Bom.",
+      "hash_input": "Offsets include the three BOM bytes; $Enc.Bom.",
+      "hash": "1bab2191925f73c0888e2cac4a8fdf5c4e27314dbe4b3beefbd280c7ce1af367",
+      "shape_hash": "527469641c112301219dc631a4154e017b2c174b9310d665f622ae87380bcfa3",
+      "body_lines": 1
+    }
+  ],
+  "occurrences": [
+    {
+      "role": "definition",
+      "text": "$Enc.Bom",
+      "at": "3:3-3:11",
+      "lsp": "2:2",
+      "container": "paragraph 3:1-3:61",
+      "within": "Enc.Bom"
+    },
+    {
+      "role": "reference",
+      "text": "$Enc.Bom",
+      "at": "3:52-3:60",
+      "lsp": "2:51",
+      "container": "paragraph 3:1-3:61",
+      "within": "Enc.Bom",
+      "state": "resolved",
+      "target": "encoding-bom.spec.md:3"
+    }
+  ],
+  "sections": [],
+  "section_refs": [],
+  "candidates": [],
+  "malformed_section_refs": [],
+  "hash_refs": [],
+  "opaque": [],
+  "diagnostics": [
+    {
+      "code": "file-bom",
+      "severity": "warning",
+      "at": "1:1-1:4",
+      "message": "file starts with a byte order mark; remove it"
+    }
+  ]
+}

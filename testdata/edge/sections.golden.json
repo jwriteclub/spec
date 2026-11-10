@@ -1,0 +1,220 @@
+{
+  "file": "sections.spec.md",
+  "valid_utf8": true,
+  "bom": false,
+  "anchors": [],
+  "occurrences": [],
+  "sections": [
+    {
+      "number": "1",
+      "title": "Frames",
+      "level": 2,
+      "heading": "3:1-3:13",
+      "range": "3:1-7:39"
+    },
+    {
+      "number": "1.1",
+      "title": "Timing",
+      "level": 3,
+      "heading": "5:1-5:15",
+      "range": "5:1-5:15"
+    },
+    {
+      "number": "1.2",
+      "title": "Dotted with a trailing period",
+      "level": 3,
+      "heading": "7:1-7:39",
+      "range": "7:1-7:39"
+    },
+    {
+      "number": "5a",
+      "title": "Retry",
+      "level": 2,
+      "heading": "9:1-9:13",
+      "range": "9:1-11:16"
+    },
+    {
+      "number": "5.2a",
+      "title": "Deep",
+      "level": 4,
+      "heading": "11:1-11:16",
+      "range": "11:1-11:16"
+    },
+    {
+      "number": "05",
+      "title": "Zero padded",
+      "level": 2,
+      "heading": "17:1-17:19",
+      "range": "17:1-17:19"
+    },
+    {
+      "number": "1",
+      "title": "Frames again",
+      "level": 2,
+      "heading": "19:1-19:19",
+      "range": "19:1-19:19"
+    },
+    {
+      "number": "7.1a",
+      "title": "Letter suffix",
+      "level": 2,
+      "heading": "23:1-23:22",
+      "range": "23:1-30:45"
+    }
+  ],
+  "section_refs": [
+    {
+      "text": "§1.1",
+      "at": "25:13-25:18",
+      "number": "1.1",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:1.1"
+    },
+    {
+      "text": "§ 1.2",
+      "at": "25:20-25:26",
+      "number": "1.2",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:1.2"
+    },
+    {
+      "text": "§5a",
+      "at": "25:28-25:32",
+      "number": "5a",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:5a"
+    },
+    {
+      "text": "§5.2a",
+      "at": "25:34-25:40",
+      "number": "5.2a",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:5.2a"
+    },
+    {
+      "text": "§7.1a",
+      "at": "25:42-25:48",
+      "number": "7.1a",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:7.1a"
+    },
+    {
+      "text": "§05",
+      "at": "25:54-25:58",
+      "number": "05",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:05"
+    },
+    {
+      "text": "§5",
+      "at": "25:66-25:69",
+      "number": "5",
+      "container": "paragraph 25:1-30:45",
+      "state": "dangling"
+    },
+    {
+      "text": "§\t1.1",
+      "at": "26:23-26:29",
+      "number": "1.1",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:1.1"
+    },
+    {
+      "text": "§sections:1.1",
+      "at": "27:12-27:26",
+      "stem": "sections",
+      "number": "1.1",
+      "container": "paragraph 25:1-30:45",
+      "state": "resolved",
+      "target": "§sections:1.1"
+    },
+    {
+      "text": "§other:1",
+      "at": "27:31-27:40",
+      "stem": "other",
+      "number": "1",
+      "container": "paragraph 25:1-30:45",
+      "state": "dangling"
+    },
+    {
+      "text": "§1",
+      "at": "28:29-28:32",
+      "number": "1",
+      "container": "paragraph 25:1-30:45",
+      "state": "ambiguous"
+    }
+  ],
+  "candidates": [],
+  "malformed_section_refs": [
+    {
+      "text": "§5.2ab",
+      "at": "26:42-26:49"
+    },
+    {
+      "text": "§5A",
+      "at": "26:54-26:58"
+    }
+  ],
+  "hash_refs": [
+    {
+      "text": "#5.2a",
+      "at": "29:32-29:37"
+    },
+    {
+      "text": "#1.1",
+      "at": "29:42-29:46"
+    }
+  ],
+  "opaque": [
+    {
+      "kind": "code_span",
+      "text": "`§1.1`",
+      "at": "30:10-30:17"
+    },
+    {
+      "kind": "code_span",
+      "text": "`#1.1`",
+      "at": "30:22-30:28"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "section-dup",
+      "severity": "error",
+      "at": "19:4-19:6",
+      "message": "section number 1 is used twice in this file; renumber one of them",
+      "related": [
+        "sections.spec.md 3:4-3:6: first section 1"
+      ]
+    },
+    {
+      "code": "section-ref-dangling",
+      "severity": "error",
+      "at": "25:66-25:69",
+      "message": "§5 does not match any numbered section"
+    },
+    {
+      "code": "section-ref-dangling",
+      "severity": "error",
+      "at": "27:31-27:40",
+      "message": "§other:1: no spec file has the stem \"other\""
+    },
+    {
+      "code": "section-ref-ambiguous",
+      "severity": "error",
+      "at": "28:29-28:32",
+      "message": "§1 is ambiguous: sections.spec.md numbers more than one section 1. Renumber the duplicate section",
+      "related": [
+        "sections.spec.md 3:1-3:13: candidate §sections:1",
+        "sections.spec.md 19:1-19:19: candidate §sections:1"
+      ]
+    }
+  ]
+}

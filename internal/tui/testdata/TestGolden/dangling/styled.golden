@@ -1,0 +1,30 @@
+[38;5;189m[38;5;102m  1[m   [38;5;185m# lensd specification[m[m                                                                         
+[38;5;189m[38;5;102m  2[m   [m                                                                                              
+[38;5;189m[38;5;102m  3[m   What lensd guarantees, as definitions ([38;5;146m`**Def $Name (title).**`[m) and invariants[m               
+[38;5;189m[38;5;102m  4[m   ([38;5;146m`**$Name (title).**`[m). Normative statements use[m                                              
+[38;5;189m[38;5;102m  5[m   MUST. Every invariant names what checks it: a TLA+ model in spec/tla/ (each with a [m           
+[38;5;189m[38;5;102m   [m   deliberately broken[m                                                                           
+[38;5;189m[38;5;102m  6[m   "mutant" that TLC must reject), a Go test, or a runtime check. Go tests cite what they check [m 
+[38;5;189m[38;5;102m   [m   with a[m                                                                                        
+[38;5;189m[38;5;102m  7[m   comment directly above the test:[m                                                              
+[38;5;189m[38;5;102m  8[m   [m                                                                                              
+[38;5;189m[38;5;102m  9[m       [38;5;146m// Spec: $Frame.Timing §1 "quoted text from this file"[m[m                                    
+[38;5;189m[38;5;102m 10[m   [m                                                                                              
+[38;5;189m[38;5;102m 11[m   and code may cite the invariant it enforces ([38;5;146m`// $Sdk.NvrAgrees: ...`[m). A spec change and the [m
+[38;5;189m[38;5;102m   [m   matching test[m                                                                                 
+[38;5;189m[38;5;102m 12[m   or model change go in the same commit. Values marked (code: …) also exist as constants; [m      
+[38;5;189m[38;5;102m   [m   changing one[m                                                                                  
+[38;5;189m[38;5;102m 13[m   means changing the other. Liveness is stated as bounded-time rules on lensd's own clock [m      
+[38;5;189m[38;5;102m   [m   ([38;5;212m$Time.Elapsed[m),[m                                                                              
+[38;5;189m[38;5;102m 14[m   not as TLA+ liveness properties. Trace verification (checking runtime traces against the [m     
+[38;5;189m[38;5;102m   [m   models) is out[m                                                                                
+[38;5;189m[1;38;5;146m 15[m [1;38;5;203mE[m of scope. See [4;38;5;203;58;5;203;4m$[m[4;38;5;203;58;5;203;4mF[m[4;38;5;203;58;5;203;4mr[m[4;38;5;203;58;5;203;4ma[m[4;38;5;203;58;5;203;4mm[m[4;38;5;203;58;5;203;4me[m[4;38;5;203;58;5;203;4m.[m[4;38;5;203;58;5;203;4mT[m[4;38;5;203;58;5;203;4mi[m[4;38;5;203;58;5;203;4mm[m[4;38;5;203;58;5;203;4mi[m[4;38;5;203;58;5;203;4mn[m[m                                                                    
+[38;5;189m[38;5;102m 16[m   [m                                                                                              
+[38;5;189m[38;5;102m 17[m   [38;5;185m## Context (for readers without the code)[m[m                                                     
+[38;5;189m[38;5;102m 18[m   [m                                                                                              
+[38;5;189m[38;5;102m 19[m   lensd is a Go web gateway for two NVRs at one site. It relays live RTSP from the NVR (one[m     
+[38;5;189m[38;5;102m 20[m   session per camera shared by all viewers), plays recordings through a vendor SDK helper [m      
+[38;5;189m[38;5;189;48;5;235m[38;5;189;48;5;235m lensd.spec.md    [m[38;5;185;48;5;235mUnsaved    [m[38;5;189;48;5;235m 15:27 [m[m[38;5;104;48;5;235m|[m[38;5;189;48;5;235m [m[38;5;189;48;5;235m[m[38;5;189;48;5;235m                                             [m[38;5;104;48;5;235m|[m[38;5;203;48;5;236m  2   [m[38;5;80;48;5;23m  0  [m[38;5;212;48;5;53m  0  [m[m
+[38;5;189m[7;38;5;235m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[m[7;38;5;235m▄[m[7;38;5;235m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[m[7;38;5;235m▄[m[7;38;5;236m▄▄▄▄▄▄[m[7;38;5;23m▄▄▄▄▄[m[7;38;5;53m▄▄▄▄▄[m[m
+[38;5;189m[38;5;80m^G [m[38;5;189m Help[m  [38;5;80m^O [m[38;5;189m Save[m [38;5;80m^W [m[38;5;189m Where Is[m [38;5;80m^K [m[38;5;189m Cut[m   [38;5;80m^Z [m[38;5;189m Undo[m [38;5;80m^T [m[38;5;189m Follow[m [38;5;60m^B [m[38;5;60m Back[m   [38;5;60m^C [m[38;5;60m Copy[m    [38;5;80m ^^ [m[38;5;189m Outline[m   [m
+[38;5;189m[38;5;80m^X [m[38;5;189m Exit[m  [38;5;80m^Q [m[38;5;189m Open[m [38;5;80m^P [m[38;5;189m Propose[m  [38;5;60m^U [m[38;5;60m Paste[m [38;5;60m^Y [m[38;5;60m Redo[m [38;5;80m^R [m[38;5;189m Checks[m [38;5;80m^F [m[38;5;189m Format[m [38;5;80m^N [m[38;5;189m Analyze[m [38;5;189;48;5;60m⇧Tab[m[38;5;189m Next Pane[m [m

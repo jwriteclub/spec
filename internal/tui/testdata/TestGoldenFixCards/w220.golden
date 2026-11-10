@@ -1,0 +1,40 @@
+lensd.spec.md E0 W1 H0     │ 88   **$Frame.OneWriter (one writer).** WriteFrame called after the Track's Close or Stop has returned MUST return         │Review · 1 awaiting
+ §0 Definitions            │ 89   ErrClosed and MUST NOT change the track; the live source MUST stop its sender before Close. Checked by:               │
+  §0.1 Time                │ 90   test asserting ErrClosed and an unchanged track, plus the teardown race test under -race.                             ││
+   ◦ $Time.Media           │ 91                                                                                                                         ││ Working-tree edit
+   ◦ $Time.Wall            │ 92│  **$Frame.CleanGeneration (each generation starts clean).** Each ffmpeg generation of a rendition MUST be fed the      ││ $Hub.TranscoderCap
+   ◦ $Time.Elapsed         │ 93│  init segment, then a part that begins a segment (keyframe), then parts in order with no gap. A live                   ││ breaking numeric_mismatch
+  §0.2 Intervals and nearne│ 94│  reader that skips ahead (more than 4 s behind the live edge; code: liveMaxLag) or is overtaken by                     ││ $Frame.CleanGeneration
+   ◦ $Interval             │ 95│  eviction MUST start a new generation at a keyframe, never hand the running generation a non-contiguous                ││ lensd.spec.md:99
+   ◦ $Interval.Gap         │ 96│  part. A stuck live generation (watchdog: output < 1% of input over 10 s; code: stuckWindow) MUST be                   ││ $Hub.TranscoderCap now bounds an exiting generation by
+ §1 Frames, segments and tr│ 97│  replaced by a new generation, not end the rendition. A replacement is not a new request: it takes over                ││ $Frame.CleanGeneration's 2 s, but $Frame.CleanGeneration says…
+  • $Frame.Timing          │ 98│  its predecessor's transcoder slot, waits for the predecessor to exit, and never gets 429. A generation                ││
+  • $Frame.SegmentShape    │ 99│  that is stopped, or whose output has ended, MUST have exited within 1→2 s, else it is SIGKILLed (code:                ││ │ Suggested fix
+  • $Frame.Numbering       │100│  rendition exit timer, 5 s today); it holds its slot until it has exited. If the rendition has no reader               ││ │ $Frame.CleanGeneration
+  • $Frame.OneWriter       │101│  when a generation ends, the replacement may still start; $Hub.IdleStop stops it. Checked by: rendition tests          ││ │ lensd.spec.md:99
+  • $Frame.CleanGeneration │102│  with a fake ffmpeg (one that ignores end of input, one that ignores stop); TLA+ Transcoders                           ││ │ within 1 → within 2
+  • $Frame.Forward         │103│  Inv_ReplacementHoldsSlot, Inv_ReplacementNever429, Inv_ExitBounded; TLA+ TrackSegments Inv_NoGap                      ││ │ pending
+  • $Frame.InitFixed       │104│  (mutant reader skipping after eviction must fail); runtime: the stuck watchdog. Known violated today                  ││ │
+ §2 HLS hub (transcoders, i│105│  (a SIGKILLed generation ends the rendition; a skip or eviction keeps feeding the same generation; the                 │
+  • $Hub.TranscoderCap     │106│  exit timer is 5 s).                                                                                                   │
+  • $Hub.TakenOver         │107                                                                                                                         │
+  • $Hub.IdleStop          │108   **$Frame.Forward (time only moves forward).** Within a track, decode times MUST strictly increase (follows            │
+  • $Hub.BlockingAnswer    │109   from $Frame.Timing). PROGRAM-DATE-TIME (wall time from NVR keyframe stamps; for live tracks, lensd's clock            │
+  • $Hub.MemoryBound       │110   at the first frame plus media time) MUST NOT go backwards between consecutive segments (equal is                      │
+ §3 Live relay             │111   allowed); a recording gap moves it forward. If an NVR keyframe stamp goes backwards, lensd MUST clamp,                │
+  • $Relay.OneSession      │112   log, and put EXT-X-DISCONTINUITY before that segment. Checked by: muxer and keyframe-stamp tests across a             │
+  • $Relay.NoOrphans       │113   32-bit wrap and a backwards NVR clock.                                                                                │
+  • $Relay.Reconnect       │114                                                                                                                         │
+ §4 Recorder sessions (leas│115   **$Frame.InitFixed (init never changes).** A published init segment MUST NOT change. A change of SPS/PPS              │
+  • $Sdk.LeaseCap          │116   (resolution, profile) MUST stop the track; the next request starts a new one. Checked by: test feeding                │
+  • $Sdk.NvrAgrees         │117   a mid-stream SPS change.                                                                                              │
+  • $Sdk.ViewersFirst      │118                                                                                                                         │
+  • $Sdk.Preempt           │119   ## 2. HLS hub (transcoders, idle, memory)                                                                             │
+  • $Sdk.BoundedWait       │120                                                                                                                         │
+  • $Sdk.NoSilentPlayer    │121   **$Hub.TranscoderCap (transcoder cap).** Running rendition ffmpegs (started and not yet exited) MUST be at most       │
+ §5 Motion index           │122   max_transcoders; the check and the reservation MUST be one atomic step, and a request that would exceed               │
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+ lensd.spec.md                Uncommitted 99:45 | $Frame.CleanGeneration                                                                                                                                   |  1     0    1
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ y  Accept                     [e] Edit                          A  Commit                      ^F  Format                       ↑  Prev                     Ret Go To                    Esc  Editor
+[n] Skip                       [f] Feedback                     [c] Message                     [r] Removed                      ↓  Next                     ^R  Hide                     ⇧Tab Next Pane

@@ -1,0 +1,30 @@
+[38;5;189m[38;5;102m  1[m   [38;5;185m# lensd specification[m[m                                                                         
+[38;5;189m[38;5;102m  2[m[m                                                                                                 
+[38;5;189m[38;5;102m  3[m   What lensd guarantees, as definitions ([38;5;146m`**Def $Name (title).**`[m) and invariants[m               
+[38;5;189m[38;5;102m  4[m   ([38;5;146m`**$Name (title).**`[m). Normative statements use[m                                              
+[38;5;189m[38;5;102m  5[m   MUST. Every invariant names what checks it: a TLA+ model in spec/tla/ (each with a[m            
+[38;5;189m[38;5;102m   [m   deliberately broken[m                                                                           
+[38;5;189m[38;5;102m  6[m   "mutant" that TLC must reject), a Go test, or a runtime check. Go tests cite what they check[m  
+[38;5;189m[38;5;102m   [m   with a[m                                                                                        
+[38;5;189m[38;5;102m  7[m   comment directly above the test:[m                                                              
+[38;5;189m[38;5;102m  8[m[m                                                                                                 
+[38;5;189m[38;5;102m  9[m       [38;5;146m// Spec: $Frame.Timing §1 "quoted text from this file"[m[m                                    
+[38;5;189m[38;5;102m 10[m[m                                                                                                 
+[38;5;189m[38;5;102m 11[m   and code may cite the invariant it enforces ([38;5;146m`// $Sdk.NvrAgrees: ...`[m). A spec change and the[m 
+[38;5;189m[38;5;102m   [m   matching test[m                                                                                 
+[38;5;189m[38;5;102m 12[m   or model change go in the same commit. Values marked (code: …) also exist as constants;[m       
+[38;5;189m[38;5;102m   [m   changing one[m                                                                                  
+[38;5;189m[38;5;146;1m 13[m   means changing the other. Liveness is stated as bounded-time rules on lensd's own clock[m       
+[38;5;189m[38;5;146;1m   [m   ([38;5;16;48;5;185m$Time.Elapsed)[m,[m                                                                              
+[38;5;189m[38;5;102m 14[m   n[38;5;102m╭─────────────────────────────────────────────────────────────────────────╮[m against the[m      
+[38;5;189m[38;5;102m   [m   m[38;5;102m│[m def [38;5;212;1m$Time.Elapsed[m (elapsed time)                                        [38;5;102m│[m[m                  
+[38;5;189m[38;5;102m 15[m   o[38;5;102m│[m Timeouts, graces and watchdogs are measured on lensd's own monotonic    [38;5;102m│[m[m                  
+[38;5;189m[38;5;102m 16[m    [38;5;102m│[m clock (`time.Since` of a `time.Now()` value), never by subtracting wall [38;5;102m│[m[m                  
+[38;5;189m[38;5;102m 17[m   [38;5;185m#[38;5;102m│[m times that came from an NVR.                                            [38;5;102m│[m[m                  
+[38;5;189m[38;5;102m 18[m    [38;5;102m│[m [38;5;146mlensd.spec.md:46 · 2 refs · b9ff785d[m                                    [38;5;102m│[m[m                  
+[38;5;189m[38;5;102m 19[m   l[38;5;102m╰─────────────────────────────────────────────────────────────────────────╯[m the NVR (one[m     
+[38;5;189m[38;5;102m 20[m   session per camera shared by all viewers), plays recordings through a vendor SDK helper[m       
+[38;5;189m[38;5;189;48;5;235m lensd.spec.md    No baseline 13:90 [38;5;104m|[38;5;189m                                              [38;5;104m|[38;5;185;48;5;236m  1   [38;5;80;48;5;23m  0  [38;5;212;48;5;53m  0  [m[m
+[38;5;189m[38;5;235;7m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[38;5;236m▄▄▄▄▄▄[38;5;23m▄▄▄▄▄[38;5;53m▄▄▄▄▄[m[m
+[38;5;189m[38;5;80m^T [38;5;189m Follow[m[m                                                                                          
+[38;5;189m[38;5;203;48;5;60mEsc[38;5;189;49m Close[m[m                                                                                           

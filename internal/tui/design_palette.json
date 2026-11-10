@@ -1,0 +1,250 @@
+{
+  "version": 1,
+  "name": "Synthwave",
+  "terminalSamples": {
+    "dark": "#202124",
+    "light": "#faf9f6"
+  },
+  "roles": {
+    "ink": {
+      "dark": "#eae6ef",
+      "light": "#282431",
+      "dark256": 254,
+      "light256": 237
+    },
+    "secondary": {
+      "dark": "#bdb5c9",
+      "light": "#514e58",
+      "dark256": 248,
+      "light256": 240
+    },
+    "structure": {
+      "dark": "#88868f",
+      "light": "#94909b",
+      "dark256": 243,
+      "light256": 247
+    },
+    "focus": {
+      "dark": "#faf7ff",
+      "light": "#181321",
+      "dark256": 255,
+      "light256": 234
+    },
+    "control": {
+      "dark": "#48e4e1",
+      "light": "#006967",
+      "dark256": 86,
+      "light256": 23
+    },
+    "human": {
+      "dark": "#f786d6",
+      "light": "#922878",
+      "dark256": 212,
+      "light256": 125
+    },
+    "agent": {
+      "dark": "#48e4e1",
+      "light": "#006967",
+      "dark256": 86,
+      "light256": 23
+    },
+    "fix": {
+      "dark": "#b695c9",
+      "light": "#6b4c7c",
+      "dark256": 183,
+      "light256": 90
+    },
+    "error": {
+      "dark": "#fe7171",
+      "light": "#a61a29",
+      "dark256": 210,
+      "light256": 124
+    },
+    "warning": {
+      "dark": "#e5ca5d",
+      "light": "#6b5a06",
+      "dark256": 221,
+      "light256": 94
+    },
+    "positive": {
+      "dark": "#78e4b2",
+      "light": "#096c49",
+      "dark256": 115,
+      "light256": 22
+    },
+    "disabled": {
+      "dark": "#716b77",
+      "light": "#817f86",
+      "dark256": 244,
+      "light256": 244
+    },
+    "card": {
+      "dark": "#2a2237",
+      "light": "#f2ecff",
+      "dark256": 235,
+      "light256": 255
+    },
+    "selectedCard": {
+      "dark": "#3c2d57",
+      "light": "#e7deff",
+      "dark256": 236,
+      "light256": 254
+    },
+    "childCard": {
+      "dark": "#342a4c",
+      "light": "#f8f6ff",
+      "dark256": 236,
+      "light256": 231
+    },
+    "selectedChildCard": {
+      "dark": "#3c2d57",
+      "light": "#efe9ff",
+      "dark256": 236,
+      "light256": 255
+    },
+    "keycap": {
+      "dark": "#604f80",
+      "light": "#e6dbff",
+      "dark256": 60,
+      "light256": 254
+    },
+    "positiveKey": {
+      "dark": "#78e4b2",
+      "light": "#096c49",
+      "dark256": 115,
+      "light256": 22
+    },
+    "onPositiveKey": {
+      "dark": "#231c2d",
+      "light": "#ffffff",
+      "dark256": 235,
+      "light256": 231
+    },
+    "warningCount": {
+      "dark": "#3c3131",
+      "light": "#f2e9e8",
+      "dark256": 58,
+      "light256": 230
+    },
+    "proposalCount": {
+      "dark": "#253647",
+      "light": "#dceaf8",
+      "dark256": 23,
+      "light256": 195
+    },
+    "otherCount": {
+      "dark": "#432848",
+      "light": "#f6e0fa",
+      "dark256": 53,
+      "light256": 225
+    },
+    "gutterHuman": {
+      "dark": "#4c3352",
+      "light": "#f7e3fc",
+      "dark256": 53,
+      "light256": 225
+    },
+    "gutterFocus": {
+      "dark": "#2a2237",
+      "light": "#f5f1ff",
+      "dark256": 235,
+      "light256": 255
+    },
+    "status": {
+      "dark": "#231c2d",
+      "light": "#231c2d",
+      "dark256": 235,
+      "light256": 235
+    },
+    "statusInk": {
+      "dark": "#eae6ef",
+      "light": "#eae6ef",
+      "dark256": 254,
+      "light256": 254
+    },
+    "statusRule": {
+      "dark": "#7b88c5",
+      "light": "#7b88c5",
+      "dark256": 141,
+      "light256": 141
+    },
+    "gutterTick": {
+      "dark": "#604f80",
+      "light": "#c5bade",
+      "dark256": 60,
+      "light256": 250
+    },
+    "syntaxInvariant": {
+      "dark": "#48e4e1",
+      "light": "#006967",
+      "dark256": 86,
+      "light256": 23
+    },
+    "syntaxDefinition": {
+      "dark": "#f786d6",
+      "light": "#922878",
+      "dark256": 212,
+      "light256": 125
+    },
+    "syntaxSection": {
+      "dark": "#e5ca5d",
+      "light": "#6b5a06",
+      "dark256": 221,
+      "light256": 94
+    },
+    "statusWarning": {
+      "dark": "#e5ca5d",
+      "light": "#e5ca5d",
+      "dark256": 221,
+      "light256": 221
+    },
+    "statusPositive": {
+      "dark": "#78e4b2",
+      "light": "#78e4b2",
+      "dark256": 115,
+      "light256": 115
+    },
+    "statusAgent": {
+      "dark": "#48e4e1",
+      "light": "#48e4e1",
+      "dark256": 86,
+      "light256": 86
+    },
+    "statusError": {
+      "dark": "#fe7171",
+      "light": "#fe7171",
+      "dark256": 210,
+      "light256": 210
+    },
+    "statusHuman": {
+      "dark": "#f786d6",
+      "light": "#f786d6",
+      "dark256": 212,
+      "light256": 212
+    },
+    "statusFix": {
+      "dark": "#b695c9",
+      "light": "#b695c9",
+      "dark256": 183,
+      "light256": 183
+    },
+    "counterHover": {
+      "dark": "#272e5b",
+      "light": "#d8e0ff",
+      "dark256": 17,
+      "light256": 153
+    },
+    "note": {
+      "dark": "#23252f",
+      "light": "#eef0f9",
+      "dark256": 236,
+      "light256": 195
+    },
+    "spell": {
+      "dark": "#ff5f6b",
+      "light": "#c21a35",
+      "dark256": 203,
+      "light256": 161
+    }
+  }
+}

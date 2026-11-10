@@ -1,0 +1,30 @@
+  1   # other                                 │Review · 2 awaiting
+  2                                           │
+  3   ## 1. Extras                            ││ Proposal
+  4                                           ││ From agent-7
+  5│  **$Extra.Limit (extra limit).** The extr││ $Frame.Timing
+   │  TestLimit.                              ││ demo.spec.md
+  6                                           ││ 2 follow-on fixes
+                                              ││ Ready to review
+                                              ││
+                                              │
+                                              ││ Proposal
+                                              ││ inconsistent numeric_mismatch
+                                              ││ $Extra.Limit
+                                              ││ other.spec.md:5
+                                              ││ 8 here, 5 in the notes
+                                              ││
+                                              ││ │ Suggested fix
+                                              ││ │ $Extra.Limit
+                                              ││ │ other.spec.md:5
+                                              ││ │ most 8 → most 5
+                                              ││ │ pending
+                                              ││ │
+                                              │
+                                              │
+                                              │
+                                              │
+ other.spec.md     No baseline 5:49 | $Extra.Limit                                 |  0     1    1
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ y  Accept     [e] Edit         A  Commit     ^F  Format     ↑  Prev   Ret Go To   Esc  Editor
+[n] Dismiss    [f] Feedback    [c] Message    [r] Removed    ↓  Next   ^R  Hide    ⇧Tab Next Pane

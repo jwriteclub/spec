@@ -1,0 +1,26 @@
+[
+  {
+    "file": "base.spec.md",
+    "name": "Time.Elapsed",
+    "hash": "b9ff785d3d2cd228cfa642f78133c5887df143fd22240b424b42999b199b853e",
+    "hash_input": "Timeouts, graces and watchdogs are measured on lensd's own monotonic clock (`time.Since` of a `time.Now()` value), never by subtracting wall times that came from an NVR."
+  },
+  {
+    "file": "reflowed.spec.md",
+    "name": "Time.Elapsed",
+    "hash": "b9ff785d3d2cd228cfa642f78133c5887df143fd22240b424b42999b199b853e",
+    "hash_input": "Timeouts, graces and watchdogs are measured on lensd's own monotonic clock (`time.Since` of a `time.Now()` value), never by subtracting wall times that came from an NVR."
+  },
+  {
+    "file": "crlf.spec.md",
+    "name": "Time.Elapsed",
+    "hash": "b9ff785d3d2cd228cfa642f78133c5887df143fd22240b424b42999b199b853e",
+    "hash_input": "Timeouts, graces and watchdogs are measured on lensd's own monotonic clock (`time.Since` of a `time.Now()` value), never by subtracting wall times that came from an NVR."
+  },
+  {
+    "file": "codespan.spec.md",
+    "name": "Time.Elapsed",
+    "hash": "6c0415d3829c60a988ae4c0729e0dc61fe0e72d535524a74bf314eab80329aa7",
+    "hash_input": "Timeouts, graces and watchdogs are measured on lensd's own monotonic clock (`time.Since` of a `time.Now( )` value), never by subtracting wall times that came from an NVR."
+  }
+]

@@ -1,0 +1,13 @@
+# Copyright 2026 Christopher O'Connell
+# SPDX-License-Identifier: Apache-2.0
+
+.DS_Store
+.env
+.claude/settings.local.json
+.claude/worktrees/
+
+# Eval runner scratch (tools/corpuseval)
+.eval/
+
+# spec ui --record output (full prompts and replies)
+.dev/recordings/

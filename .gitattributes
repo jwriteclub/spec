@@ -1,0 +1,8 @@
+# Copyright 2026 Christopher O'Connell
+# SPDX-License-Identifier: Apache-2.0
+
+# Fixtures are compared byte for byte (CRLF and BOM cases): never convert line endings.
+testdata/** -text
+
+# Terminal render snapshots intentionally retain cell padding.
+internal/tui/testdata/**/*.golden whitespace=-blank-at-eol

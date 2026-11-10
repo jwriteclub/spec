@@ -1,0 +1,30 @@
+[38;5;189m[38;5;102m   [m   (alarm log,[m                                                                                   
+[38;5;189m[38;5;102m 42[m   recording search, keyframe stamps inside recordings) are that NVR's local clock and are [m      
+[38;5;189m[38;5;102m   [m   converted with[m                                                                                
+[38;5;189m[38;5;102m 43[m   that NVR's UTC offset, which lensd learns from the NVR, before being stored or compared. [m     
+[38;5;189m[38;5;102m   [m   Assumption: the[m                                                                               
+[38;5;189m[38;5;102m 44[m   offset is fixed (the site has no daylight saving) and is learned once (see Accepted [m          
+[38;5;189m[38;5;102m   [m   behaviour).[m                                                                                   
+[38;5;189m[38;5;102m 45[m   [m                                                                                              
+[38;5;189m[1;38;5;146m 46[m[38;5;60m│[m  [1m**Def [m[1;38;5;212m$Time.Elapsed[m[1m (elapsed time).**[m Timeouts, graces and watchdogs are measured on lensd's [m 
+[38;5;189m[1;38;5;146m   [m[38;5;60m│[m  own monotonic[m                                                                                 
+[38;5;189m[38;5;102m 47[m[38;5;60m│[m  clock ([38;5;146m`time.Since`[m of a [38;5;146m`time.Now()`[m value), never by subtracting wall times that came from [m 
+[38;5;189m[38;5;102m   [m[38;5;60m│[m  an NVR.[m                                                                                       
+[38;5;189m[38;5;102m 48[m   [m                                                                                              
+[38;5;189m[38;5;102m 49[m   [38;5;185m### 0.2 Intervals and nearness[m[m                                                                
+[38;5;189m[38;5;102m 50[m   [m                                                                                              
+[38;5;189m[38;5;102m 51[m   [1m**Def [m[1;38;5;212m$Interval[m[1m (interval).**[m An interval [Start, End] is closed, with Start <= End. Zero [m    
+[38;5;189m[38;5;102m   [m   length[m                                                                                        
+[38;5;189m[38;5;102m 52[m   (Start = End) is valid: one instant.[m                                                          
+[38;5;189m[38;5;102m 53[m   [m                                                                                              
+[38;5;189m[38;5;102m 54[m   [1m**Def [m[1;38;5;212m$Interval.Gap[m[1m (gap, within).**[m For intervals A and B with A.Start <= B.Start, gap(A, B) [m
+[38;5;189m[38;5;102m   [m   = B.Start - A.End,[m                                                                            
+[38;5;189m[38;5;102m 55[m   negative when they overlap. "Within d" means gap <= d; "more than d apart" means gap > d. [m    
+[38;5;189m[38;5;102m   [m   Every bound in[m                                                                                
+[38;5;189m[38;5;102m 56[m   this spec states whether it is inclusive; the default is inclusive at the top ("at most N", [m  
+[38;5;189m[38;5;102m   [m   "<= 5 s").[m                                                                                    
+[38;5;189m[38;5;102m 57[m   A fetch window [from, to) is half-open, so an event on a boundary belongs to exactly one [m     
+[38;5;189m[38;5;189;48;5;235m[38;5;189;48;5;235m lensd.spec.md     [m[38;5;189;48;5;235mNo baseline[m[38;5;189;48;5;235m 46:1 [m[m[38;5;104;48;5;235m|[m[38;5;189;48;5;235m [m[38;5;189;48;5;235m$Time.Elapsed[m[38;5;189;48;5;235m                                [m[38;5;104;48;5;235m|[m[38;5;185;48;5;236m  1   [m[38;5;80;48;5;23m  0  [m[38;5;212;48;5;53m  0  [m[m
+[38;5;189m[7;38;5;235m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[m[7;38;5;235m▄[m[7;38;5;235m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[m[7;38;5;235m▄[m[7;38;5;236m▄▄▄▄▄▄[m[7;38;5;23m▄▄▄▄▄[m[7;38;5;53m▄▄▄▄▄[m[m
+[38;5;189m[38;5;80m^G [m[38;5;189m Help[m  [38;5;80m^O [m[38;5;189m Save[m [38;5;80m^W [m[38;5;189m Where Is[m [38;5;80m^K [m[38;5;189m Cut[m   [38;5;60m^Z [m[38;5;60m Undo[m [38;5;60m^T [m[38;5;60m Follow[m [38;5;80m^B [m[38;5;189m Back[m   [38;5;60m^C [m[38;5;60m Copy[m    [38;5;80m ^^ [m[38;5;189m Outline[m   [m
+[38;5;189m[38;5;80m^X [m[38;5;189m Exit[m  [38;5;80m^Q [m[38;5;189m Open[m [38;5;60m^P [m[38;5;60m Propose[m  [38;5;60m^U [m[38;5;60m Paste[m [38;5;60m^Y [m[38;5;60m Redo[m [38;5;80m^R [m[38;5;189m Checks[m [38;5;80m^F [m[38;5;189m Format[m [38;5;80m^N [m[38;5;189m Analyze[m [38;5;189;48;5;60m⇧Tab[m[38;5;189m Next Pane[m [m
