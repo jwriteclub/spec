@@ -67,7 +67,7 @@ tested _except_ for Terminal.app on Mac, where it falls back to 256 color mode.
 (via `codex exec`). If you have one of these tools set up, pick it in settings and `spec` will check to
 confirm that you have a supported version.
 
-Alternatively, you can use OpenRouter ([setup video](https://youtu.be/21w5sx3DEOg)), DeepSeek or an OpenAI Compatible Provider.
+Alternatively, you can use OpenRouter ([setup video](https://youtu.be/tYKEDGLEhCs)), DeepSeek ([setup video](https://youtu.be/Jcp0z4ZBU-0)) or an OpenAI Compatible Provider.
 
 In addition to inference models, `spec` supports decision models like Jev via OpenRouter, which provide
 quick gate checks so you don't have to wait for full inference for logically insignificant changes.
@@ -101,6 +101,8 @@ subtly contradicts it.
 Don't skip the formal step of having you or your model translate your plain specification into TLA+. The
 process of fully modeling the system and checking for errors catches things that pure description misses,
 particularly data races, unexpected paths to a state and so forth.
+Watch an agent and a programmer add TLA+ to a spec together: [Adding formal verification with
+TLA+](https://youtu.be/Eu1uuS2pJXw). The example has a deliberate bug, so you can see TLC catch it.
 
 Finally, have your agent extend your tags all the way to your unit tests. I have a standing rule in many of
 my projects now that every unit test must refer back to a specific `$Anchor` and/or `§1.2.3`. If a test can't
