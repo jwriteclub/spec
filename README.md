@@ -89,6 +89,8 @@ describing one concept. After editing for a while, I find that I type `$Anchors`
 by hand, but you don't have to. Write in plain language and ask your agent to make a proposal for adding
 anchors. While not strictly necessary, anchors help linking formal descriptions (in TLA+) to your own
 descriptions, and projects work best with a reasonable number of at least one per paragraph or definition.
+How I split the work between writing by hand, my agent and TLA+: [How I write specs with an AI coding
+agent](https://youtu.be/Bz5XlUndjfs).
 
 The most powerful feature of specs is being able to define invariants and examples in plain natural language.
 You can be extremely rigorous about this, but you can also just write a header "what should always be true" and
