@@ -64,6 +64,9 @@ func (f *fakeGate) Decide(ctx context.Context, req infer.GateRequest) (*infer.De
 	if req.Situation == "deadline" {
 		return nil, fmt.Errorf("gate: %w", context.DeadlineExceeded)
 	}
+	if req.Situation == "zero" || req.Situation == "missing" {
+		return &infer.Decision{CostReported: req.Situation == "zero"}, nil
+	}
 	return &infer.Decision{Scores: map[string]float64{infer.QuestionContradiction: 0.7, infer.QuestionMaterialChange: 0.25},
 		Provider: "jev", Model: "g1", Latency: 300 * time.Millisecond, CostUSD: 0.0001}, nil
 }
@@ -190,6 +193,26 @@ func TestModelRecorderRoundTrip(t *testing.T) {
 	defer cancel()
 	_, err = canned.Chat(cctx, chat("cancel", infer.PurposeFix))
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
+}
+
+func TestGateCostPresenceRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	mr, err := NewModelRecorder(dir, time.Now())
+	require.NoError(t, err)
+	gate := mr.WrapGate(&fakeGate{})
+	for _, situation := range []string{"zero", "missing"} {
+		_, err = gate.Decide(context.Background(), infer.GateRequest{Situation: situation})
+		require.NoError(t, err)
+	}
+	require.NoError(t, mr.Close())
+	canned, err := infer.NewCanned("rec", config.Provider{Kind: config.KindCanned, Path: filepath.Join(dir, CannedFile)}, func(string) string { return "" })
+	require.NoError(t, err)
+	for _, reported := range []bool{true, false} {
+		d, err := canned.Decide(context.Background(), infer.GateRequest{})
+		require.NoError(t, err)
+		assert.Zero(t, d.CostUSD)
+		assert.Equal(t, reported, d.CostReported)
+	}
 }
 
 // A call still running when recording closes keeps its index with a long

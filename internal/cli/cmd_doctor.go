@@ -425,8 +425,12 @@ func (s *session) doctorCascade(loaded *config.Loaded, add func(name, status, de
 				add("gate", stFail, err.Error(), fix)
 				break
 			}
-			add("gate", stOK, fmt.Sprintf("provider %s, model %s: answered in %d ms (escalate_class_at %.2f, skip_material_below %.2f; $%.6f)",
-				g.Provider, d.RequestedModel, d.Latency.Milliseconds(), g.EscalateAt(), g.SkipMaterialBelow, d.CostUSD), "")
+			cost := "cost not reported"
+			if d.CostReported {
+				cost = fmt.Sprintf("$%.6f", d.CostUSD)
+			}
+			add("gate", stOK, fmt.Sprintf("provider %s, model %s: answered in %d ms (escalate_class_at %.2f, skip_material_below %.2f; %s)",
+				g.Provider, d.RequestedModel, d.Latency.Milliseconds(), g.EscalateAt(), g.SkipMaterialBelow, cost), "")
 		}
 	}
 	if t := cfg.Triage; t != nil {

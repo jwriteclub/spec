@@ -219,6 +219,14 @@ reply = "plain"
 scores = { contradiction = 0.2 }
 cost_usd = 0.0001
 prompt_tokens = 50
+
+[[gate]]
+scores = { contradiction = 0.2 }
+
+[[gate]]
+scores = { contradiction = 0.2 }
+cost_usd = 0.0
+cost_reported = true
 `
 	f, err := ParseCanned([]byte(src))
 	require.NoError(t, err)
@@ -240,11 +248,20 @@ prompt_tokens = 50
 	d, err := p.Decide(ctx, GateRequest{Questions: []Question{{ID: QuestionContradiction}}})
 	require.NoError(t, err)
 	assert.InDelta(t, 0.0001, d.CostUSD, 1e-9)
+	assert.True(t, d.CostReported)
 	assert.Equal(t, 50, d.Usage.PromptTokens)
+	d, err = p.Decide(ctx, GateRequest{Questions: []Question{{ID: QuestionContradiction}}})
+	require.NoError(t, err)
+	assert.Zero(t, d.CostUSD)
+	assert.False(t, d.CostReported)
+	d, err = p.Decide(ctx, GateRequest{Questions: []Question{{ID: QuestionContradiction}}})
+	require.NoError(t, err)
+	assert.Zero(t, d.CostUSD)
+	assert.True(t, d.CostReported)
 
 	_, err = ParseCanned([]byte("[[check]]\nbogus = 1\n"))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "finish_reason, cost_usd, prompt_tokens, completion_tokens")
+	assert.Contains(t, err.Error(), "finish_reason, cost_usd, cost_reported, prompt_tokens, completion_tokens")
 	_, err = ParseCanned([]byte("[[gate]]\nscores = { a = 1.0 }\nfinish_reason = \"stop\"\n"))
 	require.Error(t, err)
 	_, err = ParseCanned([]byte("[[check]]\nreply = \"x\"\ncost_usd = -1.0\n"))

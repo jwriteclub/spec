@@ -19,30 +19,16 @@ import (
 )
 
 // DefaultDecisionsTimeout bounds one Decisions API attempt when the provider sets
-// no timeout. A decision takes about 0.3 s.
+// no timeout.
 const DefaultDecisionsTimeout = 60 * time.Second
 
-// Decisions is a gate (kind decisions): OpenRouter's Decisions API (alpha, POST
-// BaseURL/decisions), which answers each question with a "noul"
-// probability. It shares the chat client's transport rules: the key is
-// sent as a bearer token and redacted from every error, and transient
-// failures (408, 409, 425, 429, 5xx, network errors, timeouts) are retried
-// with jittered exponential backoff.
-//
-// The request body is
-//
-//	{"model": M, "state": {"policy": P, "situation": S},
-//	 "questions": {"<id>": {"type": "noul", "instructions": "..."}, ...}}
-//
-// and the reply
-//
-//	{"model": "<served id>", "provider": "TypeSafe", "id": "...",
-//	 "answers": {"<id>": {"type": "noul", "noul": 0.93}, ...},
-//	 "usage": {"input_tokens": N, "output_tokens": N, "cost": USD}}
+// Decisions asks yes/no questions through the OpenRouter or Google API.
+// Both protocols return a noul probability for each question.
 type Decisions struct {
 	// c carries the transport: base URL, key, timeouts, retries and
 	// redaction. Its chat fields are unused.
-	c *Client
+	c   *Client
+	api config.DecisionsAPI
 }
 
 // NewDecisions builds the decisions gate called name, reading base_url's ${VAR}
@@ -62,11 +48,26 @@ func NewDecisions(name string, p config.Provider, getenv func(string) string) (*
 		c.Timeout = DefaultDecisionsTimeout
 	}
 	c.SetAPIKey(key)
-	return &Decisions{c: c}, nil
+	g := &Decisions{c: c, api: p.API}
+	g.SetHTTP(nil)
+	return g, nil
 }
 
 // SetHTTP replaces the HTTP client (tests, proxies).
-func (g *Decisions) SetHTTP(d Doer) { g.c.HTTP = d }
+func (g *Decisions) SetHTTP(d Doer) {
+	if g.api == config.DecisionsGoogle {
+		if d == nil {
+			d = http.DefaultClient
+		}
+		// net/http forwards custom headers on redirects, including Google's API key.
+		if client, ok := d.(*http.Client); ok {
+			local := *client
+			local.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+			d = &local
+		}
+	}
+	g.c.HTTP = d
+}
 
 // Info describes the gate (Gate).
 func (g *Decisions) Info() Info {
@@ -83,19 +84,24 @@ func (g *Decisions) SetLimits(timeout time.Duration, attempts int) {
 	g.c.Attempts = attempts
 }
 
+const noulQuestion = "noul"
+
 // decisionsQuestion is one question of a request body.
 type decisionsQuestion struct {
 	Type         string `json:"type"`
 	Instructions string `json:"instructions"`
 }
 
-// decisionsBody is a request body.
+type decisionsState struct {
+	Policy    string `json:"policy"`
+	Situation string `json:"situation"`
+}
+
+// OpenRouter accepts state; Google accepts input. Both ask the same questions.
 type decisionsBody struct {
-	Model string `json:"model"`
-	State struct {
-		Policy    string `json:"policy"`
-		Situation string `json:"situation"`
-	} `json:"state"`
+	Model     string                       `json:"model"`
+	State     *decisionsState              `json:"state,omitempty"`
+	Input     string                       `json:"input,omitempty"`
 	Questions map[string]decisionsQuestion `json:"questions"`
 }
 
@@ -109,9 +115,11 @@ type decisionsReply struct {
 		Noul *float64 `json:"noul"`
 	} `json:"answers"`
 	Usage *struct {
-		InputTokens  int     `json:"input_tokens"`
-		OutputTokens int     `json:"output_tokens"`
-		Cost         float64 `json:"cost"`
+		InputTokens       int      `json:"input_tokens"`
+		OutputTokens      int      `json:"output_tokens"`
+		Cost              *float64 `json:"cost"`
+		TotalInputTokens  int      `json:"total_input_tokens"`
+		TotalOutputTokens int      `json:"total_output_tokens"`
 	} `json:"usage"`
 	Error json.RawMessage `json:"error"`
 }
@@ -127,8 +135,11 @@ func (g *Decisions) Decide(ctx context.Context, req GateRequest) (*Decision, err
 	}
 	var body decisionsBody
 	body.Model = model
-	body.State.Policy = req.Policy
-	body.State.Situation = req.Situation
+	if g.api == config.DecisionsGoogle {
+		body.Input = "Policy:\n" + req.Policy + "\n\nSituation:\n" + req.Situation
+	} else {
+		body.State = &decisionsState{Policy: req.Policy, Situation: req.Situation}
+	}
 	body.Questions = make(map[string]decisionsQuestion, len(req.Questions))
 	for _, q := range req.Questions {
 		if q.ID == "" {
@@ -137,7 +148,7 @@ func (g *Decisions) Decide(ctx context.Context, req GateRequest) (*Decision, err
 		if _, dup := body.Questions[q.ID]; dup {
 			return nil, fmt.Errorf("infer: gate question %q is asked twice", q.ID)
 		}
-		body.Questions[q.ID] = decisionsQuestion{Type: "noul", Instructions: q.Instructions}
+		body.Questions[q.ID] = decisionsQuestion{Type: noulQuestion, Instructions: q.Instructions}
 	}
 	payload, err := json.Marshal(body)
 	if err != nil {
@@ -149,7 +160,7 @@ func (g *Decisions) Decide(ctx context.Context, req GateRequest) (*Decision, err
 	attempts := c.attempts()
 	var last *Error
 	for n := 1; n <= attempts; n++ {
-		raw, wait, err := c.postJSON(ctx, "/decisions", payload)
+		raw, wait, err := g.postJSON(ctx, payload)
 		if err == nil {
 			d, derr := g.decode(raw, req.Questions)
 			if derr == nil {
@@ -201,28 +212,39 @@ func (g *Decisions) decode(raw []byte, qs []Question) (*Decision, error) {
 			fmt.Errorf("the reply has no probability in [0, 1] for %s (asked: %s)", strings.Join(missing, ", "), strings.Join(questionIDs(qs), ", ")), false)
 	}
 	if r.Usage != nil {
-		d.Usage = Usage{PromptTokens: r.Usage.InputTokens, CompletionTokens: r.Usage.OutputTokens}.filled()
-		d.CostUSD = r.Usage.Cost
+		input, output := r.Usage.InputTokens, r.Usage.OutputTokens
+		if g.api == config.DecisionsGoogle {
+			input, output = r.Usage.TotalInputTokens, r.Usage.TotalOutputTokens
+		}
+		d.Usage = Usage{PromptTokens: input, CompletionTokens: output}.filled()
+		if r.Usage.Cost != nil {
+			d.CostUSD, d.CostReported = *r.Usage.Cost, true
+		}
 	}
 	return d, nil
 }
 
-// postJSON sends one non-streamed POST of payload to BaseURL + path and
+// postJSON sends one non-streamed POST to the configured Decisions endpoint and
 // returns the body of a 200 reply, or an *Error (with how long the provider
 // asked us to wait), or the context's error when ctx itself ended.
-func (c *Client) postJSON(ctx context.Context, path string, payload []byte) ([]byte, time.Duration, error) {
+func (g *Decisions) postJSON(ctx context.Context, payload []byte) ([]byte, time.Duration, error) {
+	c := g.c
 	limit := c.timeout(false)
 	actx, cancel := context.WithTimeoutCause(ctx, limit,
 		fmt.Errorf("the attempt took longer than %s (timeout): %w", limit, context.DeadlineExceeded))
 	defer cancel()
-	hreq, err := http.NewRequestWithContext(actx, http.MethodPost, c.endpoint(path), bytes.NewReader(payload))
+	hreq, err := http.NewRequestWithContext(actx, http.MethodPost, c.endpoint("/decisions"), bytes.NewReader(payload))
 	if err != nil {
 		return nil, 0, c.newError(0, "", err, false)
 	}
 	hreq.Header.Set("Content-Type", "application/json")
 	hreq.Header.Set("Accept", "application/json")
 	if k := c.apiKey(); k != "" {
-		hreq.Header.Set("Authorization", "Bearer "+k)
+		if g.api == config.DecisionsGoogle {
+			hreq.Header.Set("x-goog-api-key", k)
+		} else {
+			hreq.Header.Set("Authorization", "Bearer "+k)
+		}
 	}
 	resp, err := c.doer().Do(hreq)
 	if err != nil {

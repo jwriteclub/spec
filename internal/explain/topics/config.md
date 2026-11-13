@@ -252,13 +252,16 @@ stopping at the first stage that clears the edit:
     [triage]                                     # absent: the check provider's triage_model
     provider = "cf"
 
-1. **Gate.** `kind = "decisions"` is OpenRouter's Decisions API, here with TypeSafe's Jev: it answers four
+1. **Gate.** A `kind = "decisions"` provider runs the gate. The example uses TypeSafe's Jev on OpenRouter. It answers four
    yes/no questions about the edit (`material_change` and the class questions `numeric_mismatch`,
    `contradiction`, `stale_reference`) with probabilities, in about 0.3 s for well under $0.001. The
    edit goes on when any class question scores at or above `escalate_class_at`; below, the gate
    clears it. `skip_material_below` (0 is off) also clears an edit whose `material_change` scores
-   below it, whatever the class questions say. A decisions provider takes only `model`, `base_url`,
-   `api_key_env` and `timeout`, and cannot be `default`. The gate makes one attempt: a gate that
+   below it, whatever the class questions say. A decisions provider takes `api`, `model`, `base_url`,
+   `api_key_env` and `timeout`. The default API is `"openrouter"`. For the native Google API,
+   set `api = "google"`, `model = "gemini-decision-1"` and `api_key_env = "GEMINI_API_KEY"`.
+   Settings → Add connection → Google Gemini Decisions sets these fields and the gate route.
+   The default check provider must support chat. The gate makes one attempt: a gate that
    fails passes the edit on.
 2. **Triage.** A chat model asked the same four questions, as one JSON reply; a class score of 0.5
    or more passes the edit to the check, below clears it. It runs on the `[triage]` provider with

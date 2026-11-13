@@ -88,6 +88,9 @@ func TestScenarioSettingsTestThenSaveKeepsPass(t *testing.T) {
 	s.ExpectText("check / cf: Test passed")
 	s.Press("esc", "ctrl+o", "u")
 	s.ExpectText("User saved · test passed")
-	s.ExpectFlashText("Saved user settings · test passed")
+	// The save writes the config synchronously; its command delivers the flash later.
+	s.WaitUntil("the saved settings flash", func(st tui.State) bool {
+		return st.Flash == "Saved user settings · test passed"
+	})
 	s.ExpectNoText("not tested")
 }

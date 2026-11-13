@@ -31,6 +31,24 @@ type settingsSection struct{ scope, title string }
 
 var settingsSections = []settingsSection{{"User", "Connections"}, {"User", "Model routing"}, {"User", "Appearance"}, {"User", "Limits and prompts"}, {"Project", "Project files"}, {"Project", "Lint and formatting"}}
 
+const (
+	setupOpenRouter = iota
+	setupClaude
+	setupCodex
+	setupCustom
+	setupGemini
+	setupContinue
+)
+
+var connectionChoices = []struct{ label, desc, name string }{
+	setupOpenRouter: {"OpenRouter API", "One key, three models: a decision (gate), a triage and an inference (check) model, each from a short recommended list or any model id.", ""},
+	setupClaude:     {"Claude account", "Installed Claude Code CLI; sign in with claude auth login in your terminal.", "claude"},
+	setupCodex:      {"ChatGPT / Codex", "Installed Codex CLI; sign in with codex login in your terminal.", "codex"},
+	setupCustom:     {"Custom API endpoint", "Any compatible HTTP(S) API, including local servers.", "custom"},
+	setupGemini:     {"Google Gemini Decisions", "Use Gemini Decision 1 as the gate with a Google API key.", "gemini"},
+	setupContinue:   {"Continue editing", "Setup is optional; local editing remains available.", ""},
+}
+
 type settingsField struct {
 	path                            []string
 	label, help, kind, defaultValue string
@@ -219,7 +237,7 @@ func (s *settingsScreen) fields() []settingsField {
 	}
 	switch s.section {
 	case 0:
-		fields := []settingsField{{label: "Connection", kind: "provider", choices: s.providerNames(), help: "Choose an existing connection; its settings stay in User config."}, {label: "Add connection", kind: "action", action: "add", help: "OpenRouter API (gate, triage and check models on one key), Claude account, ChatGPT / Codex, or a custom endpoint."}}
+		fields := []settingsField{{label: "Connection", kind: "provider", choices: s.providerNames(), help: "Choose an existing connection; its settings stay in User config."}, {label: "Add connection", kind: "action", action: "add", help: "OpenRouter API, Claude account, ChatGPT / Codex, a custom endpoint, or Google Gemini Decisions."}}
 		if s.provider == "" {
 			return fields
 		}
@@ -240,7 +258,14 @@ func (s *settingsScreen) fields() []settingsField {
 			fields = append(fields, p("triage_model", "Triage model", "text", "Same as check model", "Optional faster model for triage and commit message drafts."))
 		}
 		if kind == config.KindOpenAI || kind == config.KindDecisions {
-			fields = append(fields, p("base_url", "API endpoint", "text", map[bool]string{true: config.DefaultDecisionsBaseURL}[kind == config.KindDecisions], "HTTP(S) API root; ${VARIABLE} references resolve only when used."), p("api_key_env", "API key environment variable", "text", "No key required", "Store a variable name only, never the key itself."), settingsField{label: "Key for this session", kind: "secret", help: s.theme.uiText("Session only · masked. Save activates it; never written to config.")})
+			endpoint := ""
+			if kind == config.KindDecisions {
+				v, _ := s.user.Get(append(prefix, "api")...)
+				api, _ := v.(string)
+				endpoint = config.DecisionsAPI(api).DefaultBaseURL()
+				fields = append(fields, p("api", "Decisions API", "readonly", string(config.DecisionsOpenRouter), "The protocol used to ask gate questions."))
+			}
+			fields = append(fields, p("base_url", "API endpoint", "text", endpoint, "HTTP(S) API root; ${VARIABLE} references resolve only when used."), p("api_key_env", "API key environment variable", "text", "No key required", "Store a variable name only, never the key itself."), settingsField{label: "Key for this session", kind: "secret", help: s.theme.uiText("Session only · masked. Save activates it; never written to config.")})
 		}
 		if kind == config.KindClaudeCLI || kind == config.KindCodexCLI {
 			fields = append(fields, p("command", "CLI command", "text", map[bool]string{true: "codex", false: "claude"}[kind == config.KindCodexCLI], "Uses the CLI's own login. Sign in in your terminal, then choose Test."), p("pass_env", "Additional environment variables", "list", "None", "One variable name per comma-separated entry; no values."))
@@ -794,7 +819,7 @@ func (s *settingsScreen) activate(a *App, f settingsField) tea.Cmd {
 		switch f.action {
 		case "add":
 			s.setup = true
-			s.setupChoice = 0
+			s.setupChoice = setupOpenRouter
 		case "forget":
 			delete(s.sessionKeys, s.provider)
 			s.bumpCredential(s.provider)
@@ -874,13 +899,13 @@ func (s *settingsScreen) setupKey(m tea.KeyPressMsg) tea.Cmd {
 	case "up":
 		s.setupChoice = max(s.setupChoice-1, 0)
 	case "down":
-		s.setupChoice = min(s.setupChoice+1, 4)
+		s.setupChoice = min(s.setupChoice+1, len(connectionChoices)-1)
 	case "enter":
 		s.setup = false
 		switch s.setupChoice {
-		case 0:
+		case setupOpenRouter:
 			s.openOpenRouterSetup()
-		case 4:
+		case setupContinue:
 		default:
 			s.addPreset(s.setupChoice)
 		}
@@ -888,36 +913,53 @@ func (s *settingsScreen) setupKey(m tea.KeyPressMsg) tea.Cmd {
 	return nil
 }
 
-// addPreset stages the single connection of setup choice 1-3; choice 0,
-// OpenRouter, opens its three-role setup instead.
+// addPreset stages a single connection selected in Add connection.
 func (s *settingsScreen) addPreset(choice int) {
-	if choice == 0 {
-		s.openOpenRouterSetup()
-		return
-	}
-	names := []string{"openrouter", "claude", "codex", "custom"}
-	name := s.freeProviderName(names[choice])
 	p := map[string]any{}
 	switch choice {
-	case 1:
+	case setupClaude:
 		p["kind"] = config.KindClaudeCLI
-	case 2:
+	case setupCodex:
 		p["kind"] = config.KindCodexCLI
-	case 3:
+	case setupCustom:
 		p["kind"] = config.KindOpenAI
+	case setupGemini:
+		p["kind"] = config.KindDecisions
+		p["api"] = string(config.DecisionsGoogle)
+		p["model"] = config.GeminiDecisionModel
+		p["api_key_env"] = config.GeminiKeyEnv
+	default:
+		return
 	}
+	name := s.freeProviderName(connectionChoices[choice].name)
 	s.user.Set(p, "providers", name)
-	if _, ok := s.user.Get("default"); !ok {
+	if choice == setupGemini {
+		s.stageGateRoute(name)
+	} else if _, ok := s.user.Get("default"); !ok {
 		s.user.Set(name, "default")
 	}
 	s.provider = name
 	s.field = 4
 	s.cursor = 0
-	s.notice = s.theme.uiText("Connection staged · enter its model, then Review before Save. No test has run.")
+	if choice == setupGemini {
+		s.notice = "Gate staged: " + name + ". Review before Save."
+	} else {
+		s.notice = s.theme.uiText("Connection staged · enter its model, then Review before Save. No test has run.")
+	}
 	s.text = map[string]string{}
 	s.baseline = map[string]string{}
 	s.touched = map[string]bool{}
 }
+
+// stageGateRoute preserves thresholds on an existing gate.
+func (s *settingsScreen) stageGateRoute(name string) {
+	if _, ok := s.user.Get("gate"); ok {
+		s.user.Set(name, "gate", "provider")
+	} else {
+		s.user.Set(map[string]any{"provider": name, "escalate_class_at": config.DefaultEscalateClassAt, "skip_material_below": 0.0}, "gate")
+	}
+}
+
 func (s *settingsScreen) paste(text string) {
 	if s.openrouter != nil && s.confirm == "" && !s.probeRunning {
 		s.openRouterPaste(text)
@@ -967,36 +1009,34 @@ func (s *settingsScreen) openTest(a *App) {
 		s.notice = "Cannot test: " + ds[0].Message
 		return
 	}
-	name := s.provider
+	type route struct{ name, role string }
+	var plans []route
 	if s.section == 1 {
-		name = cfg.Default
+		if cfg.Default != "" {
+			plans = append(plans, route{cfg.Default, "check"})
+		}
+		if cfg.Triage != nil {
+			plans = append(plans, route{cfg.Triage.Provider, "triage"})
+		} else if cfg.Default != "" && cfg.Providers[cfg.Default].TriageOn() {
+			plans = append(plans, route{cfg.Default, "triage"})
+		}
+		if cfg.Gate != nil {
+			plans = append(plans, route{cfg.Gate.Provider, "gate"})
+		}
+	} else if p, ok := cfg.Providers[s.provider]; ok {
+		role := "check"
+		if p.IsGate() {
+			role = "gate"
+		}
+		plans = append(plans, route{s.provider, role})
 	}
-	p, ok := cfg.Providers[name]
-	if !ok {
+	if len(plans) == 0 {
 		s.notice = "Choose a connection before testing"
 		return
-	}
-	role := "check"
-	if p.IsGate() {
-		role = "gate"
 	}
 	getenv := os.Getenv
 	if a.wf != nil && a.wf.Getenv != nil {
 		getenv = a.wf.Getenv
-	}
-	plans := []struct{ name, role string }{{name, role}}
-	if s.section == 1 {
-		plans = []struct{ name, role string }{{cfg.Default, "check"}}
-		triage := cfg.Default
-		if cfg.Triage != nil {
-			triage = cfg.Triage.Provider
-		}
-		if cfg.Triage != nil || cfg.Providers[cfg.Default].TriageOn() {
-			plans = append(plans, struct{ name, role string }{triage, "triage"})
-		}
-		if cfg.Gate != nil {
-			plans = append(plans, struct{ name, role string }{cfg.Gate.Provider, "gate"})
-		}
 	}
 	var probes []settingsProbePlan
 	for _, plan := range plans {
@@ -1245,14 +1285,7 @@ func (s *settingsScreen) view(a *App, w, h int) []string {
 	}
 	if s.setup {
 		draw(2, a.theme.uiText("  Add a connection · setup is optional"))
-		choices := []struct{ label, desc string }{
-			{"OpenRouter API", "One key, three models: a decision (gate), a triage and an inference (check) model, each from a short recommended list or any model id."},
-			{"Claude account", "Installed Claude Code CLI; sign in with claude auth login in your terminal."},
-			{"ChatGPT / Codex", "Installed Codex CLI; sign in with codex login in your terminal."},
-			{"Custom API endpoint", "Any compatible HTTP(S) API, including local servers."},
-			{"Continue editing", "Setup is optional; local editing remains available."},
-		}
-		for i, c := range choices {
+		for i, c := range connectionChoices {
 			style := a.theme.HelpLabel.Background(a.theme.Token("card"))
 			if i == s.setupChoice {
 				style = a.theme.PopupTitle.Foreground(a.theme.Token("control")).Background(a.theme.Token("selectedCard"))
@@ -1471,7 +1504,11 @@ func (s *settingsScreen) confirmView(a *App, out []string, w int) {
 		if p.provider.IsCLI() {
 			add("Runs the configured CLI using its own login; no browser or login starts here.")
 		} else {
-			add("Endpoint: " + p.provider.BaseURL)
+			endpoint := p.provider.BaseURL
+			if endpoint == "" && p.provider.IsGate() {
+				endpoint = p.provider.API.DefaultBaseURL()
+			}
+			add("Endpoint: " + endpoint)
 		}
 		add("Each listed role runs one logical test using fixed synthetic text. No project files, prompts or proposal content are sent.")
 		add("API chat: 30 seconds per attempt, up to 2 attempts. CLI: one bounded request. Test can incur provider charges.")

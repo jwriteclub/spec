@@ -282,11 +282,7 @@ func (s *settingsScreen) stageOpenRouter() {
 		case config.RoleTriage:
 			s.user.Set(name, "triage", "provider")
 		case config.RoleGate:
-			if _, ok := s.user.Get("gate"); ok {
-				s.user.Set(name, "gate", "provider")
-			} else {
-				s.user.Set(map[string]any{"provider": name, "escalate_class_at": config.DefaultEscalateClassAt, "skip_material_below": 0.0}, "gate")
-			}
+			s.stageGateRoute(name)
 		}
 		if first == "" {
 			first = name

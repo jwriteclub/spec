@@ -387,7 +387,7 @@ func TestParseStreamAndIdleTimeout(t *testing.T) {
 	ds = problems(t, "default = \"a\"\n[providers.a]\nbase_url = \"http://x\"\nmodel = \"m\"\nstreaming = true\n")
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, "idle_timeout, stream;", "the known keys list the new ones")
-	assert.Contains(t, ds[0].Message, "for kinds claude-cli and codex-cli also command, pass_env; kind decisions takes only model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)")
+	assert.Contains(t, ds[0].Message, "for kinds claude-cli and codex-cli also command, pass_env; kind decisions takes only api, model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)")
 }
 
 func TestParseKinds(t *testing.T) {
@@ -663,4 +663,45 @@ provider = "scenes"
 	assert.Contains(t, ds[0].Message, "path does not apply to kind decisions")
 
 	assert.Empty(t, Gate{Provider: "c"}.Check(map[string]Provider{"c": {Kind: KindCanned, Path: "r"}}))
+}
+
+func TestDecisionsAPI(t *testing.T) {
+	const native = `[providers.gemini]
+kind = "decisions"
+api = "google"
+model = "gemini-decision-1"
+api_key_env = "GEMINI_API_KEY"
+[gate]
+provider = "gemini"
+`
+	cfg, ds := Parse("config.toml", []byte(native))
+	require.Empty(t, ds)
+	assert.Empty(t, cfg.Default)
+	p := cfg.Providers["gemini"]
+	assert.Equal(t, DecisionsGoogle, p.API)
+	assert.Equal(t, []string{GeminiKeyEnv}, p.EnvNames())
+	base, err := p.DecisionsBaseURL("gemini", nil)
+	require.NoError(t, err)
+	assert.Equal(t, GoogleDecisionsBaseURL, base)
+	_, err = p.Key("gemini", func(string) string { return "" })
+	require.ErrorContains(t, err, GeminiKeyEnv)
+
+	p.API = DecisionsOpenRouter
+	base, err = p.DecisionsBaseURL("gemini", nil)
+	require.NoError(t, err)
+	assert.Equal(t, DefaultDecisionsBaseURL, base)
+
+	p.API = "unknown"
+	p.BaseURL = "https://example.test"
+	assert.NotEmpty(t, CheckProvider("gemini", p))
+	_, err = p.DecisionsBaseURL("gemini", nil)
+	assert.ErrorContains(t, err, "unknown decisions api")
+
+	for _, kind := range []string{KindOpenAI, KindClaudeCLI, KindCodexCLI, KindCanned} {
+		assert.Contains(t, CheckProvider("other", Provider{Kind: kind, API: DecisionsGoogle}), `provider "other": api only applies to kind decisions`)
+	}
+	// A chat provider still requires a default; the suggested provider can run checks.
+	ds = problems(t, native+"\n[providers.zzchat]\nkind = 'codex-cli'\nmodel = 'm'\n")
+	require.Len(t, ds, 1)
+	assert.Contains(t, ds[0].Message, `default = "zzchat"`)
 }

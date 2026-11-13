@@ -4,10 +4,10 @@
 package config
 
 // OpenRouter setup: the models `spec ui`'s Settings → Add connection →
-// OpenRouter API offers for each role on one OpenRouter key, with the
-// request settings measured for each. The evidence for every entry is in
-// notes/evals and notes/providers.md; the choice is recorded in
-// notes/decisions.md ("OpenRouter setup sets up all three roles").
+// OpenRouter API offers for each role on one OpenRouter key. Measured
+// choices and their request settings are documented in notes/evals and
+// notes/providers.md; the setup is recorded in notes/decisions.md
+// ("OpenRouter setup sets up all three roles").
 
 // OpenRouterBaseURL is OpenRouter's OpenAI-compatible chat API root.
 const OpenRouterBaseURL = "https://openrouter.ai/api/v1"
@@ -29,7 +29,7 @@ const (
 	RoleCheck Role = "check"
 )
 
-// OpenRouterModel is one recommended model for a role and the request
+// OpenRouterModel is one available model for a role and the request
 // settings it needs.
 type OpenRouterModel struct {
 	Role Role
@@ -37,7 +37,7 @@ type OpenRouterModel struct {
 	Label string
 	// Model is the OpenRouter model id.
 	Model string
-	// Note says in one line why it is listed (the eval behind it).
+	// Note describes the model in the picker.
 	Note string
 	// JSONMode, Extra, Timeout and IdleTimeout are the connection's keys
 	// of the same names (chat roles only).
@@ -58,11 +58,13 @@ func pinned(endpoint string) map[string]any {
 	return map[string]any{"order": []any{endpoint}, "allow_fallbacks": false}
 }
 
-// OpenRouterModels lists each role's recommended models. The first entry of
+// OpenRouterModels lists each role's available models. The first entry of
 // a role is its default.
 var OpenRouterModels = []OpenRouterModel{
 	{Role: RoleGate, Label: "Jev 1.14", Model: "typesafe/jev-1.14",
 		Note: "The product gate: every problem escalated at 0.45, about 0.25 s a call (evals 2026-10-30, 2026-11-05)."},
+	{Role: RoleGate, Label: "Gemini Decision 1", Model: "google/gemini-decision-1",
+		Note: "Available through the OpenRouter Decisions API."},
 	{Role: RoleGate, Label: "Morph Reflex", Model: "morph/reflex",
 		Note: "In the gate baseline beside Jev: every problem escalated at 0.45 with fewer false escalations, about 0.7 s (eval 2026-11-05)."},
 
@@ -90,7 +92,7 @@ var OpenRouterModels = []OpenRouterModel{
 		Note:  "About 7 s per whole-spec analyze, 0 false positives in 3 runs, but misses the hardest plant (eval 2026-10-30)."},
 }
 
-// OpenRouterChoices returns role's recommended models, its default first.
+// OpenRouterChoices returns role's models, its default first.
 func OpenRouterChoices(role Role) []OpenRouterModel {
 	var ms []OpenRouterModel
 	for _, m := range OpenRouterModels {

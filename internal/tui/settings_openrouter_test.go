@@ -107,6 +107,21 @@ func TestOpenRouterSetupStagesAllThreeRoles(t *testing.T) {
 	assert.NotContains(t, src, "key =")
 }
 
+func TestOpenRouterSetupStagesGeminiGate(t *testing.T) {
+	s := openRouterSettings(t, "")
+	chooseOption(t, s, 0, "Gemini Decision 1")
+	s.stageOpenRouter()
+	require.Nil(t, s.openrouter, s.notice)
+	cfg, _ := stagedConfig(t, s)
+	require.NotNil(t, cfg.Gate)
+	gate := cfg.Providers[cfg.Gate.Provider]
+	assert.Equal(t, config.KindDecisions, gate.Kind)
+	assert.Equal(t, "google/gemini-decision-1", gate.Model)
+	assert.Equal(t, config.OpenRouterKeyEnv, gate.APIKeyEnv)
+	assert.Empty(t, gate.API, "the default API is OpenRouter")
+	assert.Empty(t, gate.BaseURL, "the Decisions API root is the default")
+}
+
 func TestOpenRouterSetupKeepsExistingRoutes(t *testing.T) {
 	const existing = `default = 'fixture'
 [providers.fixture]
@@ -245,7 +260,10 @@ func TestOpenRouterModelsTable(t *testing.T) {
 			assert.NotContains(t, m.Model, " ")
 		}
 	}
-	assert.Equal(t, "typesafe/jev-1.14", config.OpenRouterChoices(config.RoleGate)[0].Model)
+	gates := config.OpenRouterChoices(config.RoleGate)
+	require.GreaterOrEqual(t, len(gates), 2)
+	assert.Equal(t, "typesafe/jev-1.14", gates[0].Model)
+	assert.Equal(t, "google/gemini-decision-1", gates[1].Model)
 	assert.Equal(t, "z-ai/glm-5.3-flash", config.OpenRouterChoices(config.RoleTriage)[0].Model)
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", config.OpenRouterChoices(config.RoleCheck)[0].Model)
 	// Provider must hand out copies: editing a staged table cannot change the table.
