@@ -84,6 +84,7 @@ func TestDecisionsDecide(t *testing.T) {
 	assert.Equal(t, "TypeSafe", d.Upstream)
 	assert.Equal(t, "gen-dec-1", d.ID)
 	assert.Equal(t, Usage{PromptTokens: 2047, CompletionTokens: 77, TotalTokens: 2124}, d.Usage)
+	assert.True(t, d.CostReported)
 	assert.InDelta(t, 8.5974e-05, d.CostUSD, 1e-12)
 	assert.Equal(t, 1, d.Attempts)
 	m, ok := d.MaxClass()
@@ -219,4 +220,107 @@ func TestChatReportsOpenRouterCost(t *testing.T) {
 	require.NoError(t, err)
 	assert.InDelta(t, 0.5, resp.CostUSD, 1e-12)
 	assert.Equal(t, 6, resp.Usage.TotalTokens)
+}
+
+func googleDecisionsFor(t *testing.T, f *fake) *Decisions {
+	t.Helper()
+	g, err := OpenGate("gemini", config.Provider{
+		Kind: config.KindDecisions, API: config.DecisionsGoogle, BaseURL: f.srv.URL + "/v1beta",
+		Model: config.GeminiDecisionModel, APIKeyEnv: config.GeminiKeyEnv,
+	}, func(name string) string {
+		if name == config.GeminiKeyEnv {
+			return testKey
+		}
+		return ""
+	})
+	require.NoError(t, err)
+	return g.(*Decisions)
+}
+
+func TestGoogleDecisions(t *testing.T) {
+	f := newFake(t, func(n int, w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, testKey, r.Header.Get("x-goog-api-key"))
+		assert.Empty(t, r.Header.Get("Authorization"))
+		if n == 1 {
+			w.Header().Set("Retry-After", "1")
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		_, _ = io.WriteString(w, `{"answers":{"claim":{"type":"noul","noul":0.88}},"usage":{"total_input_tokens":901,"total_output_tokens":0,"total_tokens":901}}`)
+	})
+	g := googleDecisionsFor(t, f)
+	g.c.BaseDelay = time.Millisecond
+	var waits []time.Duration
+	g.c.sleep = func(ctx context.Context, d time.Duration) error {
+		waits = append(waits, d)
+		return ctx.Err()
+	}
+	d, err := g.Decide(t.Context(), GateRequest{
+		Model: "override", Policy: "A spec states requirements.", Situation: "Edited claim",
+		Questions: []Question{{ID: "claim", Instructions: "Did the claim change?"}},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []time.Duration{time.Second}, waits)
+	assert.Equal(t, 2, d.Attempts)
+	assert.Equal(t, "override", d.RequestedModel)
+	assert.Empty(t, d.Model)
+	assert.Equal(t, map[string]float64{"claim": 0.88}, d.Scores)
+	assert.Equal(t, Usage{PromptTokens: 901, TotalTokens: 901}, d.Usage)
+	assert.False(t, d.CostReported)
+	requests := f.requests()
+	require.Len(t, requests, 2)
+	assert.Equal(t, http.MethodPost, requests[1].Method)
+	assert.Equal(t, "/v1beta/decisions", requests[1].Path)
+	assert.Equal(t, map[string]any{
+		"model": "override", "input": "Policy:\nA spec states requirements.\n\nSituation:\nEdited claim",
+		"questions": map[string]any{"claim": map[string]any{"type": "noul", "instructions": "Did the claim change?"}},
+	}, requests[1].Body)
+}
+
+func TestGoogleDecisionsErrors(t *testing.T) {
+	req := GateRequest{Questions: []Question{{ID: "claim", Instructions: "Did the claim change?"}}}
+	for _, tc := range []struct {
+		name        string
+		status      int
+		reply, want string
+	}{
+		{"missing noul", http.StatusOK, `{"answers":{"claim":{"type":"noul","confidence":0.99}}}`, "no probability"},
+		{"safety", http.StatusBadRequest, `{"error":{"code":"safety","message":"blocked ` + testKey + `"}}`, "blocked [redacted]"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFake(t, func(_ int, w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tc.status)
+				_, _ = io.WriteString(w, tc.reply)
+			})
+			g := googleDecisionsFor(t, f)
+			d, err := g.Decide(t.Context(), req)
+			require.ErrorContains(t, err, tc.want)
+			assert.NotContains(t, err.Error(), testKey)
+			assert.Nil(t, d)
+			assert.Len(t, f.requests(), 1)
+
+			ctx, cancel := context.WithCancel(t.Context())
+			cancel()
+			_, err = g.Decide(ctx, req)
+			assert.ErrorIs(t, err, context.Canceled)
+			assert.Len(t, f.requests(), 1)
+		})
+	}
+}
+
+func TestGoogleDecisionsRejectsRedirect(t *testing.T) {
+	other := newFake(t, func(_ int, _ http.ResponseWriter, _ *http.Request) {})
+	origin := newFake(t, func(_ int, w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.srv.URL, http.StatusTemporaryRedirect)
+	})
+	g := googleDecisionsFor(t, origin)
+	for _, client := range []Doer{nil, origin.srv.Client()} {
+		g.SetHTTP(client)
+		_, err := g.Decide(t.Context(), GateRequest{Questions: gateQuestions})
+		var e *Error
+		require.ErrorAs(t, err, &e)
+		assert.Equal(t, http.StatusTemporaryRedirect, e.Status)
+		assert.Equal(t, 1, e.Attempts)
+		assert.Empty(t, other.requests())
+	}
 }

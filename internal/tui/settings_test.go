@@ -613,3 +613,63 @@ func TestSettingsProbeReadsEnvFile(t *testing.T) {
 	assert.Contains(t, s.notice, "chmod 600")
 	assert.NotContains(t, s.notice, secret)
 }
+
+func TestSettingsAddGoogleDecisions(t *testing.T) {
+	dir := t.TempDir()
+	user := config.NewDocument(filepath.Join(dir, "user.toml"), nil, false, userSettingsValidate)
+	project := config.NewDocument(filepath.Join(dir, "project.toml"), nil, false, projectSettingsValidate)
+	s := newSettingsWithDocuments(user, project)
+	a := &App{theme: NewTheme(true, false)}
+	s.setup = true
+	assert.Contains(t, strings.Join(s.view(a, 100, 30), "\n"), "Google Gemini Decisions")
+	for s.setupChoice < setupGemini {
+		s.setupKey(key("down"))
+	}
+	s.setupKey(key("enter"))
+	require.False(t, s.setup)
+	assert.Equal(t, config.GoogleDecisionsBaseURL, settingsFieldNamed(t, s, "API endpoint").defaultValue)
+	secret := settingsFieldNamed(t, s, "Key for this session")
+	s.paste("session-fixture")
+	assert.Equal(t, "********", s.value(secret))
+
+	s.openSave(false)
+	require.Equal(t, "save", s.confirm)
+	assert.NotContains(t, strings.Join(s.view(a, 100, 30), "\n"), "session-fixture")
+	require.NotNil(t, s.save(a, "User"), s.notice)
+	b, err := os.ReadFile(user.Path)
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), "session-fixture")
+	assert.Equal(t, "session-fixture", s.sessionKeys["gemini"])
+	cfg, ds := config.Parse(user.Path, b)
+	require.Empty(t, ds)
+	assert.Empty(t, cfg.Default)
+	assert.Nil(t, cfg.Triage)
+	require.NotNil(t, cfg.Gate)
+	assert.Equal(t, "gemini", cfg.Gate.Provider)
+	assert.Equal(t, config.DefaultEscalateClassAt, cfg.Gate.EscalateAt())
+	assert.Equal(t, config.Provider{Kind: config.KindDecisions, API: config.DecisionsGoogle,
+		Model: config.GeminiDecisionModel, APIKeyEnv: config.GeminiKeyEnv}, cfg.Providers["gemini"])
+	s.section = 1
+	s.openTest(a)
+	require.Equal(t, "test", s.confirm)
+	require.Len(t, s.probes, 1)
+	assert.Equal(t, "gate", s.probes[0].role)
+	assert.Equal(t, "gemini", s.probes[0].name)
+	assert.Contains(t, strings.Join(s.view(a, 120, 30), "\n"), config.GoogleDecisionsBaseURL)
+}
+
+func TestSettingsGoogleDecisionsReplacesOnlyGate(t *testing.T) {
+	s := fixtureSettings(t)
+	s.user.Set("fixture", "triage", "provider")
+	s.user.Set(map[string]any{"kind": config.KindDecisions, "model": "existing"}, "providers", "gemini")
+	s.user.Set(map[string]any{"provider": "gemini", "escalate_class_at": 0.6, "skip_material_below": 0.2}, "gate")
+	s.addPreset(setupGemini)
+	cfg, _ := stagedConfig(t, s)
+	assert.Equal(t, "fixture", cfg.Default)
+	assert.Equal(t, "fixture", cfg.Triage.Provider)
+	assert.Equal(t, "existing", cfg.Providers["gemini"].Model)
+	assert.NotEqual(t, "gemini", cfg.Gate.Provider)
+	assert.Equal(t, config.DecisionsGoogle, cfg.Providers[cfg.Gate.Provider].API)
+	assert.Equal(t, 0.6, cfg.Gate.EscalateClassAt)
+	assert.Equal(t, 0.2, cfg.Gate.SkipMaterialBelow)
+}

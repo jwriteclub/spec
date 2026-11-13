@@ -301,7 +301,7 @@ func (g *recGate) Decide(ctx context.Context, req infer.GateRequest) (*infer.Dec
 		}
 		e = infer.CannedEntry{
 			Scores: scores, Model: d.Model, DelayMS: int(elapsed.Milliseconds()),
-			LatencyMS: int(d.Latency.Milliseconds()), CostUSD: d.CostUSD,
+			LatencyMS: int(d.Latency.Milliseconds()), CostUSD: d.CostUSD, CostReported: d.CostReported,
 			PromptTokens: d.Usage.PromptTokens, CompletionTokens: d.Usage.CompletionTokens,
 		}
 	}

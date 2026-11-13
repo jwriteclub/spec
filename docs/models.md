@@ -117,6 +117,19 @@ second, for under a hundredth of a cent. Morph reflex also caught every problem 
 edits (4 of 20 against 13 of 20), at about three times the latency; it is the alternative `spec ui` offers.
 Leave `skip_material_below` at 0: Jev's `material_change` score was unreliable on rewordings in the corpus.
 
+A 13 November route comparison repeated the 31 edit cases
+twice per route. At the unchanged 0.45 threshold, the holdout results below count case-runs, not independent
+cases. The holdout contains 10 unique edits; development-selected thresholds are experimental.
+
+| Route | Holdout problems sent on | Holdout harmless material edits sent on | p50 / p90 per call |
+|---|---:|---:|---:|
+| Jev via OpenRouter | 12/12 | 4/8 | 238 / 312 ms |
+| Gemini Decision 1 via OpenRouter | 12/12 | 4/8 | 273 / 400 ms |
+| Gemini Decision 1 via Google | 12/12 | 4/8 | 223 / 347 ms |
+
+OpenRouter Gemini missed both development runs of one problem at 0.45. Keep Jev and the existing default;
+the small sample does not establish a better replacement. Latencies are over all 76 calls per route.
+
 ## Triage
 
 Triage was measured on a separate set: 41 edits of one spec, with 11 that cause a problem and 30 that do

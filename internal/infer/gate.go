@@ -79,6 +79,8 @@ type Decision struct {
 	Usage Usage
 	// CostUSD is the cost the provider reported (0 when it reported none).
 	CostUSD float64
+	// CostReported distinguishes a reported zero price from a missing cost.
+	CostReported bool
 	// Latency is the wall time of the whole call, retries included.
 	Latency time.Duration
 	// Attempts is how many HTTP requests were sent.
@@ -136,7 +138,7 @@ func maxScore(scores map[string]float64, ids []string) (float64, bool) {
 	return best, any
 }
 
-// OpenGate builds the gate called name from its config. Kind jev is a
+// OpenGate builds the gate called name from its config. Kind decisions is a
 // gate, and kind canned serves its [[gate]] replies; a missing API key
 // variable is a *config.EnvError.
 func OpenGate(name string, p config.Provider, getenv func(string) string) (Gate, error) {

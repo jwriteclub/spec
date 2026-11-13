@@ -146,3 +146,19 @@ func TestDoctorGateAndTriage(t *testing.T) {
 	assert.Contains(t, c["gate"].Detail, "provider jev, model typesafe/jev-1.14: answered in")
 	assert.Contains(t, c["gate"].Detail, "escalate_class_at 0.45")
 }
+
+func TestDoctorGateWithoutReportedCost(t *testing.T) {
+	is := setupInfer(t, okReply("OK"))
+	gate := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"answers": map[string]any{"material_change": map[string]any{"type": "noul", "noul": 0.01}},
+			"usage":   map[string]any{"total_input_tokens": 90, "total_output_tokens": 0},
+		})
+	}))
+	t.Cleanup(gate.Close)
+	writeUserConfig(t, is.env, "[providers.gemini]\nkind = 'decisions'\napi = 'google'\nmodel = 'gemini-decision-1'\nbase_url = '"+gate.URL+"'\n[gate]\nprovider = 'gemini'\n")
+	_, checks := doctorChecks(t, is.run(t, "doctor"))
+	assert.Equal(t, "ok", checks["gate"].Status)
+	assert.Contains(t, checks["gate"].Detail, "cost not reported")
+	assert.NotContains(t, checks["gate"].Detail, "$0")
+}

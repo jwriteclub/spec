@@ -74,6 +74,8 @@ quick gate checks so you don't have to wait for full inference for logically ins
 I strongly recommend that you choose a decision model if you're doing serious editing with spec, it costs
 pennies and saves a lot of time and tokens.
 
+Spec also supports Gemini Decision 1, Google's decision model ([setup](docs/providers.md#using-gemini-decision-1-through-google)).
+
 There are [detailed instructions on setting up Jev alongside your local agent as a provider, like Codex
 or Claude Code](docs/providers.md).
 

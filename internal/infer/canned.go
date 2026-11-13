@@ -85,6 +85,9 @@ type CannedEntry struct {
 	FinishReason string `toml:"finish_reason,omitempty"`
 	// CostUSD is the cost the reply reports (default 0).
 	CostUSD float64 `toml:"cost_usd,omitempty"`
+	// CostReported marks a gate cost as reported, including an explicit zero.
+	// A nonzero CostUSD is always considered reported for older fixtures.
+	CostReported bool `toml:"cost_reported,omitempty"`
 	// PromptTokens and CompletionTokens are the usage the reply reports
 	// (default 0).
 	PromptTokens     int `toml:"prompt_tokens,omitempty"`
@@ -141,7 +144,7 @@ func ParseCanned(src []byte) (*CannedFile, error) {
 				row, _ := e.Position()
 				keys = append(keys, fmt.Sprintf("%s (line %d)", strings.Join(e.Key(), "."), row))
 			}
-			return nil, fmt.Errorf("unknown key %s (tables: check, triage, gate, draft, fix, revise, spell_gate, spell; keys: reply, scores, delay_ms, latency_ms, error, model, finish_reason, cost_usd, prompt_tokens, completion_tokens)", strings.Join(keys, ", "))
+			return nil, fmt.Errorf("unknown key %s (tables: check, triage, gate, draft, fix, revise, spell_gate, spell; keys: reply, scores, delay_ms, latency_ms, error, model, finish_reason, cost_usd, cost_reported, prompt_tokens, completion_tokens)", strings.Join(keys, ", "))
 		case errors.As(err, &derr):
 			row, _ := derr.Position()
 			return nil, fmt.Errorf("line %d: %s: %s", row, strings.Join(derr.Key(), "."), strings.TrimPrefix(derr.Error(), "toml: "))
@@ -348,7 +351,7 @@ func (c *Canned) Decide(ctx context.Context, req GateRequest) (*Decision, error)
 		scores[k] = v
 	}
 	return &Decision{Scores: scores, Provider: c.name, RequestedModel: model, Model: echoed,
-		Usage: e.usage(), CostUSD: e.CostUSD, Latency: e.latency(), Attempts: 1}, nil
+		Usage: e.usage(), CostUSD: e.CostUSD, CostReported: e.CostReported || e.CostUSD != 0, Latency: e.latency(), Attempts: 1}, nil
 }
 
 // take waits out the next entry's delay and fails the call as the entry

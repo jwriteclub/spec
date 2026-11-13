@@ -11,7 +11,7 @@
 // Code CLI run in print mode on the user's own login; or "codex-cli", the
 // installed Codex CLI run with `codex exec` on the user's own ChatGPT login;
 // or "decisions", a gate that scores an edit on yes/no questions through
-// OpenRouter's Decisions API instead of answering chat requests; or
+// the OpenRouter or Google Decisions API; or
 // "canned", hand-written replies read from a file (UI scenes and tests).
 package config
 
@@ -46,9 +46,8 @@ const (
 	// user's own login, so a ChatGPT plan that includes Codex needs no API
 	// key.
 	KindCodexCLI = "codex-cli"
-	// KindDecisions is a gate, not a chat provider: OpenRouter's Decisions API
-	// (alpha), which answers yes/no questions about a situation with
-	// probabilities. infer.OpenGate opens it; infer.Open refuses it.
+	// KindDecisions scores yes/no questions through a Decisions API.
+	// Open it with infer.OpenGate.
 	KindDecisions = "decisions"
 	// KindCanned answers from a file of hand-written replies, served in
 	// order per request purpose (infer.Canned): for UI scenes, tests and
@@ -56,9 +55,31 @@ const (
 	KindCanned = "canned"
 )
 
-// DefaultDecisionsBaseURL is the API root of a decisions provider with no base_url;
-// requests go to DefaultDecisionsBaseURL + "/decisions".
-const DefaultDecisionsBaseURL = "https://openrouter.ai/api/alpha"
+// DecisionsAPI selects the wire protocol of a decisions provider.
+type DecisionsAPI string
+
+const (
+	DecisionsOpenRouter DecisionsAPI = "openrouter"
+	DecisionsGoogle     DecisionsAPI = "google"
+
+	DefaultDecisionsBaseURL = "https://openrouter.ai/api/alpha"
+	GoogleDecisionsBaseURL  = "https://generativelanguage.googleapis.com/v1beta"
+	GeminiDecisionModel     = "gemini-decision-1"
+	GeminiKeyEnv            = "GEMINI_API_KEY"
+)
+
+// DefaultBaseURL is the API root when base_url is omitted. An unknown API
+// has no root. An omitted API uses OpenRouter for existing configurations.
+func (api DecisionsAPI) DefaultBaseURL() string {
+	switch api {
+	case "", DecisionsOpenRouter:
+		return DefaultDecisionsBaseURL
+	case DecisionsGoogle:
+		return GoogleDecisionsBaseURL
+	default:
+		return ""
+	}
+}
 
 // effortLevels are the effort values each kind accepts. For openai they are
 // sent as reasoning_effort; for claude-cli as Claude Code's --effort; for
@@ -87,6 +108,8 @@ type Provider struct {
 	// Kind is KindOpenAI ("" means it too), KindClaudeCLI, KindCodexCLI,
 	// KindDecisions or KindCanned.
 	Kind string `toml:"kind"`
+	// API selects the Decisions API for a gate (default OpenRouter).
+	API DecisionsAPI `toml:"api,omitempty"`
 	// Path is a canned provider's replies file (kind canned only).
 	Path string `toml:"path"`
 	// Command is the CLI a CLI provider runs: a name looked up on PATH or a
@@ -367,7 +390,7 @@ func Parse(file string, src []byte) (Config, []diag.Diagnostic) {
 				if len(key) > 0 {
 					length = len(key[len(key)-1])
 				}
-				bad(at(row, col, length), "unknown key %q (known: default, env_file, max_context_tokens, max_output_tokens, underline_color, foreground_profile, color_capability, glyph_profile, color_scheme, color_scheme_dir, [prompts] with change, analyze, commit, gate and triage, [gate] with provider, escalate_class_at and skip_material_below, [triage] with provider, [providers.<name>] with kind, model, triage_model, triage, effort, timeout; for kind openai also base_url, api_key_env, json_mode, extra, triage_extra, max_tokens_param, idle_timeout, stream; for kinds claude-cli and codex-cli also command, pass_env; kind decisions takes only model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)", strings.Join(key, "."))
+				bad(at(row, col, length), "unknown key %q (known: default, env_file, max_context_tokens, max_output_tokens, underline_color, foreground_profile, color_capability, glyph_profile, color_scheme, color_scheme_dir, [prompts] with change, analyze, commit, gate and triage, [gate] with provider, escalate_class_at and skip_material_below, [triage] with provider, [providers.<name>] with kind, model, triage_model, triage, effort, timeout; for kind openai also base_url, api_key_env, json_mode, extra, triage_extra, max_tokens_param, idle_timeout, stream; for kinds claude-cli and codex-cli also command, pass_env; kind decisions takes only api, model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)", strings.Join(key, "."))
 			}
 		case errors.As(err, &derr):
 			row, col := derr.Position()
@@ -445,7 +468,12 @@ func Parse(file string, src []byte) (Config, []diag.Diagnostic) {
 	}
 	switch {
 	case cfg.Default == "" && len(names) > 0:
-		bad(pos.Range{}, "default is not set; add default = %q (or another provider name)", names[0])
+		for _, name := range names {
+			if !cfg.Providers[name].IsGate() {
+				bad(pos.Range{}, "default is not set; add default = %q (or another provider name)", name)
+				break
+			}
+		}
 	case cfg.Default != "" && len(names) == 0:
 		bad(findKey(src, "default"), "default = %q names a provider, but no [providers.%s] table exists", cfg.Default, cfg.Default)
 	case cfg.Default != "":
@@ -476,8 +504,11 @@ func checkProvider(n string, p Provider) []string {
 	if kind == KindDecisions {
 		return checkDecisions(n, p)
 	}
+	if p.API != "" {
+		bad("api only applies to kind %s", KindDecisions)
+	}
 	if kind == KindCanned {
-		return checkCanned(n, p)
+		return append(msgs, checkCanned(n, p)...)
 	}
 	if _, ok := effortLevels[kind]; !ok {
 		bad("kind %q must be %q (the default), %q, %q, %q or %q", p.Kind, KindOpenAI, KindClaudeCLI, KindCodexCLI, KindDecisions, KindCanned)
@@ -592,12 +623,14 @@ func checkCLI(n string, p Provider) []string {
 	return msgs
 }
 
-// checkDecisions checks a gate provider: model, base_url (optional, default
-// DefaultDecisionsBaseURL), api_key_env and timeout apply; nothing else does.
+// checkDecisions validates the protocol and settings of a gate provider.
 func checkDecisions(n string, p Provider) []string {
 	var msgs []string
 	bad := func(format string, args ...any) {
 		msgs = append(msgs, fmt.Sprintf("provider %q: ", n)+fmt.Sprintf(format, args...))
+	}
+	if p.API.DefaultBaseURL() == "" {
+		bad("api %q must be %q or %q", p.API, DecisionsOpenRouter, DecisionsGoogle)
 	}
 	if strings.TrimSpace(p.Model) == "" {
 		bad("model is required (for example \"typesafe/jev-1.14\")")
@@ -638,7 +671,7 @@ func checkDecisions(n string, p Provider) []string {
 		}
 	}
 	if len(unused) > 0 {
-		bad("%s %s not apply to kind %s (a gate takes model, base_url, api_key_env and timeout)",
+		bad("%s %s not apply to kind %s (a gate takes api, model, base_url, api_key_env and timeout)",
 			strings.Join(unused, ", "), map[bool]string{true: "does", false: "do"}[len(unused) == 1], KindDecisions)
 	}
 	return msgs
@@ -684,10 +717,14 @@ func checkCanned(n string, p Provider) []string {
 }
 
 // DecisionsBaseURL returns the API root of a decisions provider: BaseURL with its
-// ${VAR} references resolved, or DefaultDecisionsBaseURL when it is unset.
+// ${VAR} references resolved, or the default for the selected API.
 func (p Provider) DecisionsBaseURL(name string, getenv func(string) string) (string, error) {
+	root := p.API.DefaultBaseURL()
+	if root == "" {
+		return "", fmt.Errorf("provider %q: unknown decisions api %q", name, p.API)
+	}
 	if p.BaseURL == "" {
-		return DefaultDecisionsBaseURL, nil
+		return root, nil
 	}
 	return p.ResolveBaseURL(name, getenv)
 }
