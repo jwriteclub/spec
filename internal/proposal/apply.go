@@ -16,7 +16,7 @@ import (
 	"github.com/jwriteclub/spec/internal/pos"
 )
 
-// StaleError says the primary hunk no longer applies: the anchor changed
+// StaleError says a primary hunk no longer applies: the anchor changed
 // since the proposal was made. The whole proposal fails.
 type StaleError struct {
 	Name   string
@@ -42,11 +42,22 @@ type Prepared struct {
 func (p *Proposal) Prepare(spec *mdspec.Spec, accept map[int]bool) (*Prepared, error) {
 	out := &Prepared{Applied: []int{}, Failed: []Failure{}}
 	byFile := map[string][]edit.Splice{}
-	if pr := p.Primary; pr != nil && accept[pr.N] && !p.AppliedHunk(pr.N) {
+	// The primaries of a batch are spliced in batch order: added anchors
+	// adjacent to one another resolve to one offset, and splices at one
+	// offset apply in the order given.
+	for _, pr := range p.Primaries() {
+		if !accept[pr.N] || p.AppliedHunk(pr.N) {
+			continue
+		}
 		if !pr.InWorktree {
 			path, sp, err := pr.splice(spec)
 			if err != nil {
 				return nil, err
+			}
+			for _, o := range byFile[path] {
+				if sp.Range.Start < o.Range.End && o.Range.Start < sp.Range.End {
+					return nil, &StaleError{Name: pr.Name, Reason: "overlaps another change of the batch"}
+				}
 			}
 			byFile[path] = append(byFile[path], sp)
 		}

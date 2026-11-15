@@ -10,6 +10,8 @@
 package specctx
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"sort"
 	"strings"
 
@@ -56,7 +58,10 @@ type Region struct {
 // Target is what a check is about: a change, or regions or whole files for
 // analysis.
 type Target struct {
-	Change  *Change
+	Change *Change
+	// Batch are the other changes of a batch checked with Change as one:
+	// the model sees every change of the batch, and their neighborhoods.
+	Batch   []*Change
 	Regions []Region
 	// Files are checked whole: they are sent in full (budget permitting)
 	// and their anchors' neighbors in other files come along.
@@ -129,7 +134,9 @@ type Part struct {
 
 // Context is the assembled text.
 type Context struct {
-	Change    *Change
+	Change *Change
+	// Batch are the batch's changes after Change (empty for one change).
+	Batch     []*Change
 	Regions   []RegionText
 	Neighbors []Neighbor
 	Mentions  []MentionText
@@ -145,7 +152,7 @@ type Context struct {
 
 // Build assembles the context for t from spec.
 func Build(spec *mdspec.Spec, t Target, o Options) *Context {
-	c := &Context{Change: t.Change, whole: t.Files}
+	c := &Context{Change: t.Change, Batch: t.Batch, whole: t.Files}
 	budget := o.MaxTokens
 	if budget <= 0 {
 		budget = DefaultMaxTokens
@@ -153,21 +160,106 @@ func Build(spec *mdspec.Spec, t Target, o Options) *Context {
 	if !o.Full {
 		c.Budget = budget
 	}
-	order := map[*mdspec.Anchor]int{}
-	for i, a := range spec.Anchors {
-		order[a] = i
+
+	_, hops, touched := c.neighborhood(spec, t)
+	for n, h := range hops {
+		as := spec.Lookup(n)
+		if len(as) == 0 {
+			continue
+		}
+		for _, a := range as {
+			f := spec.File(a.File)
+			c.Neighbors = append(c.Neighbors, Neighbor{
+				Name: a.Name, Kind: a.Kind, File: a.File, Line: f.Index().Position(a.LabelRange.Start).Line,
+				Hops: h, Text: f.Text(a.BodyRange),
+			})
+			touched[a.File] = true
+		}
+	}
+	sort.SliceStable(c.Neighbors, func(i, j int) bool {
+		a, b := c.Neighbors[i], c.Neighbors[j]
+		if a.Hops != b.Hops {
+			return a.Hops < b.Hops
+		}
+		if a.File != b.File {
+			return a.File < b.File
+		}
+		return a.Line < b.Line
+	})
+
+	// Prose that mentions the targets, once even when it names several
+	// changes of a batch.
+	seenMention := map[MentionText]bool{}
+	for _, ch := range t.changes() {
+		for _, m := range spec.Mentions(ch.Name) {
+			f := spec.File(m.File)
+			mt := MentionText{
+				File: m.File, Line: f.Index().Position(m.Range.Start).Line, Kind: m.Kind, Text: f.Text(m.Range),
+			}
+			if seenMention[mt] {
+				continue
+			}
+			seenMention[mt] = true
+			c.Mentions = append(c.Mentions, mt)
+			touched[m.File] = true
+		}
 	}
 
+	for _, a := range spec.Anchors {
+		f := spec.File(a.File)
+		c.Index = append(c.Index, IndexEntry{Name: a.Name, Kind: a.Kind, File: a.File, Summary: firstSentence(f, a)})
+	}
+	// A batch's added anchors are not in the files yet: index them, so a
+	// reference to one from another change of the batch is not dangling.
+	if len(t.Batch) > 0 {
+		for _, ch := range t.changes() {
+			if ch.Action != ActionAdd || len(spec.Lookup(ch.Name)) > 0 {
+				continue
+			}
+			pf := mdspec.ParseFile(ch.File, []byte(ch.NewText))
+			for _, a := range pf.Anchors {
+				if a.Name == ch.Name {
+					c.Index = append(c.Index, IndexEntry{Name: a.Name, Kind: a.Kind, File: ch.File, Summary: "(added by this batch) " + firstSentence(pf, a)})
+				}
+			}
+		}
+	}
+
+	c.files(spec, touched, o.Full, budget)
+	return c
+}
+
+// changes returns the target's changes: Change, then Batch.
+func (t Target) changes() []*Change {
+	var out []*Change
+	if t.Change != nil {
+		out = append(out, t.Change)
+	}
+	for _, ch := range t.Batch {
+		if ch != nil {
+			out = append(out, ch)
+		}
+	}
+	return out
+}
+
+// neighborhood returns the target's seed names (hop 0), the names one and
+// two hops of references away (either direction, absent names included),
+// and the files touched so far.
+func (c *Context) neighborhood(spec *mdspec.Spec, t Target) (map[string]bool, map[string]int, map[string]bool) {
 	// Seeds: the hop-0 anchors and the names referenced from the target.
 	seed := map[string]bool{}
 	direct := map[string]bool{}
 	touched := map[string]bool{}
-	if ch := t.Change; ch != nil {
+	chs := t.changes()
+	for _, ch := range chs {
 		seed[ch.Name] = true
 		touched[ch.File] = true
+	}
+	for _, ch := range chs {
 		for _, txt := range []string{ch.OldText, ch.NewText} {
 			for _, n := range refNames(txt) {
-				if n != ch.Name {
+				if !seed[n] {
 					direct[n] = true
 				}
 			}
@@ -237,49 +329,7 @@ func Build(spec *mdspec.Spec, t Target, o Options) *Context {
 			}
 		}
 	}
-	for n, h := range hops {
-		as := spec.Lookup(n)
-		if len(as) == 0 {
-			continue
-		}
-		for _, a := range as {
-			f := spec.File(a.File)
-			c.Neighbors = append(c.Neighbors, Neighbor{
-				Name: a.Name, Kind: a.Kind, File: a.File, Line: f.Index().Position(a.LabelRange.Start).Line,
-				Hops: h, Text: f.Text(a.BodyRange),
-			})
-			touched[a.File] = true
-		}
-	}
-	sort.SliceStable(c.Neighbors, func(i, j int) bool {
-		a, b := c.Neighbors[i], c.Neighbors[j]
-		if a.Hops != b.Hops {
-			return a.Hops < b.Hops
-		}
-		if a.File != b.File {
-			return a.File < b.File
-		}
-		return a.Line < b.Line
-	})
-
-	// Prose that mentions the target.
-	if ch := t.Change; ch != nil {
-		for _, m := range spec.Mentions(ch.Name) {
-			f := spec.File(m.File)
-			c.Mentions = append(c.Mentions, MentionText{
-				File: m.File, Line: f.Index().Position(m.Range.Start).Line, Kind: m.Kind, Text: f.Text(m.Range),
-			})
-			touched[m.File] = true
-		}
-	}
-
-	for _, a := range spec.Anchors {
-		f := spec.File(a.File)
-		c.Index = append(c.Index, IndexEntry{Name: a.Name, Kind: a.Kind, File: a.File, Summary: firstSentence(f, a)})
-	}
-
-	c.files(spec, touched, o.Full, budget)
-	return c
+	return seed, hops, touched
 }
 
 // files fills Files: every file with Full, else the touched files whole if
@@ -375,7 +425,7 @@ func (c *Context) files(spec *mdspec.Spec, touched map[string]bool, full bool, b
 // fixedTokens estimates everything but the files.
 func (c *Context) fixedTokens() int {
 	n := 0
-	if ch := c.Change; ch != nil {
+	for _, ch := range (Target{Change: c.Change, Batch: c.Batch}).changes() {
 		n += len(ch.OldText) + len(ch.NewText) + len(ch.Why)
 	}
 	for _, r := range c.Regions {
@@ -500,5 +550,55 @@ func sortedKeys(m map[string]bool) []string {
 		out = append(out, k)
 	}
 	sort.Strings(out)
+	return out
+}
+
+// Deps returns what a check of t over spec depends on, keyed by what it is
+// and valued by a content hash: every seed and every name one or two hops
+// of references away ("$Name": its definitions' file, kind and text, or
+// "absent"), and the prose that mentions each changed anchor ("mentions
+// $Name"). It is computed the way Build gathers the neighborhood, so the
+// same spec gives the same map, and a change to any of that text, a new
+// reference to a target or a hop name, or a name that appears or
+// disappears gives a different one. The whole-file background and the
+// anchor index are not dependencies: edits to unrelated anchors leave the
+// map unchanged. Line numbers are left out, so text moving does not count.
+func Deps(spec *mdspec.Spec, t Target) map[string]string {
+	c := &Context{}
+	seed, hops, _ := c.neighborhood(spec, t)
+	out := map[string]string{}
+	names := sortedKeys(seed)
+	for n := range hops {
+		if !seed[n] {
+			names = append(names, n)
+		}
+	}
+	for _, n := range names {
+		as := spec.Lookup(n)
+		if len(as) == 0 {
+			out["$"+n] = "absent"
+			continue
+		}
+		h := sha256.New()
+		for _, a := range as {
+			f := spec.File(a.File)
+			h.Write([]byte(a.File + "\x00" + string(a.Kind) + "\x00" + f.Text(a.BodyRange) + "\x00"))
+		}
+		out["$"+n] = hex.EncodeToString(h.Sum(nil))
+	}
+	for _, ch := range t.changes() {
+		// Sorted, so moving a mentioning paragraph past another does not count.
+		var parts []string
+		for _, m := range spec.Mentions(ch.Name) {
+			f := spec.File(m.File)
+			parts = append(parts, m.File+"\x00"+string(m.Kind)+"\x00"+f.Text(m.Range)+"\x00")
+		}
+		sort.Strings(parts)
+		h := sha256.New()
+		for _, p := range parts {
+			h.Write([]byte(p))
+		}
+		out["mentions $"+ch.Name] = hex.EncodeToString(h.Sum(nil))
+	}
 	return out
 }

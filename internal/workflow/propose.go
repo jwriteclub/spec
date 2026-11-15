@@ -29,7 +29,28 @@ import (
 // Inference.ClearedBy names the stage and its summary says why. protected
 // are the ranges no finding hunk may touch.
 func (w *Workflow) CheckChange(ck *Checker, spec *mdspec.Spec, ch *specctx.Change, pr *proposal.Primary, protected map[string][]pos.Range, author string) (*proposal.Proposal, *Error) {
-	stages, cleared := ck.screen(spec, ch)
+	return w.CheckBatch(ck, spec, []*specctx.Change{ch}, []*proposal.Primary{pr}, protected, author)
+}
+
+// CheckBatch is CheckChange for a batch: chs[i] is the change of primary
+// prs[i] (numbered 1..k), all checked in one model request that sees every
+// change of the batch, and returned as one proposal whose finding hunks are
+// numbered from k+1. A batch skips the gate and triage stages, which judge
+// one change.
+func (w *Workflow) CheckBatch(ck *Checker, spec *mdspec.Spec, chs []*specctx.Change, prs []*proposal.Primary, protected map[string][]pos.Range, author string) (*proposal.Proposal, *Error) {
+	if len(chs) == 0 || len(chs) != len(prs) {
+		return nil, internalErr(fmt.Errorf("a check needs one change per primary (got %d changes, %d primaries)", len(chs), len(prs)))
+	}
+	ch, pr := chs[0], prs[0]
+	var batch []*proposal.Primary
+	if len(prs) > 1 {
+		batch = prs[1:]
+	}
+	var stages []proposal.Stage
+	var cleared *proposal.Stage
+	if len(chs) == 1 {
+		stages, cleared = ck.screen(spec, ch)
+	}
 	if e := ck.cancelled(); e != nil {
 		return nil, e
 	}
@@ -39,16 +60,19 @@ func (w *Workflow) CheckChange(ck *Checker, spec *mdspec.Spec, ch *specctx.Chang
 		p := &proposal.Proposal{
 			Created: w.stamp(), Author: author, Kind: proposal.KindChange,
 			Why: ch.Why, Summary: ClearedText(*cleared) + "; the check did not run",
-			Primary: pr, Status: proposal.StatusPending, Inference: &rec,
+			Primary: pr, Batch: batch, Status: proposal.StatusPending, Inference: &rec,
 		}
 		FillBase(p, spec)
 		return p, nil
 	}
 	anchor := "$" + ch.Name
+	if len(chs) > 1 {
+		anchor = fmt.Sprintf("$%s and %d more", ch.Name, len(chs)-1)
+	}
 	check := proposal.Stage{Name: proposal.StageCheck, Provider: ck.Record.Provider, Model: ck.Record.Model}
 	start := ck.clock()
 	ck.emit(anchor, withOutcome(check, proposal.OutcomeRunning), start)
-	c := specctx.Build(spec, specctx.Target{Change: ch}, ck.options())
+	c := specctx.Build(spec, specctx.Target{Change: ch, Batch: chs[1:]}, ck.options())
 	res, e := ck.Run(prompt.Change, c)
 	if e != nil {
 		check.Outcome, check.Reason = proposal.OutcomeFailed, oneLineText(e.Message)
@@ -56,7 +80,7 @@ func (w *Workflow) CheckChange(ck *Checker, spec *mdspec.Spec, ch *specctx.Chang
 		ck.emit(anchor, check, start)
 		return nil, e
 	}
-	hunks, notes := finding.Verify(res, SourcesOf(spec), finding.Options{Protected: protected, FirstN: 2})
+	hunks, notes := finding.Verify(res, SourcesOf(spec), finding.Options{Protected: protected, FirstN: len(prs) + 1})
 	rec := ck.Record
 	check.Model, check.LatencyMS, check.CostUSD = rec.Model, ck.clock().Sub(start).Milliseconds(), rec.CostUSD
 	check.Outcome, check.Findings = proposal.OutcomeDone, len(hunks)+len(notes)+len(res.Questions)
@@ -66,7 +90,7 @@ func (w *Workflow) CheckChange(ck *Checker, spec *mdspec.Spec, ch *specctx.Chang
 	ck.emit(anchor, check, start)
 	p := &proposal.Proposal{
 		Created: w.stamp(), Author: author, Kind: proposal.KindChange,
-		Why: ch.Why, Summary: strings.TrimSpace(res.Summary), Primary: pr, Hunks: hunks, Notes: notes,
+		Why: ch.Why, Summary: strings.TrimSpace(res.Summary), Primary: pr, Batch: batch, Hunks: hunks, Notes: notes,
 		Questions: res.Questions, Status: proposal.StatusPending, Inference: &rec,
 	}
 	FillBase(p, spec)
@@ -123,7 +147,9 @@ type pendingEdit struct {
 }
 
 // Propose turns the working tree's edits of anchors (against HEAD) into
-// proposals: one contradiction check per changed anchor. Without Keep the
+// proposals: without Keep one proposal holding every named anchor as a
+// primary (a batch, with one contradiction check that sees the whole
+// batch); with Keep one proposal and one check per changed anchor. Without Keep the
 // proposals are filed and the HEAD text is restored, both under the lock.
 // All model calls happen before anything is written, so a provider failure
 // (or the end of ctx) leaves the working tree as it was. A change an applied
@@ -250,20 +276,33 @@ func (w *Workflow) Propose(ctx context.Context, proj *project.Project, req Propo
 	}
 	ck.OnStage = req.OnStage
 	var ps []*proposal.Proposal
-	for _, pe := range edits {
+	// of maps each edit to the proposal that holds it.
+	of := map[*pendingEdit]*proposal.Proposal{}
+	for _, group := range batchGroups(edits, req.Keep) {
 		protected := map[string][]pos.Range{}
-		if pe.change.Action != specctx.ActionAdd || req.Keep {
-			if as := target.Lookup(pe.change.Name); len(as) == 1 {
-				protected[as[0].File] = []pos.Range{as[0].BodyRange}
+		var chs []*specctx.Change
+		// Called for its side effect: it numbers the group's primaries
+		// 1..k (each was created with N 1). Do not drop it.
+		primariesOf(group)
+		var prs []*proposal.Primary
+		for _, pe := range group {
+			chs, prs = append(chs, pe.change), append(prs, pe.primary)
+			if pe.change.Action != specctx.ActionAdd || req.Keep {
+				if as := target.Lookup(pe.change.Name); len(as) == 1 {
+					protected[as[0].File] = append(protected[as[0].File], as[0].BodyRange)
+				}
 			}
 		}
 		ck.ResetRecord()
-		p, e := w.CheckChange(ck, target, pe.change, pe.primary, protected, req.Author)
+		p, e := w.CheckBatch(ck, target, chs, prs, protected, req.Author)
 		if e != nil {
 			return nil, e
 		}
 		p.SourceKind = req.SourceKind
 		ps = append(ps, p)
+		for _, pe := range group {
+			of[pe] = p
+		}
 	}
 	res.Proposals = ps
 	if req.Keep {
@@ -279,15 +318,11 @@ func (w *Workflow) Propose(ctx context.Context, proj *project.Project, req Propo
 
 	if !req.Keep {
 		// Auto-approved proposals keep their edit: they are not restored.
-		index := map[*pendingEdit]int{}
-		for i, pe := range edits {
-			index[pe] = i
-		}
 		var keepEdits []edit.FileEdit
 		for _, fe := range fileEdits {
 			var sps []edit.Splice
 			for _, pe := range restoreOrder(edits) {
-				if pe.file == fe.Path && !(req.AutoApprove && Eligible(ps[index[pe]])) {
+				if pe.file == fe.Path && !(req.AutoApprove && Eligible(of[pe])) {
 					sps = append(sps, *pe.restore)
 				}
 			}
@@ -295,8 +330,8 @@ func (w *Workflow) Propose(ctx context.Context, proj *project.Project, req Propo
 				keepEdits = append(keepEdits, edit.FileEdit{Path: fe.Path, Snapshot: fe.Snapshot, Splices: sps})
 			}
 		}
-		for i, pe := range edits {
-			if req.AutoApprove && Eligible(ps[i]) {
+		for _, pe := range edits {
+			if req.AutoApprove && Eligible(of[pe]) {
 				pe.primary.InWorktree = true
 			}
 		}
@@ -496,7 +531,7 @@ func PendingFor(existing []*proposal.Proposal, names []string) []Duplicate {
 		}
 		seen[n] = true
 		for _, p := range existing {
-			if p.Status == proposal.StatusPending && p.Primary != nil && p.Primary.Name == n {
+			if p.Status == proposal.StatusPending && p.PrimaryFor(n) != nil {
 				out = append(out, Duplicate{Name: n, ID: p.ID})
 				break
 			}

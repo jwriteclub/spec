@@ -209,41 +209,31 @@ func TestPrimaryMarkerSaveFailureIsNotReportedAsDurableStale(t *testing.T) {
 	assert.Nil(t, p.StalePrimary)
 }
 
-func TestRejectedBatchCheckContinuesToLaterPublishedCard(t *testing.T) {
+func TestRejectedBatchDuringCheckKeepsTheRejection(t *testing.T) {
 	proj := commitRepo(t)
 	env := newCascadeEnv(t, "")
 	var calls atomic.Int32
-	rejected := make(chan string, 1)
 	env.check.reply = func(w http.ResponseWriter, body map[string]any) {
 		if calls.Add(1) == 1 {
 			ps, err := env.wf.Store(proj.Root).List()
 			require.NoError(t, err)
-			require.Len(t, ps, 2)
-			for _, p := range ps {
-				if p.CheckState == "running" {
-					rejected <- p.ID
-					_, e := env.wf.Reject(proj.Root, p.ID, "declined during check", "Chris")
-					require.Nil(t, e)
-				}
-			}
+			require.Len(t, ps, 1, "one propose run files one batch")
+			require.Equal(t, "running", ps[0].CheckState)
+			_, e := env.wf.Reject(proj.Root, ps[0].ID, "declined during check", "Chris")
+			require.Nil(t, e)
 		}
 		chatReply(`{"summary":"checked","findings":[],"questions":[]}`)(w, body)
 	}
 	write(t, proj.Root, "c.spec.md", strings.ReplaceAll(strings.Replace(commitSpec, "at most 4", "at most 6", 1), "within 5 s", "within 7 s"))
 	res, e := env.wf.Propose(context.Background(), proj, ProposeRequest{Names: []string{"A.One", "B.Two"}, SourceKind: "agent", Why: "update", Full: true})
 	require.Nil(t, e)
-	require.Len(t, res.Proposals, 2)
-	assert.Equal(t, int32(2), calls.Load())
-	rejectedID := <-rejected
-	for _, p := range res.Proposals {
-		if p.ID == rejectedID {
-			assert.Equal(t, proposal.StatusRejected, p.Status)
-			assert.Equal(t, "declined during check", p.Decision.Reason)
-			assert.False(t, Eligible(p))
-		} else {
-			assert.Equal(t, "complete", p.CheckState)
-		}
-	}
+	require.Len(t, res.Proposals, 1)
+	assert.Equal(t, int32(1), calls.Load(), "one check covers the batch")
+	p := res.Proposals[0]
+	assert.Equal(t, []string{"$A.One", "$B.Two"}, p.Names())
+	assert.Equal(t, proposal.StatusRejected, p.Status)
+	assert.Equal(t, "declined during check", p.Decision.Reason)
+	assert.False(t, Eligible(p))
 }
 
 func TestPartialResidualGuidancePreservesAppliedReceipt(t *testing.T) {
@@ -256,7 +246,7 @@ func TestPartialResidualGuidancePreservesAppliedReceipt(t *testing.T) {
 	applied := strings.Replace(commitSpec, "at most 4", "at most 6", 1)
 	write(t, proj.Root, "c.spec.md", applied)
 	write(t, proj.Root, "other.spec.md", "# New context\n")
-	_, e := wf.Apply(proj.Root, p.ID, nil, "human", false)
+	_, e := wf.Apply(proj.Root, p.ID, []int{1, 3}, "human", false)
 	require.NotNil(t, e)
 	assert.Equal(t, "stale_check", e.Code)
 	assert.Contains(t, e.Message, "spec reject "+p.ID)
@@ -270,7 +260,7 @@ func TestPartialResidualGuidancePreservesAppliedReceipt(t *testing.T) {
 	h.Replace = "Fresh text between"
 	_, e = wf.SetHunk(proj.Root, p.ID, h)
 	require.Nil(t, e)
-	_, e = wf.Apply(proj.Root, p.ID, nil, "human", false)
+	_, e = wf.Apply(proj.Root, p.ID, []int{1, 3}, "human", false)
 	require.NotNil(t, e)
 	assert.Equal(t, "stale_check", e.Code)
 	closed, e := wf.Reject(proj.Root, p.ID, "refile residual", "Chris")
@@ -299,7 +289,7 @@ func (r *changingIDReader) Read(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func TestQueuedStalePrimaryDoesNotAbortPublishedBatch(t *testing.T) {
+func TestQueuedStalePrimaryStalesTheWholeBatch(t *testing.T) {
 	proj := commitRepo(t)
 	p := recoveryProposal(t, proj)
 	require.NoError(t, proposal.NewStore(proj.Root).Remove(p.ID))
@@ -314,15 +304,15 @@ func TestQueuedStalePrimaryDoesNotAbortPublishedBatch(t *testing.T) {
 		{primary: other, change: &specctx.Change{Name: "B.Two"}},
 	}, nil, &ProposeResult{})
 	require.Nil(t, e)
-	require.Len(t, res.Proposals, 2)
+	require.Len(t, res.Proposals, 1, "the two edits are one batch")
+	assert.Equal(t, []int{1, 2}, res.Proposals[0].PrimaryNumbers())
 	assert.Equal(t, "queued", res.Proposals[0].CheckState)
-	require.NotNil(t, res.Proposals[0].StalePrimary)
-	assert.Equal(t, "stale", res.Proposals[1].CheckState, "later published check is processed instead of stranded queued")
+	require.NotNil(t, res.Proposals[0].StalePrimary, "a stale primary stales the whole batch")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	ps, err := wf.Wait(ctx, proj.Root, []string{res.Proposals[0].ID, res.Proposals[1].ID}, time.Second)
+	ps, err := wf.Wait(ctx, proj.Root, []string{res.Proposals[0].ID}, time.Second)
 	require.NoError(t, err)
-	require.Len(t, ps, 2)
+	require.Len(t, ps, 1)
 	assert.Equal(t, proposal.StatusPending, ps[0].Status)
 }
 

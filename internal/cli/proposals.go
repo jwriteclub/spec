@@ -138,7 +138,9 @@ type proposalData struct {
 
 // approveData is the data of approve and review.
 type approveData struct {
-	Warning  string             `json:"warning,omitempty"`
+	Warning string `json:"warning,omitempty"`
+	// Skipped are the follow-on hunks a default approval left out.
+	Skipped  []int              `json:"skipped"`
 	Proposal *proposal.Proposal `json:"proposal"`
 	Commit   string             `json:"commit"`
 	Trailers []string           `json:"trailers"`
@@ -153,6 +155,19 @@ type approveData struct {
 // Decisions delivered after a wait (or when ack is set, for auto-approved
 // ones) are acknowledged (proposal.Store.Acknowledge).
 func (s *session) settle(root string, ps []*proposal.Proposal, skipped []string, wait time.Duration, ack bool, human string) *outcome {
+	out := s.settleWait(root, ps, skipped, wait, ack, human)
+	if wait == 0 && out.code == "pending" {
+		// Nothing waited: say so, so the line does not read as blocking.
+		out.message = strings.Replace(out.message, "waiting for review: ", "filed for review (not waiting; pass --wait D to block): ", 1)
+		if out.stderr != "" {
+			out.stderr = "spec: " + out.message + "\n"
+		}
+	}
+	return out
+}
+
+// settleWait is settle before its no-wait wording.
+func (s *session) settleWait(root string, ps []*proposal.Proposal, skipped []string, wait time.Duration, ack bool, human string) *outcome {
 	st := s.store(root)
 	if wait > 0 {
 		ids := make([]string, 0, len(ps))
@@ -328,7 +343,10 @@ func renderProposal(p *proposal.Proposal) string {
 	if p.IsModel() {
 		b.WriteString(renderModel(p))
 	}
-	if pr := p.Primary; pr != nil {
+	if p.IsBatch() {
+		fmt.Fprintf(&b, "  batch of %d anchors (hunks %s), applied together\n", len(p.Primaries()), joinInts(p.PrimaryNumbers()))
+	}
+	for _, pr := range p.Primaries() {
 		fmt.Fprintf(&b, "  [%d] %s %s in %s", pr.N, pr.Action, pr.Name, pr.File)
 		if pr.OldKind != "" && pr.NewKind != "" && pr.OldKind != pr.NewKind {
 			fmt.Fprintf(&b, " (%s -> %s)", pr.OldKind, pr.NewKind)

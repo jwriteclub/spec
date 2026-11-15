@@ -20,12 +20,16 @@ import (
 // ---- proposals ----
 
 type proposalSummary struct {
-	ID        string `json:"id"`
-	Kind      string `json:"kind"`
-	Status    string `json:"status"`
-	Created   string `json:"created"`
-	Author    string `json:"author"`
-	Anchor    string `json:"anchor"`
+	ID      string `json:"id"`
+	Kind    string `json:"kind"`
+	Status  string `json:"status"`
+	Created string `json:"created"`
+	Author  string `json:"author"`
+	Anchor  string `json:"anchor"`
+	// Anchors are every primary's anchor: one, or a batch's.
+	Anchors []string `json:"anchors"`
+	// Reason is a decided proposal's reason (a rejection's why), else "".
+	Reason    string `json:"reason"`
 	Why       string `json:"why"`
 	Hunks     int    `json:"hunks"`
 	Notes     int    `json:"notes"`
@@ -73,11 +77,21 @@ func (s *session) runProposals() *outcome {
 			ID: p.ID, Kind: p.Kind, Status: p.Status, Created: p.Created.UTC().Format(time.RFC3339),
 			Author: p.Author, Why: p.Why, Hunks: len(p.Numbers()), Notes: len(p.Notes), Questions: len(p.Questions),
 		}
+		sum.Anchors = p.Names()
+		if sum.Anchors == nil {
+			sum.Anchors = []string{}
+		}
 		if p.Primary != nil {
 			sum.Anchor = p.Primary.Name
 		}
+		if p.Decision != nil {
+			sum.Reason = p.Decision.Reason
+		}
 		data.Proposals = append(data.Proposals, sum)
 		what := sum.Anchor
+		if len(sum.Anchors) > 1 {
+			what = fmt.Sprintf("%s +%d", sum.Anchor, len(sum.Anchors)-1)
+		}
 		switch {
 		case what != "":
 		case p.Fix != nil:
@@ -233,29 +247,36 @@ func (s *session) runProposal(id string, ack bool, wait time.Duration) *outcome 
 
 func (s *session) approveCommand() *cobra.Command {
 	var hunks, by string
-	var commit bool
+	var commit, all bool
 	cmd := &cobra.Command{
-		Use:   "approve ID [--hunks 1,3] [--commit]",
-		Short: "apply a proposal (all hunks, or the listed ones) to the spec files",
-		Long: "Re-verifies every hunk against the files first: a hunk whose text moved or changed, or that would\n" +
+		Use:   "approve ID [--hunks 1,3 | --all] [--commit]",
+		Short: "apply a proposal (its change, the listed hunks, or --all) to the spec files",
+		Long: "Without --hunks or --all a change proposal applies only its change: hunk 1, or every anchor of a\n" +
+			"batch. The check's follow-on hunks are applied only when named (--hunks 1,4) or with --all, and the\n" +
+			"ones left out are listed; an analysis, fix or model proposal applies all its hunks.\n" +
+			"Re-verifies every hunk against the files first: a hunk whose text moved or changed, or that would\n" +
 			"introduce a lint error, fails alone; a change whose anchor changed since fails the whole proposal\n" +
 			"(exit 1 stale; it stays pending with stale_primary, and --wait reports exit 6). Inspect it, and ask\n" +
 			"the user to close or rework it and refile the remaining work. A partly applied stale proposal is\n" +
 			"closed by rejecting its remaining edits before refiling; the applied edits stay.\n" +
 			"--commit commits the touched spec files with the Spec-Change/Spec-Rename trailers and the reason.",
-		Args: needArgs(1, "approve ID [--hunks 1,3] [--commit]"),
+		Args: needArgs(1, "approve ID [--hunks 1,3 | --all] [--commit]"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s.result = s.runApprove(args[0], hunks, by, commit)
+			s.result = s.runApprove(args[0], hunks, by, commit, all)
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&hunks, "hunks", "", "apply only these hunks, e.g. 1,3 or 1-3 (hunk 1 of a change is the change itself)")
+	cmd.Flags().StringVar(&hunks, "hunks", "", "apply these hunks, e.g. 1,3 or 1-3 (hunk 1 of a change is the change itself; a batch's changes are 1..k)")
+	cmd.Flags().BoolVar(&all, "all", false, "apply every hunk, the check's follow-on edits included")
 	cmd.Flags().BoolVar(&commit, "commit", false, "commit the touched spec files with the required trailers")
 	cmd.Flags().StringVar(&by, "by", "", "who approves (default: human)")
 	return cmd
 }
 
-func (s *session) runApprove(id, hunks, by string, commit bool) *outcome {
+func (s *session) runApprove(id, hunks, by string, commit, all bool) *outcome {
+	if all && hunks != "" {
+		return usageErr("--all and --hunks exclude each other")
+	}
 	accept, o := parseHunks(hunks)
 	if o != nil {
 		return o
@@ -263,6 +284,13 @@ func (s *session) runApprove(id, hunks, by string, commit bool) *outcome {
 	root, o := s.resolveRoot()
 	if o != nil {
 		return o
+	}
+	if all {
+		p, o := s.loadProposal(root, id)
+		if o != nil {
+			return o
+		}
+		accept = p.Numbers()
 	}
 	res, e := s.workflow().Apply(root, id, accept, byOr(by), commit)
 	if e != nil {
@@ -276,9 +304,15 @@ func byOr(by string) string {
 }
 
 func approvedOutcome(res *workflow.Applied) *outcome {
-	data := approveData{Proposal: res.Proposal, Commit: res.Commit, Trailers: res.Trailers, Warning: res.Warning}
+	data := approveData{Proposal: res.Proposal, Commit: res.Commit, Trailers: res.Trailers, Warning: res.Warning, Skipped: res.Skipped}
+	if data.Skipped == nil {
+		data.Skipped = []int{}
+	}
 	var b strings.Builder
 	b.WriteString(renderProposal(res.Proposal))
+	if len(res.Skipped) > 0 {
+		fmt.Fprintf(&b, "skipped follow-on hunks %s (not named; approve with --hunks or --all to apply them); the proposal is decided, so file them again if they are wanted\n", joinInts(res.Skipped))
+	}
 	if res.Commit != "" {
 		fmt.Fprintf(&b, "committed %s", shortSHA(res.Commit))
 		if len(res.Trailers) > 0 {

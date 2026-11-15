@@ -64,7 +64,12 @@ func observable(p *proposal.Proposal) bool {
 	if p.IsModel() {
 		return true
 	}
-	return p.Primary != nil && !p.AppliedHunk(p.Primary.N)
+	for _, pr := range p.Primaries() {
+		if !p.AppliedHunk(pr.N) {
+			return true
+		}
+	}
+	return false
 }
 
 func (w *Workflow) checkPrimaryLocked(root string, p *proposal.Proposal, loaded *project.Loaded) *Error {

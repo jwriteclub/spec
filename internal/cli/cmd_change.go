@@ -88,7 +88,10 @@ func (s *session) changeCommand() *cobra.Command {
 				}
 				return nil
 			}
-			return needArgs(1, "change NAME --body-file F --why W")(cmd, args)
+			if f.add && len(args) == 0 {
+				return fmt.Errorf("usage: spec change NAME --add (--after NAME | --section N) --body-file F --why W: --add needs the new anchor's NAME before the flags")
+			}
+			return needArgs(1, "change NAME (--body-file F | --remove | --def | --inv | --add ...) --why W")(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if f.tla != "" {
@@ -290,7 +293,8 @@ func (s *session) fileProposals(root string, ps []*proposal.Proposal, skipped []
 				fmt.Fprintf(&b, "not auto-approved: %s has an unfinished/failed required check, breaking findings or questions\n", p.ID)
 				continue
 			}
-			res, e := s.workflow().Apply(root, p.ID, nil, f.author()+" (auto-approve)", false)
+			// --auto-approve applies the check's follow-on fixes too, as documented.
+			res, e := s.workflow().Apply(root, p.ID, p.Numbers(), f.author()+" (auto-approve)", false)
 			if e != nil {
 				return filedFailure(ps, skipped, fromWF(e))
 			}
@@ -442,9 +446,9 @@ func (s *session) placementFor(spec *mdspec.Spec, after, section string) (propos
 	default:
 		qs := []string{}
 		for _, c := range cands {
-			qs = append(qs, c.Qualified())
+			qs = append(qs, mdspec.StemOf(c.File)+":"+c.Number)
 		}
-		o := fail(exitFail, "ambiguous", "--section %s matches %d sections; qualify it (%s)", t.display(), len(cands), strings.Join(qs, ", "))
+		o := fail(exitFail, "ambiguous", "--section %s matches %d sections; qualify it as FILE:%s, one of: %s", t.display(), len(cands), t.number, strings.Join(qs, ", "))
 		o.data = map[string]any{"candidates": qs}
 		return proposal.Placement{}, "", o
 	}

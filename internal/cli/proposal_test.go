@@ -185,7 +185,7 @@ func TestChangeApproveCommit(t *testing.T) {
 	assert.Contains(t, h.stdout, "[1] change $Frame.Timing in demo.spec.md")
 	assert.Contains(t, h.stdout, "      + "+strings.Split(timingNew, "\n")[0])
 
-	jr = is.run(t, "approve", p.ID, "--commit")
+	jr = is.run(t, "approve", p.ID, "--commit", "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	var ad approveData
 	jr.decode(t, &ad)
@@ -319,7 +319,7 @@ func TestProposeRestoresHeadText(t *testing.T) {
 	assert.Contains(t, msg, "<text>\n"+timingOld+"\n</text>")
 	assert.Contains(t, msg, "reason: bound it\n")
 
-	jr = is.run(t, "approve", p.ID)
+	jr = is.run(t, "approve", p.ID, "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	assert.Equal(t, strings.Replace(edited, proseFix.Find, proseFix.Replace, 1), readFile(t, is.dir, "demo.spec.md"))
 	_, sd = statusOf(t, is.dir)
@@ -339,20 +339,18 @@ func TestProposeAddAndRemoveRoundTrip(t *testing.T) {
 	jr := is.run(t, "propose", "--source", "human", "--why", "restructure")
 	require.Equal(t, exitPending, jr.code, jr.stdout)
 	d := filedOf(t, jr)
-	require.Len(t, d.Proposals, 2)
+	require.Len(t, d.Proposals, 1, "one run files one batch")
 	actions := map[string]string{}
-	for _, p := range d.Proposals {
-		actions[p.Primary.Name] = p.Primary.Action
+	for _, pr := range d.Proposals[0].Primaries() {
+		actions[pr.Name] = pr.Action
 	}
 	assert.Equal(t, map[string]string{"$Frame.Gap": "add", "$Frame.Order": "remove"}, actions)
 	// Both anchors are back to HEAD; the prose edit stays.
 	assert.Equal(t, strings.Replace(baseSpec, "Prose that mentions $Frame.Order for the reader.\n", "Prose for the reader.\n", 1), readFile(t, is.dir, "demo.spec.md"))
 
-	for _, p := range d.Proposals {
-		jr = is.run(t, "approve", p.ID)
-		require.Equal(t, 0, jr.code, jr.stdout)
-	}
-	assert.Equal(t, edited, readFile(t, is.dir, "demo.spec.md"), "approving both reproduces the edit byte for byte")
+	jr = is.run(t, "approve", d.Proposals[0].ID)
+	require.Equal(t, 0, jr.code, jr.stdout)
+	assert.Equal(t, edited, readFile(t, is.dir, "demo.spec.md"), "approving the batch reproduces the edit byte for byte")
 }
 
 func TestProposeKeep(t *testing.T) {
@@ -370,7 +368,7 @@ func TestProposeKeep(t *testing.T) {
 	assert.Equal(t, edited, readFile(t, is.dir, "demo.spec.md"), "--keep leaves the edit")
 	assert.Contains(t, userMessage(t, is.srv, 0), "<text>\n"+timingNew+"\n</text>")
 
-	jr = is.run(t, "approve", p.ID)
+	jr = is.run(t, "approve", p.ID, "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	assert.Equal(t, strings.Replace(edited, proseFix.Find, proseFix.Replace, 1), readFile(t, is.dir, "demo.spec.md"))
 
@@ -396,7 +394,7 @@ func TestStaleProposal(t *testing.T) {
 	require.Equal(t, exitPending, jr.code)
 	id := filedOf(t, jr).Proposals[0].ID
 	replaceIn(t, is.dir, "demo.spec.md", "for the reader.", "for every reader.")
-	jr = is.run(t, "approve", id)
+	jr = is.run(t, "approve", id, "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	var ad approveData
 	jr.decode(t, &ad)

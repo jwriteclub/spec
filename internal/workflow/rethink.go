@@ -61,7 +61,7 @@ func (w *Workflow) Rethink(ctx context.Context, proj *project.Project, req Rethi
 	if of != nil && of.Kind == proposal.KindAnalysis {
 		return w.rethinkAnalysis(ctx, proj, req)
 	}
-	if of == nil || of.Primary == nil || !of.Primary.InWorktree || of.Primary.Name == "" {
+	if of == nil || of.Primary == nil || of.IsBatch() || !of.Primary.InWorktree || of.Primary.Name == "" {
 		return nil, fail(ExitFail, "bad_change", "only a check of an edit in the files can be rethought")
 	}
 	if of.Status != proposal.StatusPending {

@@ -59,7 +59,7 @@ func (w *Workflow) ReviseHunk(ck *Checker, root string, p *proposal.Proposal, h 
 		return nil, fail(ExitFail, "bad_model_output", "the revised edit changes nothing")
 	}
 	start := strings.Index(src, rev.Find)
-	if pr := p.Primary; pr != nil {
+	for _, pr := range p.Primaries() {
 		for _, a := range loaded.Spec.Lookup(strings.TrimPrefix(pr.Name, "$")) {
 			if a.File == h.File && start < a.BodyRange.End && a.BodyRange.Start < start+len(rev.Find) {
 				return nil, fail(ExitFail, "bad_model_output", "the revised edit changes %s, the change under review; try other feedback", pr.Name)

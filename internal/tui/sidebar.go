@@ -710,8 +710,10 @@ func (a *App) applyProposal(lock *project.Lock, p *proposal.Proposal, format boo
 
 func (a *App) proposalHunksToApply(p *proposal.Proposal) []int {
 	var ns []int
-	if p.Primary != nil && !p.AppliedHunk(p.Primary.N) {
-		ns = append(ns, p.Primary.N)
+	for _, n := range p.PrimaryNumbers() {
+		if !p.AppliedHunk(n) {
+			ns = append(ns, n)
+		}
 	}
 	for _, h := range p.Hunks {
 		if !p.AppliedHunk(h.N) && a.decided(p.ID, hunkKey(h.N)) != decDismissed {
@@ -783,6 +785,19 @@ func (a *App) applyInto(seen *proposal.Proposal, accept []int, format bool) (*pr
 		}
 		if first == nil {
 			first = &Location{Path: r.path, Off: mapOffset(r.before, r.after, r.start)}
+		}
+	}
+	if len(seen.CheckDeps) > 0 {
+		// The buffers now hold this proposal's own edits: its dependency
+		// snapshot follows them, as the file hashes above do.
+		overlay := map[string][]byte{}
+		for path, doc := range a.ws.docs {
+			overlay[path] = doc.Ed.Buffer().Bytes()
+		}
+		if loaded, err := project.Load(a.ws.Root, overlay); err == nil {
+			workflow.RefreshOwnSnapshot(seen, loaded.Spec)
+		} else {
+			lg.WithError(err).Warn("cannot refresh the check snapshot after applying into the buffers")
 		}
 	}
 	switch {
@@ -1240,10 +1255,7 @@ func (a *App) formattedPreview(c *card, inner int) []string {
 	th := a.theme
 	accept := []int{c.hunk.N}
 	if c.kind == cardProposal {
-		accept = nil
-		if c.p.Primary != nil {
-			accept = append(accept, c.p.Primary.N)
-		}
+		accept = append([]int(nil), c.p.PrimaryNumbers()...)
 		for _, h := range c.p.Hunks {
 			accept = append(accept, h.N)
 		}

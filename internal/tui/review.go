@@ -76,8 +76,8 @@ func (a *App) openReview(id string) {
 // that needs a decision, without showing it.
 func (a *App) newReview(p *proposal.Proposal) *reviewScreen {
 	r := &reviewScreen{p: p, state: map[int]hunkState{}}
-	if p.Primary != nil {
-		r.state[p.Primary.N] = hunkAccepted
+	for _, n := range p.PrimaryNumbers() {
+		r.state[n] = hunkAccepted
 	}
 	if p.IsModel() {
 		// A model edit applies as a whole.
@@ -120,8 +120,12 @@ func (r *reviewScreen) recheck(a *App) {
 		r.recheckModel(loaded)
 		return
 	}
-	if pr := r.p.Primary; pr != nil {
-		if _, err := r.p.Prepare(loaded.Spec, map[int]bool{pr.N: true}); err != nil {
+	if prs := r.p.PrimaryNumbers(); len(prs) > 0 {
+		accept := map[int]bool{}
+		for _, n := range prs {
+			accept[n] = true
+		}
+		if _, err := r.p.Prepare(loaded.Spec, accept); err != nil {
 			var st *proposal.StaleError
 			if errors.As(err, &st) {
 				r.primaryStale = st.Error()
@@ -193,8 +197,8 @@ func (r *reviewScreen) onStoreChanged(a *App) {
 func (r *reviewScreen) take(a *App, cur *proposal.Proposal) {
 	if r.p.CheckGeneration != cur.CheckGeneration {
 		r.state = map[int]hunkState{}
-		if cur.Primary != nil {
-			r.state[cur.Primary.N] = hunkAccepted
+		for _, n := range cur.PrimaryNumbers() {
+			r.state[n] = hunkAccepted
 		}
 	}
 	changed := workflow.Changed(r.p, cur, nil)
@@ -234,7 +238,7 @@ func (r *reviewScreen) hunk(n int) (finding.Hunk, bool) {
 
 // isPrimary reports whether n is the change itself.
 func (r *reviewScreen) isPrimary(n int) bool {
-	return r.p.Primary != nil && r.p.Primary.N == n
+	return r.p.PrimaryOf(n) != nil
 }
 
 func (r *reviewScreen) context(*App) Context { return CtxReview }
@@ -793,7 +797,7 @@ func (r *reviewScreen) render(a *App, w int) {
 
 	r.starts, r.ends = map[int]int{}, map[int]int{}
 	sel := r.selected()
-	if pr := p.Primary; pr != nil {
+	for _, pr := range p.Primaries() {
 		add("")
 		r.starts[pr.N] = len(lines)
 		title := fmt.Sprintf("[%d] %s %s in %s", pr.N, pr.Action, pr.Name, pr.File)
@@ -909,7 +913,7 @@ func (r *reviewScreen) retryBlocked(a *App) string {
 	if r.p.CheckState == "" {
 		return "No required check to recheck"
 	}
-	if r.p.Primary == nil || len(r.p.CheckFiles) == 0 {
+	if r.p.Primary == nil || !workflow.HasCheckSnapshot(r.p) {
 		return "No stored check snapshot; ask the author to resubmit"
 	}
 	if r.p.Decision != nil && len(r.p.Decision.Applied) > 0 {

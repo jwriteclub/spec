@@ -101,7 +101,8 @@ Exit 1 (`data` is null unless stated):
   stays pending. When given, `data` is `{"proposal": proposal, "acked": false}`. Read the reason;
   run a plain recheck when the files the check read have changed, or ask the user to close or refile
   work that is obsolete. This refusal is exit 1; the stale result of a wait, below, is exit 6.
-- `stale_check`: source files changed since the required check. `data` holds the proposal when it
+- `stale_check`: text the required check depended on changed since it ran (or, for a proposal filed
+  before dependency snapshots, any spec file changed). `data` holds the proposal when it
   could be loaded. Recheck against the current files before applying; after a partial application,
   inspect the applied receipt and ask the user to close or refile only the remaining work.
 - `check_required`: the required check is queued, running, failed or stale. `data` holds the
@@ -244,6 +245,10 @@ with it: `"worktree"`, or `"index"` for `--staged` (which `check` implies when g
 
 - `kind` is `change` (with `primary`), `analysis`, `fix` or `model` (all three: `primary` null,
   hunks numbered from 1).
+- `batch` (absent when empty) holds the further primaries of a `spec propose` run that named several
+  anchors: `primary` is hunk 1 and `batch` hunks 2..k, each shaped like `primary`; follow-on hunks
+  are numbered from k+1. The batch is checked once, applied as a unit (its primaries cannot be left
+  out of `--hunks`) and decided as one proposal.
 - `model` is absent except on a `model` proposal (`spec change --tla`), an edit of one TLA+ model
   applied as a whole: `{"file": "tla/M.tla", "module": "M", "base_hash": "...", "decls": ["Next"],
   "check": {...}, "links": [...]}`. `decls` are the definitions the edit touches; its hunks have
@@ -296,9 +301,12 @@ with it: `"worktree"`, or `"index"` for `--staged` (which `check` implies when g
   to edit.
 - Optional `check_state` is `queued`, `running`, `complete`, `failed` or `stale`; when it is absent,
   the proposal has no required check. `check_message` explains the state. `check_generation` counts
-  check attempts; `check_files` maps file paths to the hashes the check read; `check_owner` names the
+  check attempts; `check_deps` maps what the check depended on to content hashes (`"$Name"`: an anchor in the check's
+  neighborhood, its definitions' text or `absent`; `"mentions $Name"`: the prose that mentions a
+  target), and any difference stales the check; `check_files`, on proposals filed before
+  `check_deps`, maps every spec file to its hash, and any file change stales the check; `check_owner` names the
   worker that holds the check. spec keeps these fields itself; agents never edit them. A stale check
-  (the files changed) is separate from a stale primary, and a recheck can refresh it on its own.
+  (text it depended on changed) is separate from a stale primary, and a recheck can refresh it on its own.
 - Optional `stale_primary` is `{"reason": "..."}`: the saved finding that an unapplied primary no
   longer applies. A waiter checks the current files under the decision lock, without calling a
   model, and saves it, even when nobody has tried to approve. It stays through new waiters, revised
@@ -561,7 +569,12 @@ line counts. With several findings there, `--code` picks one, else the most seve
 
     {"proposals": [{"id": "k3x7a", "kind": "change", "status": "pending",
                     "created": "2026-10-30T14:02:11Z", "author": "agent-7", "anchor": "$Frame.Timing",
+                    "anchors": ["$Frame.Timing"], "reason": "",
                     "why": "...", "hunks": 2, "notes": 1, "questions": 0}]}
+
+`anchor` is the first primary's anchor and `anchors` every primary's (a batch lists them all; empty
+without a primary). `reason` is a decided receipt's `decision.reason` (why it was rejected), else
+`""`.
 
 Oldest first; receipts older than 7 days are removed as a side effect.
 
@@ -603,9 +616,13 @@ or the index, confirm any write, or unblock the interrupted proposal. The user c
 and files only the remaining work as a new one; receipts of applied work stay as the record. Agents
 ask the user for this decision and never acknowledge or reject on their own.
 
-**`spec approve ID [--hunks 1,3] [--commit]`** and **`spec review ID`**
+**`spec approve ID [--hunks 1,3] [--all] [--commit]`** and **`spec review ID`**
 
-    {"proposal": proposal, "commit": "<sha or empty>", "trailers": ["Spec-Change: ..."], "next": next}
+    {"proposal": proposal, "commit": "<sha or empty>", "trailers": ["Spec-Change: ..."], "skipped": [3], "next": next}
+
+Without `--hunks` or `--all` a change proposal applies only its primaries; `skipped` lists the
+follow-on hunks left out (empty otherwise). The proposal is then decided, so wanted follow-on edits
+are named before approving, or filed again.
 
 Optional `warning` says that the commit, receipt or cleanup may not have finished; keep it and
 check, even when `commit` is set. Follow `next`, and inspect `spec recover` before retrying.

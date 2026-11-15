@@ -14,6 +14,8 @@ by `spec init`; ask the user before installing either. Editors connect through t
 
     #!/bin/sh
     # Require Spec-Change:/Spec-Rename: trailers for changed anchors (spec explain workflow).
+    # Every worktree of the repo shares this hook: skip a checkout with no spec project.
+    [ -f spec.toml ] || exit 0
     if ! command -v spec >/dev/null 2>&1; then
         echo "commit-msg: spec not found on PATH; spec trailers not checked" >&2
         exit 0
@@ -22,10 +24,11 @@ by `spec init`; ask the user before installing either. Editors connect through t
     exec spec check --message-file "$1" --base "${SPEC_BASE:-HEAD}"
 
 `spec check --message-file F` compares the staged spec with `HEAD` and exits 4, printing exactly the
-missing trailer lines, when the message lacks one. Git runs hooks from the top of the work tree; if
-`spec.toml` is in a subdirectory, add `--project path/to/dir`. With a hook manager (lefthook, husky,
-pre-commit), register the same command for the `commit-msg` stage. `git commit --no-verify` skips the
-hook; agents never use it.
+missing trailer lines, when the message lacks one. Git runs hooks from the top of the work tree, and
+every worktree of a repo runs the same hook, so it exits 0 in a checkout with no `spec.toml`. If
+`spec.toml` is in a subdirectory, test for `path/to/dir/spec.toml` instead and add
+`--project path/to/dir`. With a hook manager (lefthook, husky, pre-commit), register the same command
+for the `commit-msg` stage. `git commit --no-verify` skips the hook; agents never use it.
 
 **Amending.** The hook cannot detect `git commit --amend`; it compares with `HEAD`, the commit being
 amended. When amending a commit that already changed anchors, the trailers must cover the change since

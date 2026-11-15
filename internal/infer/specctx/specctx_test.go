@@ -185,3 +185,41 @@ func TestFirstSentence(t *testing.T) {
 	require.Len(t, f.Anchors, 1)
 	assert.Equal(t, "Every frame MUST arrive.", firstSentence(f, f.Anchors[0]))
 }
+
+func TestBuildBatchMentionsOnce(t *testing.T) {
+	src := "# a\n\n## 1. One\n\n**$A.One (one).** The first rule.\n\n**$A.Two (two).** The second rule.\n\n" +
+		"Prose that names both $A.One and $A.Two.\n"
+	spec := mdspec.Build([]*mdspec.File{mdspec.ParseFile("a.spec.md", []byte(src))})
+	change := func(name string) *Change {
+		a := spec.Anchor(name)
+		f := spec.File(a.File)
+		old := f.Text(a.BodyRange)
+		return &Change{
+			Action: ActionChange, Name: name, File: a.File, OldKind: a.Kind, NewKind: a.Kind,
+			OldText: old, NewText: strings.Replace(old, "rule", "rule, revised", 1),
+		}
+	}
+	c := Build(spec, Target{Change: change("A.One"), Batch: []*Change{change("A.Two")}}, Options{})
+	require.Len(t, c.Mentions, 1, "a paragraph naming two changes of a batch is listed once")
+	assert.Equal(t, 1, strings.Count(c.Render(), "### a.spec.md:9 (paragraph)"), "Render quotes it once")
+}
+
+func TestDepsIgnoresMentionOrder(t *testing.T) {
+	head := "# a\n\n## 1. One\n\n**$A.One (one).** The first rule.\n\n"
+	p1 := "First prose naming $A.One.\n\n"
+	p2 := "Second prose naming $A.One.\n"
+	deps := func(src string) map[string]string {
+		spec := mdspec.Build([]*mdspec.File{mdspec.ParseFile("a.spec.md", []byte(src))})
+		a := spec.Anchor("A.One")
+		old := spec.File(a.File).Text(a.BodyRange)
+		return Deps(spec, Target{Change: &Change{
+			Action: ActionChange, Name: "A.One", File: a.File, OldKind: a.Kind, NewKind: a.Kind,
+			OldText: old, NewText: old + " Revised.",
+		}})
+	}
+	before := deps(head + p1 + p2)
+	assert.Equal(t, before, deps(head+strings.TrimSuffix(p2, "\n")+"\n\n"+strings.TrimSuffix(p1, "\n")),
+		"moving prose that mentions a target does not change the dependencies")
+	assert.NotEqual(t, before, deps(head+p1+"Second prose naming $A.One, edited.\n"),
+		"editing it does")
+}

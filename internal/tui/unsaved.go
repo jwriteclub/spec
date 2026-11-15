@@ -118,9 +118,7 @@ func (a *App) withBuffered(p *proposal.Proposal) bool {
 			merged := workflow.MergeDecision(p, *e.decision)
 			p.Decision = &merged
 		}
-		if len(p.CheckFiles) > 0 {
-			p.CheckFiles = e.seen.CheckFiles
-		}
+		workflow.CopySnapshot(p, e.seen)
 	}
 	switch {
 	case !held:

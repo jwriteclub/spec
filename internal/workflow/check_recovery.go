@@ -181,8 +181,8 @@ func (w *Workflow) finishCheckLocked(root string, cp checkCheckpoint, overlay ma
 	var snapshotErr *Error
 	if cp.State == "complete" {
 		loaded, err := project.Load(root, overlay)
-		if err != nil || !sameSnapshot(cur.CheckFiles, loaded.Spec) {
-			cp.State, cp.Message, cp.Result = "stale", "Source files changed while checking; recheck the proposal", nil
+		if err != nil || !checkFresh(cur, loaded.Spec) {
+			cp.State, cp.Message, cp.Result = "stale", "Text the check depends on changed while checking; recheck the proposal", nil
 			snapshotErr = fail(ExitFail, "stale", "%s", cp.Message)
 		}
 	}

@@ -13,34 +13,19 @@ import (
 // can copy exact substrings from it.
 func (c *Context) Render() string {
 	var b strings.Builder
-	if ch := c.Change; ch != nil {
+	if ch := c.Change; ch != nil && len(c.Batch) > 0 {
+		all := append([]*Change{ch}, c.Batch...)
+		fmt.Fprintf(&b, "## Proposed changes (one batch of %d, reviewed together)\n\n", len(all))
+		b.WriteString("Every change of the batch is accepted or rejected as a unit. An anchor that one change adds\n")
+		b.WriteString("exists for the others: a reference to it is not stale. Every changed anchor is the author's: never\n")
+		b.WriteString("edit one of them.\n\n")
+		for i, x := range all {
+			fmt.Fprintf(&b, "### Change %d of %d: $%s\n\n", i+1, len(all), x.Name)
+			writeChange(&b, x, "####")
+		}
+	} else if ch != nil {
 		b.WriteString("## Proposed change\n\n")
-		fmt.Fprintf(&b, "action: %s\n", ch.Action)
-		fmt.Fprintf(&b, "anchor: $%s\n", ch.Name)
-		fmt.Fprintf(&b, "file: %s\n", ch.File)
-		switch {
-		case ch.OldKind != "" && ch.NewKind != "" && ch.OldKind != ch.NewKind:
-			fmt.Fprintf(&b, "kind: %s -> %s\n", ch.OldKind, ch.NewKind)
-		case ch.NewKind != "":
-			fmt.Fprintf(&b, "kind: %s\n", ch.NewKind)
-		case ch.OldKind != "":
-			fmt.Fprintf(&b, "kind: %s\n", ch.OldKind)
-		}
-		if ch.Where != "" {
-			fmt.Fprintf(&b, "where: %s\n", ch.Where)
-		}
-		fmt.Fprintf(&b, "reason: %s\n", oneLine(ch.Why))
-		if ch.OldText != "" {
-			b.WriteString("\n### Current text\n\n")
-			quote(&b, "text", "", ch.OldText)
-		}
-		if ch.NewText != "" {
-			b.WriteString("\n### Proposed text\n\n")
-			quote(&b, "text", "", ch.NewText)
-		} else {
-			b.WriteString("\n### Proposed text\n\n(none: the anchor is removed)\n")
-		}
-		b.WriteString("\n")
+		writeChange(&b, ch, "###")
 	}
 	if len(c.Regions) > 0 {
 		b.WriteString("## Edited regions\n")
@@ -62,7 +47,11 @@ func (c *Context) Render() string {
 		b.WriteString("\n")
 	}
 	if len(c.Mentions) > 0 && c.Change != nil {
-		fmt.Fprintf(&b, "## Prose that mentions $%s\n", c.Change.Name)
+		if len(c.Batch) > 0 {
+			b.WriteString("## Prose that mentions the changed anchors\n")
+		} else {
+			fmt.Fprintf(&b, "## Prose that mentions $%s\n", c.Change.Name)
+		}
 		for _, m := range c.Mentions {
 			fmt.Fprintf(&b, "\n### %s:%d (%s)\n\n", m.File, m.Line, m.Kind)
 			quote(&b, "text", "", m.Text)
@@ -95,6 +84,37 @@ func (c *Context) Render() string {
 		}
 	}
 	return b.String()
+}
+
+// writeChange writes one change: its action, anchor, kind and texts, with
+// its subheadings at level head.
+func writeChange(b *strings.Builder, ch *Change, head string) {
+	fmt.Fprintf(b, "action: %s\n", ch.Action)
+	fmt.Fprintf(b, "anchor: $%s\n", ch.Name)
+	fmt.Fprintf(b, "file: %s\n", ch.File)
+	switch {
+	case ch.OldKind != "" && ch.NewKind != "" && ch.OldKind != ch.NewKind:
+		fmt.Fprintf(b, "kind: %s -> %s\n", ch.OldKind, ch.NewKind)
+	case ch.NewKind != "":
+		fmt.Fprintf(b, "kind: %s\n", ch.NewKind)
+	case ch.OldKind != "":
+		fmt.Fprintf(b, "kind: %s\n", ch.OldKind)
+	}
+	if ch.Where != "" {
+		fmt.Fprintf(b, "where: %s\n", ch.Where)
+	}
+	fmt.Fprintf(b, "reason: %s\n", oneLine(ch.Why))
+	if ch.OldText != "" {
+		fmt.Fprintf(b, "\n%s Current text\n\n", head)
+		quote(b, "text", "", ch.OldText)
+	}
+	if ch.NewText != "" {
+		fmt.Fprintf(b, "\n%s Proposed text\n\n", head)
+		quote(b, "text", "", ch.NewText)
+	} else {
+		fmt.Fprintf(b, "\n%s Proposed text\n\n(none: the anchor is removed)\n", head)
+	}
+	b.WriteString("\n")
 }
 
 // quote writes text between <tag attrs> and </tag> lines.
