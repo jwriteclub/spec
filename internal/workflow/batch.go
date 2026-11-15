@@ -84,9 +84,10 @@ func snapshotCheck(p *proposal.Proposal, spec *mdspec.Spec) {
 }
 
 // CopySnapshot makes dst stand for what src's check stood for (the
-// reviewer's view laid over the stored proposal).
+// reviewer's view laid over the stored proposal). A src without a snapshot
+// leaves dst's in place, so staleness protection is never cleared.
 func CopySnapshot(dst, src *proposal.Proposal) {
-	if HasCheckSnapshot(dst) {
+	if src != nil && HasCheckSnapshot(dst) && HasCheckSnapshot(src) {
 		dst.CheckDeps, dst.CheckFiles = src.CheckDeps, src.CheckFiles
 	}
 }

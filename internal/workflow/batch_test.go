@@ -193,3 +193,13 @@ func TestLegacyWholeTreeSnapshotStillReads(t *testing.T) {
 	require.NotNil(t, e)
 	assert.Equal(t, "stale_check", e.Code)
 }
+
+func TestCopySnapshotKeepsDstWhenSrcHasNone(t *testing.T) {
+	dst := &proposal.Proposal{CheckDeps: map[string]string{"anchor:A.One": "h1"}}
+	CopySnapshot(dst, &proposal.Proposal{})
+	assert.Equal(t, map[string]string{"anchor:A.One": "h1"}, dst.CheckDeps)
+	CopySnapshot(dst, nil)
+	assert.Equal(t, map[string]string{"anchor:A.One": "h1"}, dst.CheckDeps)
+	CopySnapshot(dst, &proposal.Proposal{CheckDeps: map[string]string{"anchor:A.One": "h2"}})
+	assert.Equal(t, map[string]string{"anchor:A.One": "h2"}, dst.CheckDeps)
+}
