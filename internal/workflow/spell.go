@@ -132,11 +132,16 @@ func (w *Workflow) SpellProposals(ctx context.Context, proj *project.Project, sp
 	var files []*mdspec.File
 	seen := map[string]bool{}
 	for _, p := range ps {
-		if p == nil || p.Primary == nil || p.Primary.NewText == "" || seen[p.Primary.Name] {
+		if p == nil {
 			continue
 		}
-		seen[p.Primary.Name] = true
-		files = append(files, mdspec.ParseFile(p.Primary.Name, []byte(p.Primary.NewText)))
+		for _, pr := range p.Primaries() {
+			if pr.NewText == "" || seen[pr.Name] {
+				continue
+			}
+			seen[pr.Name] = true
+			files = append(files, mdspec.ParseFile(pr.Name, []byte(pr.NewText)))
+		}
 	}
 	if len(files) == 0 {
 		return nil
@@ -190,11 +195,15 @@ func (w *Workflow) SpellNotes(ctx context.Context, proj *project.Project, ps []*
 	}
 	for _, f := range rep.Flags {
 		for _, p := range ps {
-			if p == nil || p.Primary == nil || p.Primary.Name != f.File {
+			if p == nil {
+				continue
+			}
+			pr := p.PrimaryFor(f.File)
+			if pr == nil {
 				continue
 			}
 			p.Notes = append(p.Notes, finding.Note{
-				File: p.Primary.File, Anchor: p.Primary.Name, Issue: finding.IssueSpelling, Severity: finding.SeverityCosmetic,
+				File: pr.File, Anchor: pr.Name, Issue: finding.IssueSpelling, Severity: finding.SeverityCosmetic,
 				Explanation: spell.Message(f), Find: f.Word, Reason: "spell check",
 			})
 		}

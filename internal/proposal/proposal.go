@@ -6,8 +6,9 @@
 //
 // A proposal is one JSON file, <id>.json, written atomically; proposal files
 // need no lock. A `change` proposal has a primary hunk (the anchor added,
-// changed or removed) plus follow-on finding hunks from the contradiction
-// check; an `analysis` proposal has finding hunks only, and so has a `fix`
+// changed or removed), or a batch of primaries (hunks 1..k, one per anchor of
+// one `spec propose` run, checked, decided and waited on as a unit), plus
+// follow-on finding hunks from the contradiction check; an `analysis` proposal has finding hunks only, and so has a `fix`
 // proposal (the edits that fix one lint finding); a `model` proposal edits
 // one formal model, with hunks applied as a whole. When a proposal is
 // approved or rejected it stays on disk as a receipt (status and decision)
@@ -66,7 +67,8 @@ type Placement struct {
 	Sep       string   `json:"sep"`
 }
 
-// Primary is the change itself: hunk N (always 1) of a change proposal.
+// Primary is the change itself: hunk N of a change proposal (1, or 1..k in
+// a batch: Proposal.Primary is hunk 1 and Proposal.Batch holds 2..k).
 type Primary struct {
 	N int `json:"n"`
 	// Action is change, add, remove or kind (specctx actions).
@@ -218,18 +220,31 @@ type Proposal struct {
 	Created time.Time `json:"created"`
 	Author  string    `json:"author,omitempty"`
 	// SourceKind is explicit provenance, independent of author and text location.
-	SourceKind      string            `json:"source_kind,omitempty"`
-	Revision        int               `json:"revision,omitempty"`
-	CheckOwner      string            `json:"check_owner,omitempty"`
-	CheckGeneration int               `json:"check_generation,omitempty"`
-	CheckState      string            `json:"check_state,omitempty"`
-	CheckMessage    string            `json:"check_message,omitempty"`
-	CheckFiles      map[string]string `json:"check_files,omitempty"`
-	Kind            string            `json:"kind"`
-	Why             string            `json:"why"`
-	Summary         string            `json:"summary"`
-	Primary         *Primary          `json:"primary"`
-	StalePrimary    *StalePrimary     `json:"stale_primary,omitempty"`
+	SourceKind      string `json:"source_kind,omitempty"`
+	Revision        int    `json:"revision,omitempty"`
+	CheckOwner      string `json:"check_owner,omitempty"`
+	CheckGeneration int    `json:"check_generation,omitempty"`
+	CheckState      string `json:"check_state,omitempty"`
+	CheckMessage    string `json:"check_message,omitempty"`
+	// CheckFiles is the legacy whole-tree snapshot (sha256 of every spec
+	// file) a required check stood for. Proposals checked since dependency
+	// snapshots exist leave it empty and use CheckDeps.
+	CheckFiles map[string]string `json:"check_files,omitempty"`
+	// CheckDeps is what a required check depended on, by content hash: the
+	// target anchors, the anchors in its model context (two hops of
+	// references either way, absent names included) and the prose that
+	// mentions the targets (workflow.CheckDeps). Any change to one of them
+	// makes the check stale; edits elsewhere do not.
+	CheckDeps map[string]string `json:"check_deps,omitempty"`
+	Kind      string            `json:"kind"`
+	Why       string            `json:"why"`
+	Summary   string            `json:"summary"`
+	Primary   *Primary          `json:"primary"`
+	// Batch holds the primaries after the first (hunks 2..k) when one
+	// `spec propose` run filed several anchors as one proposal; empty
+	// otherwise.
+	Batch        []*Primary    `json:"batch,omitempty"`
+	StalePrimary *StalePrimary `json:"stale_primary,omitempty"`
 	// Fix is set on a fix proposal.
 	Fix *Fix `json:"fix"`
 	// Model is set on a model proposal.
@@ -311,8 +326,10 @@ func (p *Proposal) Normalize() {
 			m.Check.Diagnostics = []formal.Diagnostic{}
 		}
 	}
-	if p.Primary != nil && p.Primary.Placement != nil && p.Primary.Placement.Earlier == nil {
-		p.Primary.Placement.Earlier = []string{}
+	for _, pr := range p.Primaries() {
+		if pr.Placement != nil && pr.Placement.Earlier == nil {
+			pr.Placement.Earlier = []string{}
+		}
 	}
 	if d := p.Decision; d != nil {
 		if d.Accepted == nil {
@@ -327,15 +344,83 @@ func (p *Proposal) Normalize() {
 	}
 }
 
-// Numbers returns every hunk number in order: the primary's, then the
+// Numbers returns every hunk number in order: the primaries', then the
 // finding hunks'.
 func (p *Proposal) Numbers() []int {
-	var out []int
-	if p.Primary != nil {
-		out = append(out, p.Primary.N)
-	}
+	out := p.PrimaryNumbers()
 	for _, h := range p.Hunks {
 		out = append(out, h.N)
+	}
+	return out
+}
+
+// Primaries returns the primary hunks in order: Primary, then Batch. Nil
+// without a primary.
+func (p *Proposal) Primaries() []*Primary {
+	if p.Primary == nil {
+		return nil
+	}
+	out := []*Primary{p.Primary}
+	for _, pr := range p.Batch {
+		if pr != nil {
+			out = append(out, pr)
+		}
+	}
+	return out
+}
+
+// PrimaryNumbers returns the hunk numbers of the primaries.
+func (p *Proposal) PrimaryNumbers() []int {
+	var out []int
+	for _, pr := range p.Primaries() {
+		out = append(out, pr.N)
+	}
+	return out
+}
+
+// PrimaryOf returns primary hunk n, or nil when n is not a primary.
+func (p *Proposal) PrimaryOf(n int) *Primary {
+	for _, pr := range p.Primaries() {
+		if pr.N == n {
+			return pr
+		}
+	}
+	return nil
+}
+
+// IsBatch reports whether p holds more than one primary.
+func (p *Proposal) IsBatch() bool {
+	return len(p.Primaries()) > 1
+}
+
+// Names returns the primaries' anchor names ("$Name"), in order.
+func (p *Proposal) Names() []string {
+	var out []string
+	for _, pr := range p.Primaries() {
+		out = append(out, pr.Name)
+	}
+	return out
+}
+
+// PrimaryFor returns the primary for anchor name ("$Name" or bare), or nil.
+func (p *Proposal) PrimaryFor(name string) *Primary {
+	name = "$" + strings.TrimPrefix(name, "$")
+	for _, pr := range p.Primaries() {
+		if pr.Name == name {
+			return pr
+		}
+	}
+	return nil
+}
+
+// FollowOns returns the numbers of the finding hunks (the check's follow-on
+// edits) not yet applied.
+func (p *Proposal) FollowOns() []int {
+	var out []int
+	for _, h := range p.Hunks {
+		if !p.AppliedHunk(h.N) {
+			out = append(out, h.N)
+		}
 	}
 	return out
 }
@@ -393,12 +478,17 @@ func (p *Proposal) Clone() (*Proposal, error) {
 // for: the text it checked and, for a rethink that changes the author's
 // edit, that text with the change made. Nil without a primary.
 func (p *Proposal) CheckedTexts() []string {
-	pr := p.Primary
+	return p.CheckedTextsOf(p.Primary)
+}
+
+// CheckedTextsOf is CheckedTexts for primary pr of p (a rethink only ever
+// changes the first).
+func (p *Proposal) CheckedTextsOf(pr *Primary) []string {
 	if pr == nil {
 		return nil
 	}
 	out := []string{pr.NewText}
-	if p.Rethink == nil || p.Rethink.PrimaryHunk == 0 {
+	if p.Rethink == nil || p.Rethink.PrimaryHunk == 0 || pr != p.Primary {
 		return out
 	}
 	for _, h := range p.Hunks {

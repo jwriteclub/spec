@@ -24,9 +24,10 @@ func (s *session) proposeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "propose [NAME...] --why W [--keep] [--wait D]",
 		Short: "turn direct edits of anchors (as spec status reports them) into proposals for review",
-		Long: "For each NAMEd anchor: records the new text, runs the contradiction check, files a proposal, and\n" +
-			"restores the anchor's HEAD text in the working tree. An anchor an applied proposal explains is\n" +
-			"skipped. Only --keep (leaves the edit in place and proposes only the follow-on fixes; for humans) and\n" +
+		Long: "Files one proposal holding every NAMEd anchor (a batch: hunks 1..k, one per anchor), runs one\n" +
+			"contradiction check that sees the whole batch, and restores each anchor's HEAD text in the working\n" +
+			"tree. The batch is approved, rejected and waited on as a unit. An anchor an applied proposal explains is\n" +
+			"skipped. With --keep each anchor gets its own proposal. Only --keep (leaves the edit in place and proposes only the follow-on fixes; for humans) and\n" +
 			"--source human may leave out the names, for every other changed anchor. Exit 2 with the\n" +
 			"proposal ids, or with --wait: 0 applied, 3 rejected, 6 stale (still pending), 2 timeout.",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -120,9 +121,7 @@ func (s *session) runPropose(args []string, f proposeFlags) *outcome {
 	warnings := []string{}
 	var filed []string
 	for _, p := range res.Proposals {
-		if p.Primary != nil {
-			filed = append(filed, p.Primary.Name)
-		}
+		filed = append(filed, p.Names()...)
 	}
 	for _, d := range workflow.PendingFor(pending, filed) {
 		warnings = append(warnings, d.Message())

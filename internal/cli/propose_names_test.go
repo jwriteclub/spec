@@ -25,7 +25,7 @@ func applyTiming(t *testing.T, is *inferSetup) (string, string) {
 	jr := is.run(t, "propose", "Frame.Timing", "--why", "bound it", "--by", "agent-7")
 	require.Equal(t, exitPending, jr.code, jr.stdout)
 	id := filedOf(t, jr).Proposals[0].ID
-	jr = is.run(t, "approve", id)
+	jr = is.run(t, "approve", id, "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	return id, readFile(t, is.dir, "demo.spec.md")
 }
@@ -34,7 +34,7 @@ func primaries(t *testing.T, jr jsonResult) []string {
 	t.Helper()
 	names := []string{}
 	for _, p := range filedOf(t, jr).Proposals {
-		names = append(names, p.Primary.Name)
+		names = append(names, p.Names()...)
 	}
 	return names
 }

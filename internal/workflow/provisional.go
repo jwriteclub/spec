@@ -29,10 +29,11 @@ func (w *Workflow) proposeExternal(ctx context.Context, proj *project.Project, r
 		return nil, e
 	}
 	defer func() { _ = owner.Release() }()
-	for _, pe := range edits {
-		p := &proposal.Proposal{Created: w.stamp(), Author: req.Author, SourceKind: "agent", Kind: proposal.KindChange, Why: pe.change.Why, Primary: pe.primary, Status: proposal.StatusPending, CheckState: "queued", CheckOwner: token}
+	for _, group := range batchGroups(edits, req.Keep) {
+		p := &proposal.Proposal{Created: w.stamp(), Author: req.Author, SourceKind: "agent", Kind: proposal.KindChange, Why: group[0].change.Why, Status: proposal.StatusPending, CheckState: "queued", CheckOwner: token}
+		p.Primary, p.Batch = primariesOf(group)
 		FillBase(p, target)
-		p.CheckFiles = snapshotHashes(target)
+		snapshotCheck(p, target)
 		res.Proposals = append(res.Proposals, p)
 	}
 	if len(restores) > 0 {
@@ -92,6 +93,33 @@ func sameSnapshot(want map[string]string, spec *mdspec.Spec) bool {
 	return true
 }
 
+// batchGroups splits the edits of one spec propose run into proposals: one
+// batch holding them all, or with keep (the edits stay in the working tree,
+// and a check of each may be answered and redone alone) one per edit.
+func batchGroups(edits []*pendingEdit, keep bool) [][]*pendingEdit {
+	if !keep {
+		return [][]*pendingEdit{edits}
+	}
+	out := make([][]*pendingEdit, 0, len(edits))
+	for _, pe := range edits {
+		out = append(out, []*pendingEdit{pe})
+	}
+	return out
+}
+
+// primariesOf numbers the primaries of group 1..k and returns the first and
+// the rest.
+func primariesOf(group []*pendingEdit) (*proposal.Primary, []*proposal.Primary) {
+	var rest []*proposal.Primary
+	for i, pe := range group {
+		pe.primary.N = i + 1
+		if i > 0 {
+			rest = append(rest, pe.primary)
+		}
+	}
+	return group[0].primary, rest
+}
+
 // CheckPublished retries the original snapshot. RecheckPublished explicitly
 // refreshes the full context while preserving the author's primary intent.
 func (w *Workflow) CheckPublished(ctx context.Context, proj *project.Project, id string, full bool, onStage func(StageEvent)) (*proposal.Proposal, *Error) {
@@ -140,7 +168,7 @@ func (w *Workflow) checkPublished(ctx context.Context, proj *project.Project, id
 	if e := w.CheckRecovery(proj.Root, id); e != nil {
 		return refuse(e)
 	}
-	if p.Status != proposal.StatusPending || p.Primary == nil || !recheck && len(p.CheckFiles) == 0 {
+	if p.Status != proposal.StatusPending || p.Primary == nil || !recheck && !HasCheckSnapshot(p) {
 		return refuse(fail(ExitFail, "retry_unavailable", "proposal %s has no retryable required-check snapshot", id))
 	}
 	if p.Decision != nil && len(p.Decision.Applied) > 0 {
@@ -184,8 +212,8 @@ func (w *Workflow) checkPublished(ctx context.Context, proj *project.Project, id
 	if e := w.checkPrimaryLocked(proj.Root, p, loaded); e != nil && (e.Code != "stale" || !explicit || validateCheckPrimary(p, loaded.Spec) != nil) {
 		return refuse(e)
 	}
-	if !recheck && !sameSnapshot(p.CheckFiles, loaded.Spec) {
-		p.CheckState, p.CheckMessage, p.CheckOwner = "stale", "Source files changed; recheck this proposal", ""
+	if !recheck && !checkFresh(p, loaded.Spec) {
+		p.CheckState, p.CheckMessage, p.CheckOwner = "stale", "Text the check depends on changed; recheck this proposal", ""
 		if err := w.Store(proj.Root).Save(p); err != nil {
 			return refuse(internalErr(err))
 		}
@@ -194,11 +222,15 @@ func (w *Workflow) checkPublished(ctx context.Context, proj *project.Project, id
 	if !recheck && p.CheckState == "complete" {
 		return refuse(nil)
 	}
-	if as := loaded.Spec.Lookup(strings.TrimPrefix(p.Primary.Name, "$")); len(as) == 1 {
-		p.Primary.File = as[0].File
+	for _, pr := range p.Primaries() {
+		if as := loaded.Spec.Lookup(strings.TrimPrefix(pr.Name, "$")); len(as) == 1 {
+			pr.File = as[0].File
+		}
 	}
+	// The check is fresh here (or a recheck), so this records the same
+	// dependencies, or turns a legacy whole-tree snapshot into them.
+	snapshotCheck(p, loaded.Spec)
 	if recheck {
-		p.CheckFiles = snapshotHashes(loaded.Spec)
 		p.Hunks, p.Notes, p.Questions, p.Summary, p.Inference = nil, nil, nil, "", nil
 		FillBase(p, loaded.Spec)
 	}
@@ -259,15 +291,19 @@ func (w *Workflow) checkPublished(ctx context.Context, proj *project.Project, id
 			p = cur
 		}
 	}
-	pr := p.Primary
-	ch := &specctx.Change{Action: pr.Action, Name: strings.TrimPrefix(pr.Name, "$"), File: pr.File, OldKind: mdspec.Kind(pr.OldKind), NewKind: mdspec.Kind(pr.NewKind), OldText: pr.OldText, NewText: pr.NewText, Why: p.Why}
+	prs := p.Primaries()
+	chs := make([]*specctx.Change, 0, len(prs))
 	protected := map[string][]pos.Range{}
-	if ch.Action != specctx.ActionAdd || pr.InWorktree {
-		if as := loaded.Spec.Lookup(ch.Name); len(as) == 1 {
-			protected[as[0].File] = []pos.Range{as[0].BodyRange}
+	for _, pr := range prs {
+		ch := changeOf(pr, p.Why)
+		chs = append(chs, ch)
+		if ch.Action != specctx.ActionAdd || pr.InWorktree {
+			if as := loaded.Spec.Lookup(ch.Name); len(as) == 1 {
+				protected[as[0].File] = append(protected[as[0].File], as[0].BodyRange)
+			}
 		}
 	}
-	result, e := w.CheckChange(ck, loaded.Spec, ch, pr, protected, p.Author)
+	result, e := w.CheckBatch(ck, loaded.Spec, chs, prs, protected, p.Author)
 	// Cancellation before the checkpoint boundary wins over a successful reply.
 	if ctx.Err() != nil {
 		e = fail(ExitFail, "cancelled", "Check cancelled")
@@ -276,23 +312,27 @@ func (w *Workflow) checkPublished(ctx context.Context, proj *project.Project, id
 }
 
 func validateCheckPrimary(p *proposal.Proposal, spec *mdspec.Spec) error {
-	pr := p.Primary
-	if pr == nil || p.AppliedHunk(pr.N) {
-		return nil
-	}
-	if !pr.InWorktree {
-		_, err := p.Prepare(spec, map[int]bool{pr.N: true})
-		if err != nil {
-			return err
+	accept := map[int]bool{}
+	for _, pr := range p.Primaries() {
+		if p.AppliedHunk(pr.N) {
+			continue
 		}
-	} else {
+		if !pr.InWorktree {
+			accept[pr.N] = true
+			continue
+		}
 		as := spec.Lookup(strings.TrimPrefix(pr.Name, "$"))
 		if pr.Action == specctx.ActionRemove {
 			if len(as) != 0 {
 				return fmt.Errorf("%s is present again", pr.Name)
 			}
-		} else if len(as) != 1 || !slices.Contains(p.CheckedTexts(), spec.File(as[0].File).Text(as[0].BodyRange)) {
+		} else if len(as) != 1 || !slices.Contains(p.CheckedTextsOf(pr), spec.File(as[0].File).Text(as[0].BodyRange)) {
 			return fmt.Errorf("%s no longer matches the proposed text", pr.Name)
+		}
+	}
+	if len(accept) > 0 {
+		if _, err := p.Prepare(spec, accept); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -306,8 +346,9 @@ func (w *Workflow) PublishChange(ctx context.Context, proj *project.Project, spe
 		return nil, e
 	}
 	defer func() { _ = owner.Release() }()
-	p := &proposal.Proposal{CheckOwner: token, Created: w.stamp(), Author: author, SourceKind: "agent", Kind: proposal.KindChange, Why: why, Primary: primary, Status: proposal.StatusPending, CheckState: "queued", CheckFiles: snapshotHashes(spec)}
+	p := &proposal.Proposal{CheckOwner: token, Created: w.stamp(), Author: author, SourceKind: "agent", Kind: proposal.KindChange, Why: why, Primary: primary, Status: proposal.StatusPending, CheckState: "queued"}
 	FillBase(p, spec)
+	snapshotCheck(p, spec)
 	lock, e := w.DecisionLock(ctx, proj.Root, "publish proposal")
 	if e != nil {
 		return nil, e

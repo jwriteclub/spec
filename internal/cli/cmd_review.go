@@ -110,15 +110,21 @@ func (s *session) runReview(id string, commit bool, by string) *outcome {
 		return r.reviewModel(commit, by)
 	}
 	var accepted []int
-	if pr := p.Primary; pr != nil {
-		fmt.Fprintf(r.out, "\n[%d] %s %s in %s\n%s", pr.N, pr.Action, pr.Name, pr.File, indentDiff(pr.OldText, pr.NewText))
+	if prs := p.Primaries(); len(prs) > 0 {
+		for _, pr := range prs {
+			fmt.Fprintf(r.out, "\n[%d] %s %s in %s\n%s", pr.N, pr.Action, pr.Name, pr.File, indentDiff(pr.OldText, pr.NewText))
+		}
+		question := fmt.Sprintf("apply the change itself (hunk %d)? [y/n/q] ", prs[0].N)
+		if len(prs) > 1 {
+			question = fmt.Sprintf("apply the batch's changes together (hunks %s)? [y/n/q] ", joinInts(p.PrimaryNumbers()))
+		}
 		for {
-			ans, ok := r.ask(fmt.Sprintf("apply the change itself (hunk %d)? [y/n/q] ", pr.N))
+			ans, ok := r.ask(question)
 			if !ok || ans == "q" {
 				return leftPending(p)
 			}
 			if ans == "y" {
-				accepted = append(accepted, pr.N)
+				accepted = append(accepted, p.PrimaryNumbers()...)
 				break
 			}
 			if ans == "n" {

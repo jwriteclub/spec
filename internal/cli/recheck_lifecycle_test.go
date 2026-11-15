@@ -15,7 +15,7 @@ import (
 	"github.com/jwriteclub/spec/internal/proposal"
 )
 
-func TestDefaultAgentBatchRechecksBeforeSecondAutoApproval(t *testing.T) {
+func TestDefaultAgentBatchAutoApprovesAsOne(t *testing.T) {
 	requireGit(t)
 	is := setupInfer(t, okReply(modelReply{Summary: "clean"}.json(t)))
 	desired := strings.Replace(strings.Replace(baseSpec, timingOld, timingNew, 1), "Fragments MUST arrive in order", "Fragments MUST always arrive in order", 1)
@@ -23,12 +23,10 @@ func TestDefaultAgentBatchRechecksBeforeSecondAutoApproval(t *testing.T) {
 	jr := is.run(t, "propose", "Frame.Timing", "Frame.Order", "--why", "two changes", "--auto-approve")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	ps := filedOf(t, jr).Proposals
-	require.Len(t, ps, 2)
-	for _, p := range ps {
-		assert.Equal(t, "agent", p.SourceKind)
-		assert.Equal(t, proposal.StatusApplied, p.Status)
-	}
-	assert.Greater(t, ps[1].CheckGeneration, ps[0].CheckGeneration)
+	require.Len(t, ps, 1, "one batch, one check, one auto-approval")
+	assert.Equal(t, "agent", ps[0].SourceKind)
+	assert.Equal(t, proposal.StatusApplied, ps[0].Status)
+	assert.Equal(t, []int{1, 2}, ps[0].Decision.Applied)
 	assert.Equal(t, desired, readFile(t, is.dir, "demo.spec.md"))
 }
 
@@ -51,32 +49,24 @@ func TestRecheckCLIUsesSameIDAfterContextChange(t *testing.T) {
 	require.Equal(t, 0, jr.code, jr.stdout)
 }
 
-func TestDefaultAgentAutoApproveLeavesFreshQuestionsPending(t *testing.T) {
+func TestDefaultAgentAutoApproveLeavesBatchWithQuestionPending(t *testing.T) {
 	requireGit(t)
 	var calls atomic.Int32
-	clean := modelReply{Summary: "clean"}.json(t)
 	question := modelReply{Summary: "needs clarification", Questions: []string{"Is the combined behavior intended?"}}.json(t)
 	is := setupInfer(t, func(w http.ResponseWriter, r *http.Request) {
-		reply := clean
-		if calls.Add(1) == 3 {
-			reply = question
-		}
-		okReply(reply)(w, r)
+		calls.Add(1)
+		okReply(question)(w, r)
 	})
 	desired := strings.Replace(strings.Replace(baseSpec, timingOld, timingNew, 1), "Fragments MUST arrive in order", "Fragments MUST always arrive in order", 1)
 	write(t, is.dir, "demo.spec.md", desired)
 	jr := is.run(t, "propose", "Frame.Timing", "Frame.Order", "--why", "two changes", "--auto-approve")
 	require.Equal(t, exitPending, jr.code, jr.stdout)
 	ps := filedOf(t, jr).Proposals
-	require.Len(t, ps, 2)
-	assert.NotEmpty(t, ps[0].ID)
-	assert.NotEmpty(t, ps[1].ID)
-	assert.Equal(t, proposal.StatusApplied, ps[0].Status)
-	assert.Equal(t, proposal.StatusPending, ps[1].Status)
-	assert.Equal(t, []string{"Is the combined behavior intended?"}, ps[1].Questions)
-	assert.Contains(t, readFile(t, is.dir, "demo.spec.md"), ps[0].Primary.NewText)
-	assert.Contains(t, readFile(t, is.dir, "demo.spec.md"), ps[1].Primary.OldText)
-	assert.Equal(t, int32(3), calls.Load())
+	require.Len(t, ps, 1)
+	assert.Equal(t, proposal.StatusPending, ps[0].Status)
+	assert.Equal(t, []string{"Is the combined behavior intended?"}, ps[0].Questions)
+	assert.Equal(t, baseSpec, readFile(t, is.dir, "demo.spec.md"), "nothing of the batch is applied")
+	assert.Equal(t, int32(1), calls.Load())
 }
 
 func TestHumanCLIWithoutKeepRetainsMandatoryPrimary(t *testing.T) {

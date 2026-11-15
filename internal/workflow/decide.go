@@ -64,9 +64,7 @@ func (w *Workflow) PrepareIntoLocked(lock *project.Lock, proj *project.Project, 
 		d := MergeDecision(cur, *seen.Decision)
 		cur.Decision = &d
 	}
-	if len(cur.CheckFiles) > 0 {
-		cur.CheckFiles = seen.CheckFiles
-	}
+	CopySnapshot(cur, seen)
 	set := map[int]bool{}
 	for _, n := range accept {
 		set[n] = true
@@ -89,6 +87,9 @@ func (w *Workflow) PrepareIntoLocked(lock *project.Lock, proj *project.Project, 
 	if e := wholeModel(cur, set); e != nil {
 		return nil, e
 	}
+	if e := wholeBatch(cur, set); e != nil {
+		return nil, e
+	}
 	prep, err := prepareProposal(cur, loaded, set)
 	if err != nil {
 		var stale *proposal.StaleError
@@ -102,13 +103,15 @@ func (w *Workflow) PrepareIntoLocked(lock *project.Lock, proj *project.Project, 
 			return nil, internalErr(err)
 		}
 	}
-	if pr := cur.Primary; pr != nil && set[pr.N] && !pr.InWorktree && !cur.AppliedHunk(pr.N) {
+	if prs := pendingPrimaries(cur, set); len(prs) > 0 {
 		plan, err := edit.NewPlan(proj.Root, prep.Edits)
 		if err != nil {
 			return nil, fail(ExitFail, "stale", "proposal %s does not apply cleanly: %v", cur.ID, err)
 		}
-		if e := checkPrimaryResult(proj, plan, pr, overlay); e != nil {
-			return nil, e
+		for _, pr := range prs {
+			if e := checkPrimaryResult(proj, plan, pr, overlay); e != nil {
+				return nil, e
+			}
 		}
 	}
 	return prep, nil
@@ -129,13 +132,15 @@ func (w *Workflow) Settle(root, id string, d proposal.Decision) (*proposal.Propo
 
 // SettleLocked is Settle for a caller that holds .spec/lock (taken with
 // DecisionLock).
-func (w *Workflow) SettleLocked(lock *project.Lock, root, id string, d proposal.Decision, snapshots ...map[string]string) (*proposal.Proposal, *Error) {
-	return w.settleLocked(lock, root, id, d, nil, snapshots...)
+func (w *Workflow) SettleLocked(lock *project.Lock, root, id string, d proposal.Decision) (*proposal.Proposal, *Error) {
+	return w.settleLocked(lock, root, id, d, nil, nil)
 }
 
 // settleLocked is SettleLocked that also records check, a model check made at
 // approval, on a model proposal applied.
-func (w *Workflow) settleLocked(lock *project.Lock, root, id string, d proposal.Decision, check *proposal.ModelCheck, snapshots ...map[string]string) (*proposal.Proposal, *Error) {
+// seen, when not nil, is the reviewer's view, whose check snapshot (updated
+// for the buffered edits) is kept on a proposal left partly applied.
+func (w *Workflow) settleLocked(lock *project.Lock, root, id string, d proposal.Decision, check *proposal.ModelCheck, seen *proposal.Proposal) (*proposal.Proposal, *Error) {
 	if e := held(lock); e != nil {
 		return nil, e
 	}
@@ -157,8 +162,8 @@ func (w *Workflow) settleLocked(lock *project.Lock, root, id string, d proposal.
 		d.Reason = "dismissed in spec ui"
 	}
 	cur.Decision = &d
-	if len(snapshots) > 0 && len(cur.CheckFiles) > 0 && len(d.Applied) > 0 {
-		cur.CheckFiles = snapshots[0]
+	if seen != nil && len(d.Applied) > 0 {
+		CopySnapshot(cur, seen)
 	}
 	if check != nil && cur.IsModel() && len(d.Applied) > 0 {
 		cur.Model.Check = *check
@@ -178,8 +183,10 @@ func SettleStatus(p *proposal.Proposal, d proposal.Decision) string {
 	} else if len(d.Applied) == 0 {
 		status = proposal.StatusRejected
 	}
-	if pr := p.Primary; pr != nil && !pr.InWorktree && len(d.Applied) > 0 && !slices.Contains(d.Applied, pr.N) {
-		status = proposal.StatusPending
+	for _, pr := range p.Primaries() {
+		if !pr.InWorktree && len(d.Applied) > 0 && !slices.Contains(d.Applied, pr.N) {
+			status = proposal.StatusPending
+		}
 	}
 	return status
 }
@@ -243,19 +250,19 @@ func (w *Workflow) SettleSeenLocked(lock *project.Lock, root string, seen *propo
 	if seen.IsModel() && seen.Model.Check.Rechecked {
 		check = &seen.Model.Check
 	}
-	return w.settleLocked(lock, root, seen.ID, d, check, seen.CheckFiles)
+	return w.settleLocked(lock, root, seen.ID, d, check, seen)
 }
 
 // CheckSnapshot prevents a completed required check from authorizing an edit
 // against different surrounding context. The caller supplies freshly discovered
 // files, with editor overlays when application targets buffers.
 func CheckSnapshot(p *proposal.Proposal, spec *mdspec.Spec) *Error {
-	if len(p.CheckFiles) == 0 || sameSnapshot(p.CheckFiles, spec) {
+	if checkFresh(p, spec) {
 		return nil
 	}
-	e := fail(ExitFail, "stale_check", "Source files changed since the required check; recheck proposal %s before applying", p.ID)
+	e := fail(ExitFail, "stale_check", "Text the required check depends on changed since it ran; recheck proposal %s before applying", p.ID)
 	if p.Decision != nil && len(p.Decision.Applied) > 0 {
-		e.Message = "Source files changed since the required check. " + ResidualGuidance(p)
+		e.Message = "Text the required check depends on changed since it ran. " + ResidualGuidance(p)
 	}
 	e.Proposal = p
 	return e
@@ -301,9 +308,7 @@ func (w *Workflow) RecordPartialSeenLocked(lock *project.Lock, root string, seen
 	}
 	d.By, d.At = ByOr(d.By), w.stamp()
 	cur.Decision, cur.Status = &d, proposal.StatusPending
-	if len(cur.CheckFiles) > 0 {
-		cur.CheckFiles = seen.CheckFiles
-	}
+	CopySnapshot(cur, seen)
 	cur.Normalize()
 	if err := w.Store(root).Save(cur); err != nil {
 		return nil, internalErr(err)

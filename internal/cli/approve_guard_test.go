@@ -69,7 +69,7 @@ func TestHunkIntroducingLintErrorsFailsAlone(t *testing.T) {
 	p := filedOf(t, jr).Proposals[0]
 	require.Len(t, p.Hunks, 2)
 
-	jr = is.run(t, "approve", p.ID, "--commit")
+	jr = is.run(t, "approve", p.ID, "--commit", "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	var ad approveData
 	jr.decode(t, &ad)
@@ -89,7 +89,7 @@ func TestHunkIntroducingLintErrorsFailsAlone(t *testing.T) {
 	require.Equal(t, exitPending, jr.code, jr.stdout)
 	p = filedOf(t, jr).Proposals[0]
 	require.Len(t, p.Hunks, 1)
-	jr = is.run(t, "approve", p.ID)
+	jr = is.run(t, "approve", p.ID, "--all")
 	require.Equal(t, 0, jr.code, jr.stdout)
 	jr.decode(t, &ad)
 	assert.Equal(t, []int{1}, ad.Proposal.Decision.Applied)

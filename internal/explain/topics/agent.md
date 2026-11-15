@@ -31,7 +31,11 @@ says. If a hook already ran it after your edit, read that output instead.
       spec propose Frame.Timing --why "the reason" --by YOUR-NAME --wait 30m
 
   Names are required (exit 1 `names_required` lists what differs): the working tree cannot say whose
-  edit is whose, so name only your own. An applied proposal's uncommitted change is skipped, named or
+  edit is whose, so name only your own. One `spec propose A B C` files **one** proposal, a batch
+  holding every named anchor (hunks 1..k): one check sees the whole batch, so references between its
+  anchors are not stale, and it is approved, rejected and waited on as a unit (one id, one exit code).
+  Name a section's anchors together; to add a new anchor without editing, `spec change NAME --add
+  --section FILE:N --body-file F` (a bare `--section 1` is ambiguous when several files have a §1). An applied proposal's uncommitted change is skipped, named or
   not; commit it. A further edit on top of one is exit 1 `applied_not_committed`: commit the applied
   change first. `spec propose` restores the old text while the proposal waits. Then:
   - Exit 0, applied: run `spec status` and commit with its trailer lines, unless the output says it
@@ -42,7 +46,8 @@ says. If a hook already ran it after your edit, read that output instead.
     pending. Read `spec proposal ID`, report its `stale_primary.reason`, and ask the user how to close
     or refile the remaining work. Waiting again returns the same result, and `--ack` cannot clear it.
 
-  In your report, list every anchor you proposed and its outcome.
+  In your report, list every anchor you proposed and its outcome. Without `--wait` the command files
+  the proposal and exits 2 at once; it does not block.
 - **Changing what a pending proposal changes:** proposals do not stack. A second one built on a
   pending one's unapplied text, or overlapping it, goes stale. Withdraw yours and send one that holds
   all the changes:
@@ -64,7 +69,10 @@ says. If a hook already ran it after your edit, read that output instead.
 
 ## Interrupted checks and stale work
 
-A required check is queued, running, complete, failed or stale. `check_required` means the proposal
+A required check is queued, running, complete, failed or stale. It goes stale only when text it
+depended on changes: its anchors, the anchors two hops of references away (either way), and the
+prose that mentions its anchors, compared by content hash. Edits to other anchors or files leave it
+fresh, also while it runs. `check_required` means the proposal
 cannot be applied yet. If the check is running, wait for it. If it failed or was interrupted, ask the
 user to authorize `spec recheck ID --retry` when the source files are unchanged, or `spec recheck ID`
 to check against the current files. `stale_check` also needs `spec recheck ID`, without `--retry`. A recheck keeps the

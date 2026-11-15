@@ -76,7 +76,8 @@ func TestCheckRetryUsesSameIdentityAndRejectsChangedSnapshot(t *testing.T) {
 	assert.Equal(t, "complete", done.CheckState)
 	done.CheckState = "failed"
 	require.NoError(t, env.wf.Store(proj.Root).Save(done))
-	write(t, proj.Root, "c.spec.md", commitSpec+"\nDifferent context.\n")
+	// Prose that mentions the target is a dependency.
+	write(t, proj.Root, "c.spec.md", commitSpec+"\nDifferent context about $A.One.\n")
 	stale, e := env.wf.CheckPublished(context.Background(), proj, p.ID, false, nil)
 	require.NotNil(t, e)
 	assert.Equal(t, "stale", e.Code)
@@ -218,7 +219,7 @@ func TestCheckRetryDiscoversNewSpecFile(t *testing.T) {
 	res, e := w.Propose(context.Background(), proj, ProposeRequest{Names: []string{"A.One"}, SourceKind: "agent", Why: "raise capacity"})
 	require.Nil(t, e)
 	env := newCascadeEnv(t, "")
-	write(t, proj.Root, "new.spec.md", "# New context\n\nAn additional rule.\n")
+	write(t, proj.Root, "new.spec.md", "# New context\n\nAn additional rule about $A.One.\n")
 	p, e := env.wf.CheckPublished(context.Background(), proj, res.Proposals[0].ID, false, nil)
 	require.NotNil(t, e)
 	assert.Equal(t, "stale", e.Code)
@@ -233,7 +234,7 @@ func TestCheckCompletionDiscoversNewFileUnderLock(t *testing.T) {
 	env.check.reply = chatReply(`{"summary":"consistent","findings":[],"questions":[]}`)
 	env.wf.BeforeCommit = func() {
 		if len(env.check.requests()) > 0 {
-			write(t, proj.Root, "late.spec.md", "# Late context\n\nAn additional rule.\n")
+			write(t, proj.Root, "late.spec.md", "# Late context\n\nAn additional rule about $A.One.\n")
 		}
 	}
 	res, e := env.wf.Propose(context.Background(), proj, ProposeRequest{Names: []string{"A.One"}, SourceKind: "agent", Why: "raise capacity"})
@@ -324,12 +325,13 @@ func TestCompletedRequiredCheckRefusesChangedApplicationContext(t *testing.T) {
 			p := res.Proposals[0]
 			require.Equal(t, "complete", p.CheckState)
 			overlay := map[string][]byte{}
-			changed := strings.Replace(commitSpec, "within 5", "within 99", 1)
+			// B.Two comes to reference the target: it joins the check's context.
+			changed := strings.Replace(commitSpec, "within 5 s.", "within 5 s; see $A.One.", 1)
 			switch mode {
 			case "disk":
 				write(t, proj.Root, "c.spec.md", changed)
 			case "new file":
-				write(t, proj.Root, "new.spec.md", "# New context\n")
+				write(t, proj.Root, "new.spec.md", "# New context\n\nThe limit of $A.One applies here too.\n")
 			case "buffer":
 				overlay["c.spec.md"] = []byte(changed)
 			}

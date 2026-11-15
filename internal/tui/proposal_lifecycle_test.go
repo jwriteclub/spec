@@ -133,7 +133,7 @@ func TestReviewShowsPersistentStaleBlockerWhileDisabledApplyIsInert(t *testing.T
 	require.NotNil(t, r)
 	assert.Contains(t, r.approveBlocked(a), "recheck")
 	r.scroll = 100
-	assert.Contains(t, strings.Join(r.view(a, 160, 12), "\n"), "Apply unavailable: Source files changed")
+	assert.Contains(t, strings.Join(r.view(a, 160, 12), "\n"), "Apply unavailable: Text the required check depends on changed")
 }
 
 func TestProvenanceHousekeepingHonorsExplicitSource(t *testing.T) {

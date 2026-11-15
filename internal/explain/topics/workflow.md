@@ -94,14 +94,17 @@ An agent edits the anchor directly, then:
 
     spec propose Frame.Timing --why "fragments over 5 s stall players" --by agent-7 --wait 30m
 
-For each anchor named, it records the new text, files a pending proposal under `.spec/proposals/`
-without waiting for the check, and restores the `HEAD` text in the working tree. The edit lives in
+It records the new text of every anchor named, files one pending proposal under `.spec/proposals/`
+holding them all (a batch when there are several: hunks 1..k, one per anchor) without waiting for
+the check, and restores the `HEAD` text in the working tree. One check covers the whole batch: the
+model sees every change in it, and an anchor the batch adds is in its index, so a reference between
+the batch's anchors is not stale. A batch is approved, rejected and waited on as a unit; `--keep`
+files one proposal per anchor. The edit lives in
 the proposal until it is approved. Whether the text came from an agent or a human (`--source`,
 default `agent`) is recorded separately from the optional author name (`--by`). The card shows the
 check's state (queued, running, complete, failed or stale), and the proposal cannot be applied until
 the check completes. The user can reject it with a reason while the check runs. A model result that
-arrives after that does not overwrite the rejection, and does not stop the checks of the batch's
-other proposals.
+arrives after that does not overwrite the rejection.
 
 Names are required. The working tree cannot say whose edit is whose, and propose takes the edit out
 of it, so an agent's `spec propose` with no names files nothing (exit 1 `names_required`, listing
@@ -113,10 +116,10 @@ names, and then cover every other changed anchor.
 
 Scripts can skip the edit: `spec change Frame.Timing --body-file new.md --why W`, `--remove`,
 `--def`/`--inv`, or `spec change Frame.Gap --add --after Frame.Timing --body-file F` (or
-`--section 2`).
+`--section 2`; qualify it as `--section FILE:2` when several files have a §2).
 
-A proposal holds hunks. Hunk 1, the primary, is the change itself; the rest are follow-on fixes the
-check proposed (each quotes text that occurs exactly once in its file; anything else is shown as a
+A proposal holds hunks. Hunk 1, the primary, is the change itself (hunks 1..k for a batch); the rest
+are follow-on fixes the check proposed (each quotes text that occurs exactly once in its file; anything else is shown as a
 note). The user
 decides:
 
@@ -125,7 +128,11 @@ decides:
     spec approve k3x7a --hunks 1,3 --commit
     spec reject k3x7a --why "5 s is too short for keyframe gaps"
 
-`approve` re-checks every hunk against the files: a fix whose text changed fails alone; a change
+`approve` with no `--hunks` applies the change only (every primary of a batch) and lists the
+follow-on hunks it skipped: model-written edits are applied only when named (`--hunks 1,3`) or with
+`--all`, so an approval never writes text the approver did not pick. `spec review` asks about each
+hunk, and `spec ui` shows each as a card. A batch's primaries cannot be split. `approve` re-checks
+every hunk against the files: a fix whose text changed fails alone; a change
 whose primary no longer applies blocks application and stays pending with durable `stale_primary`
 evidence. It never becomes rejected automatically. `--commit` commits what the approval
 wrote (and the anchor a `--keep` proposal checked) with the trailer lines and the reason; other edits,
@@ -170,8 +177,12 @@ all the changes: `spec propose Frame.Timing` naming each anchor, or `spec change
 
 **Rechecking.** `spec recheck ID` keeps the proposal's ID and its primary, checks it against the
 current files, and regenerates the findings and follow-on hunks; any earlier selection of follow-on
-hunks is dropped. `--retry` reruns the check on the original snapshot, and only when the source files
-have not changed. If a check is still running, wait for it instead of starting a second one. After a
+hunks is dropped. `--retry` reruns the check on the original snapshot, and only when the text it
+depends on has not changed. A check depends on its anchors, the anchors two hops of references away
+in either direction (names not yet defined included) and the prose that mentions its anchors, hashed
+by content; it goes stale when one of them changes, and edits elsewhere, saved before, during or after
+the check, leave it fresh. Proposals filed before this kept a whole-tree snapshot, which any spec file
+change stales; a recheck moves them to the dependency snapshot. If a check is still running, wait for it instead of starting a second one. After a
 check fails or is interrupted, ask for a `--retry`; after the files have changed, use a plain
 recheck. Only a successful `spec recheck ID` without `--retry` clears a stale primary. A failed
 recheck, a revised follow-on hunk or putting the old text back does not. Neither command applies

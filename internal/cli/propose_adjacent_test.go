@@ -29,47 +29,35 @@ func TestProposeRestoresAdjacentRemovals(t *testing.T) {
 	jr := is.run(t, "propose", "--source", "human", "--why", "drop both")
 	require.Equal(t, exitPending, jr.code, jr.stdout)
 	d := filedOf(t, jr)
-	require.Len(t, d.Proposals, 2)
+	require.Len(t, d.Proposals, 1, "one batch")
+	assert.Equal(t, []string{"$Frame.Timing", "$Frame.Order"}, d.Proposals[0].Names())
 	want := strings.Replace(baseSpec, "Prose that mentions $Frame.Order for the reader.", "Prose for the reader.", 1)
 	assert.Equal(t, want, readFile(t, is.dir, "demo.spec.md"), "both anchors are back where they were")
 
-	for _, p := range d.Proposals {
-		jr = is.run(t, "approve", p.ID)
-		require.Equal(t, 0, jr.code, jr.stdout)
-	}
+	jr = is.run(t, "approve", d.Proposals[0].ID)
+	require.Equal(t, 0, jr.code, jr.stdout)
 	assert.Equal(t, edited, readFile(t, is.dir, "demo.spec.md"))
 }
 
-// Adding two adjacent anchors: approving them in either order reproduces
-// the edit byte for byte.
-func TestProposeAdjacentAddsApproveInAnyOrder(t *testing.T) {
-	for _, reverse := range []bool{false, true} {
-		requireGit(t)
-		is := setupInfer(t, okReply(modelReply{Summary: "ok"}.json(t)))
-		gapA := "**$Frame.Gap (frame gap).** Two fragments are at most 2 s apart.\nChecked by: TestGap."
-		gapB := "**$Frame.Jitter (frame jitter).** Arrival jitter is at most 50 ms.\nChecked by: TestJitter."
-		edited := strings.Replace(baseSpec, orderOld+"\n", orderOld+"\n\n"+gapA+"\n\n"+gapB+"\n", 1)
-		write(t, is.dir, "demo.spec.md", edited)
+// Adding two adjacent anchors in one run: they are one batch, and approving
+// it reproduces the edit byte for byte, the anchors in their order.
+func TestProposeAdjacentAddsBatchRoundTrip(t *testing.T) {
+	requireGit(t)
+	is := setupInfer(t, okReply(modelReply{Summary: "ok"}.json(t)))
+	gapA := "**$Frame.Gap (frame gap).** Two fragments are at most 2 s apart.\nChecked by: TestGap."
+	gapB := "**$Frame.Jitter (frame jitter).** Arrival jitter is at most 50 ms.\nChecked by: TestJitter."
+	edited := strings.Replace(baseSpec, orderOld+"\n", orderOld+"\n\n"+gapA+"\n\n"+gapB+"\n", 1)
+	write(t, is.dir, "demo.spec.md", edited)
 
-		jr := is.run(t, "propose", "--source", "human", "--why", "two new rules")
-		require.Equal(t, exitPending, jr.code, jr.stdout)
-		ps := filedOf(t, jr).Proposals
-		require.Len(t, ps, 2)
-		assert.Equal(t, baseSpec, readFile(t, is.dir, "demo.spec.md"))
-		byName := map[string]string{}
-		for _, p := range ps {
-			byName[p.Primary.Name] = p.ID
-		}
-		order := []string{"$Frame.Gap", "$Frame.Jitter"}
-		if reverse {
-			order = []string{"$Frame.Jitter", "$Frame.Gap"}
-		}
-		for _, n := range order {
-			jr = is.run(t, "approve", byName[n])
-			require.Equal(t, 0, jr.code, jr.stdout)
-		}
-		assert.Equal(t, edited, readFile(t, is.dir, "demo.spec.md"), "reverse=%v", reverse)
-	}
+	jr := is.run(t, "propose", "--source", "human", "--why", "two new rules")
+	require.Equal(t, exitPending, jr.code, jr.stdout)
+	ps := filedOf(t, jr).Proposals
+	require.Len(t, ps, 1)
+	assert.Equal(t, []string{"$Frame.Gap", "$Frame.Jitter"}, ps[0].Names())
+	assert.Equal(t, baseSpec, readFile(t, is.dir, "demo.spec.md"))
+	jr = is.run(t, "approve", ps[0].ID)
+	require.Equal(t, 0, jr.code, jr.stdout)
+	assert.Equal(t, edited, readFile(t, is.dir, "demo.spec.md"))
 }
 
 // When the proposal cannot be filed, propose must not restore the HEAD

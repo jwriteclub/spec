@@ -40,7 +40,7 @@ func AccountFor(e baseline.Entry, head, work *mdspec.Spec, evidence []*proposal.
 	var out Accounting
 	for _, p := range evidence {
 		touched := false
-		if pr := p.Primary; pr != nil && pr.Name == "$"+e.Name && p.AppliedHunk(pr.N) {
+		if pr := p.PrimaryFor(e.Name); pr != nil && p.AppliedHunk(pr.N) {
 			if pr.Action == specctx.ActionAdd && !cur.present || pr.Action != specctx.ActionAdd && cur.present && sameAnchor(e.Name, cur.text, pr.OldText) {
 				cur = anchorText{present: pr.Action != specctx.ActionRemove, file: pr.File, text: pr.NewText}
 				touched = true

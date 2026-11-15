@@ -29,7 +29,7 @@ func FillBase(p *proposal.Proposal, spec *mdspec.Spec) {
 	p.Base = proposal.Base{Files: map[string]string{}, Anchors: map[string]string{}}
 	files := map[string]bool{}
 	anchors := map[string]bool{}
-	if pr := p.Primary; pr != nil {
+	for _, pr := range p.Primaries() {
 		files[pr.File] = true
 		anchors[strings.TrimPrefix(pr.Name, "$")] = true
 	}
@@ -67,10 +67,17 @@ type Applied struct {
 	Commit   string
 	// Warning preserves successful commits whose index still needs inspection.
 	Warning string
+	// Skipped are the follow-on hunks a default approval (no hunks named)
+	// left out.
+	Skipped []int
 }
 
-// Apply writes the accepted hunks of pending proposal id (all hunks when
-// accept is nil) under the project lock, records the decision, and commits
+// Apply writes the accepted hunks of pending proposal id under the project
+// lock. With accept nil a change proposal applies its primaries only (the
+// change itself, every anchor of a batch): the check's follow-on hunks need
+// naming, so an approval never writes model text the approver did not pick;
+// Applied.Skipped lists them. A proposal without a primary (analysis, fix,
+// model) applies all its hunks. Apply then records the decision, and commits
 // with the trailers when commit is set. A stale primary remains pending:
 // without durable evidence, prior interrupted writes cannot be inferred.
 func (w *Workflow) Apply(root, id string, accept []int, by string, commit bool) (*Applied, *Error) {
@@ -94,14 +101,31 @@ func Changed(a, b *proposal.Proposal, accept []int) []int {
 	}
 	all := accept == nil
 	var out []int
-	if all || a.Primary != nil && want[a.Primary.N] || b.Primary != nil && want[b.Primary.N] {
-		if !reflect.DeepEqual(a.Primary, b.Primary) {
-			n := 1
-			if a.Primary != nil {
-				n = a.Primary.N
-			} else if b.Primary != nil {
-				n = b.Primary.N
-			}
+	prims := func(p *proposal.Proposal) map[int]*proposal.Primary {
+		m := map[int]*proposal.Primary{}
+		for _, pr := range p.Primaries() {
+			m[pr.N] = pr
+		}
+		return m
+	}
+	pa, pb := prims(a), prims(b)
+	pnums := map[int]bool{}
+	for n := range pa {
+		pnums[n] = true
+	}
+	for n := range pb {
+		pnums[n] = true
+	}
+	if len(pnums) == 0 && (a.Primary != nil || b.Primary != nil) {
+		pnums[1] = true
+	}
+	// A batch whose membership changed differs as a whole.
+	shape := len(pa) != len(pb)
+	for n := range pnums {
+		if !all && !want[n] && !shape {
+			continue
+		}
+		if !reflect.DeepEqual(pa[n], pb[n]) || shape {
 			out = append(out, n)
 		}
 	}
@@ -160,8 +184,16 @@ func (w *Workflow) apply(root, id string, accept []int, by string, commit bool, 
 	if e := CheckReady(p); e != nil {
 		return nil, e
 	}
+	skipped := []int{}
 	if accept == nil {
-		accept = p.Numbers()
+		accept = p.PrimaryNumbers()
+		if len(accept) == 0 {
+			accept = p.Numbers()
+		} else if len(pendingPrimaries(p, setOf(accept))) == 0 && !anyInWorktree(p) {
+			return nil, usageErr("the change of proposal %s is already applied; name the remaining hunks with --hunks (%s) or use --all", id, JoinInts(p.FollowOns()))
+		} else {
+			skipped = p.FollowOns()
+		}
 	}
 	set := map[int]bool{}
 	valid := map[int]bool{}
@@ -174,7 +206,13 @@ func (w *Workflow) apply(root, id string, accept []int, by string, commit bool, 
 		}
 		set[n] = true
 	}
-	if pr := p.Primary; pr != nil && !set[pr.N] {
+	for _, pr := range p.Primaries() {
+		if set[pr.N] {
+			continue
+		}
+		if p.IsBatch() {
+			return nil, usageErr("hunks %s are the batch's changes and cannot be left out (hunk %d is not named); to drop the batch, run `spec reject %s --why ...`", JoinInts(p.PrimaryNumbers()), pr.N, id)
+		}
 		return nil, usageErr("hunk %d is the change itself and cannot be left out; to drop the change, run `spec reject %s --why ...`", pr.N, id)
 	}
 	if seen != nil {
@@ -228,7 +266,7 @@ func (w *Workflow) apply(root, id string, accept []int, by string, commit bool, 
 	if err != nil {
 		return nil, fail(ExitFail, "stale", "proposal %s does not apply cleanly: %v", id, err)
 	}
-	if pr := p.Primary; pr != nil && !pr.InWorktree && !p.AppliedHunk(pr.N) {
+	for _, pr := range pendingPrimaries(p, set) {
 		if e := checkPrimaryResult(proj, plan, pr, nil); e != nil {
 			return nil, e
 		}
@@ -241,7 +279,7 @@ func (w *Workflow) apply(root, id string, accept []int, by string, commit bool, 
 	if w.BeforeCommit != nil {
 		w.BeforeCommit()
 	}
-	if len(p.CheckFiles) > 0 {
+	if HasCheckSnapshot(p) {
 		fresh, err := project.Load(root, nil)
 		if err != nil {
 			return nil, internalErr(err)
@@ -269,9 +307,17 @@ func (w *Workflow) apply(root, id string, accept []int, by string, commit bool, 
 		return nil, WriteErr("spec approve", err)
 	}
 
-	if len(p.CheckFiles) > 0 {
+	if HasCheckSnapshot(p) {
+		// The snapshot was verified above, under the lock: the files now
+		// differ from it by this approval's own edits only.
+		overlay := map[string][]byte{}
 		for _, out := range plan.Outputs {
-			p.CheckFiles[out.Path] = proposal.FileHash(out.After)
+			overlay[out.Path] = out.After
+		}
+		if after, err := proj.Load(overlay); err == nil {
+			RefreshOwnSnapshot(p, after.Spec)
+		} else {
+			lg.WithError(err).Warn("cannot refresh the check snapshot after applying")
 		}
 	}
 	p.Status = proposal.StatusApplied
@@ -283,7 +329,7 @@ func (w *Workflow) apply(root, id string, accept []int, by string, commit bool, 
 		By: by, At: w.stamp(),
 	})
 	p.Decision = &d
-	res := &Applied{Proposal: p, Trailers: []string{}}
+	res := &Applied{Proposal: p, Trailers: []string{}, Skipped: skipped}
 	var commitErr *Error
 	if commit {
 		res.Trailers, res.Commit, commitErr = w.commitTouched(proj, p, plan.Outputs, intent)
@@ -334,7 +380,10 @@ func Touched(p *proposal.Proposal) []string {
 		for _, n := range d.Applied {
 			applied[n] = true
 		}
-		if pr := p.Primary; pr != nil && applied[pr.N] {
+		for _, pr := range p.Primaries() {
+			if !applied[pr.N] {
+				continue
+			}
 			set[pr.File] = true
 			if pr.Placement != nil && pr.Placement.File != "" {
 				set[pr.Placement.File] = true
@@ -361,8 +410,8 @@ func Touched(p *proposal.Proposal) []string {
 // spec valid. It returns prep recomputed without them.
 func dropBreakingHunks(proj *project.Project, spec *mdspec.Spec, p *proposal.Proposal, set map[int]bool, prep *proposal.Prepared, overlay map[string][]byte) (*proposal.Prepared, error) {
 	only := map[int]bool{}
-	if pr := p.Primary; pr != nil {
-		only[pr.N] = true
+	for _, n := range p.PrimaryNumbers() {
+		only[n] = true
 	}
 	var findings []int
 	for _, n := range prep.Applied {
@@ -520,13 +569,10 @@ func (w *Workflow) commitTouched(proj *project.Project, p *proposal.Proposal, ou
 	for _, out := range outputs {
 		written[out.Path] = lineRuns(string(out.Before), string(out.After))
 	}
-	primary := ""
-	if pr := p.Primary; pr != nil {
-		primary = pr.Name
-	}
+	primaries := p.Names()
 	var sel []Change
 	for _, c := range Changes(b.Spec, loaded.Spec) {
-		hit := primary != "" && slices.ContainsFunc(c.Anchors, func(a ChangedAnchor) bool { return a.Name == primary })
+		hit := slices.ContainsFunc(c.Anchors, func(a ChangedAnchor) bool { return slices.Contains(primaries, a.Name) })
 		for _, f := range c.Files {
 			for _, r := range c.Ranges(f) {
 				for _, wr := range written[f] {
@@ -577,6 +623,9 @@ func CommitSubject(p *proposal.Proposal) string {
 		}[pr.Action]
 		if verb == "" {
 			verb = "change"
+		}
+		if p.IsBatch() {
+			return fmt.Sprintf("spec: %s and %d more (proposal %s)", strings.Join([]string{verb, pr.Name}, " "), len(p.Primaries())-1, p.ID)
 		}
 		return fmt.Sprintf("spec: %s %s (proposal %s)", verb, pr.Name, p.ID)
 	}
@@ -730,4 +779,24 @@ func (w *Workflow) SetHunkSeenLocked(lock *project.Lock, root string, seen *prop
 		return cur, fail(ExitFail, "changed", "proposal changed while revising; review it again")
 	}
 	return w.SetHunkLocked(lock, root, seen.ID, h)
+}
+
+// setOf returns ns as a set.
+func setOf(ns []int) map[int]bool {
+	out := map[int]bool{}
+	for _, n := range ns {
+		out[n] = true
+	}
+	return out
+}
+
+// anyInWorktree reports whether a primary of p is already in the working
+// tree (approving it writes nothing, yet still decides it).
+func anyInWorktree(p *proposal.Proposal) bool {
+	for _, pr := range p.Primaries() {
+		if pr.InWorktree && !p.AppliedHunk(pr.N) {
+			return true
+		}
+	}
+	return false
 }
