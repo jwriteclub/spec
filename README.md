@@ -63,9 +63,10 @@ tested _except_ for Terminal.app on Mac, where it falls back to 256 color mode.
 
 ### Supported Providers
 
-`spec` is designed to work with your existing Claude Code (via `claude -p`) or OpenAI Codex
-(via `codex exec`). If you have one of these tools set up, pick it in settings and `spec` will check to
-confirm that you have a supported version.
+`spec` is designed to work with your existing Claude Code (via `claude -p`,
+[setup video](https://youtu.be/L_bGdPLAYek)) or OpenAI Codex (via `codex exec`,
+[setup video](https://youtu.be/BbWamXRYsjs)). If you have one of these tools set up, pick it in
+settings and `spec` will check to confirm that you have a supported version.
 
 Alternatively, you can use OpenRouter ([setup video](https://youtu.be/tYKEDGLEhCs)), DeepSeek ([setup video](https://youtu.be/Jcp0z4ZBU-0)) or an OpenAI Compatible Provider.
 

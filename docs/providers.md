@@ -7,8 +7,9 @@ How to connect `spec` to a model for contradiction checks and `spec analyze`.
 
 ## Adding a connection
 
-Videos: [setting up spec with OpenRouter](https://youtu.be/tYKEDGLEhCs) and
-[with DeepSeek](https://youtu.be/Jcp0z4ZBU-0).
+Videos: setting up spec with [OpenRouter](https://youtu.be/tYKEDGLEhCs),
+[DeepSeek](https://youtu.be/Jcp0z4ZBU-0), [Codex with your ChatGPT login](https://youtu.be/BbWamXRYsjs)
+and [Claude Code with your Claude login](https://youtu.be/L_bGdPLAYek).
 
 In `spec ui`, press ^G, then ^T for Settings, and choose Add connection:
 
