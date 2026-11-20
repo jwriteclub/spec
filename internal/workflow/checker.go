@@ -169,9 +169,6 @@ func (ck *Checker) runMessages(msgs []infer.Message, purpose string) (*finding.R
 		if ck.Client.Info().Kind == config.KindClaudeCLI {
 			return nil, fail(ExitFail, "bad_model_output", "the model hit Claude Code's reply cap (%d tokens) without finishing its answer; nothing was filed. Lower the provider's effort (effort = \"low\", or --effort low) in %s", resp.Usage.CompletionTokens, ck.cfgPath)
 		}
-		if ck.Client.Info().Kind == config.KindAgyCLI {
-			return nil, fail(ExitFail, "bad_model_output", "the model hit Antigravity CLI's reply cap (%d tokens) without finishing its answer; nothing was filed. Lower the provider's effort (effort = \"low\", or --effort low) in %s", resp.Usage.CompletionTokens, ck.cfgPath)
-		}
 		if guard.fired {
 			return nil, fail(ExitFail, "bad_model_output", "the model used its whole reply budget (max_output_tokens %d, %d tokens) without finishing its answer, again after a retry with the provider's triage_extra; nothing was filed. Lower the reasoning effort in triage_extra and extra, or raise max_output_tokens in %s", ck.cfg.OutputBudget(), resp.Usage.CompletionTokens, ck.cfgPath)
 		}

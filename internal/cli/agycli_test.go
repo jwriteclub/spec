@@ -14,11 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeAgyScript stands in for `agy`: it records its argv (NUL-separated) in
-// $SPEC_FAKE_DIR, prints the reply file to stdout, prints the stderr file (if
-// non-empty) to stderr, and exits with the code in the exit file.
+// fakeAgyScript stands in for `agy`: it records its argv (NUL-separated) and
+// its stdin in $SPEC_FAKE_DIR, prints the reply file to stdout, prints the
+// stderr file (if non-empty) to stderr, and exits with the code in the exit
+// file.
 const fakeAgyScript = `#!/bin/sh
 for a in "$@"; do printf '%s\0' "$a"; done > "$SPEC_FAKE_DIR/args"
+cat > "$SPEC_FAKE_DIR/stdin"
 if [ -s "$SPEC_FAKE_DIR/stderr" ]; then
 	cat "$SPEC_FAKE_DIR/stderr" >&2
 fi
@@ -42,8 +44,9 @@ func newFakeAgy(t *testing.T) *fakeAgy {
 	return f
 }
 
-// reply sets what the next run prints: a SUCCESS result with text, or, with a
-// non-zero exit, an ERROR result whose error message is text.
+// reply sets what the next run prints, as stream-json events (an init event,
+// then the result): a SUCCESS result with text, or, with a non-zero exit, an
+// ERROR result whose error message is text.
 func (f *fakeAgy) reply(t *testing.T, exit int, text string) {
 	t.Helper()
 	var res map[string]any
@@ -77,12 +80,12 @@ func (f *fakeAgy) reply(t *testing.T, exit int, text string) {
 				"cache_read_tokens": 0,
 				"total_tokens":      0,
 			},
-			"finished_reason": "error",
 		}
 	}
-	raw, err := json.Marshal(res)
+	raw, err := json.Marshal(map[string]any{"event": "result", "result": res})
 	require.NoError(t, err)
-	f.rawReply(t, exit, string(raw)+"\n", "")
+	init := `{"event":"init","conversation_id":"conv-1","init":{"cwd":"/tmp/x","tools":["run_command"],"permission_mode":"request-review"}}`
+	f.rawReply(t, exit, init+"\n"+string(raw)+"\n", "")
 }
 
 // rawReply sets literal stdout, stderr, and exit code for the next run.
@@ -91,6 +94,23 @@ func (f *fakeAgy) rawReply(t *testing.T, exit int, stdout, stderr string) {
 	require.NoError(t, os.WriteFile(filepath.Join(f.dir, "reply"), []byte(stdout), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(f.dir, "stderr"), []byte(stderr), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(f.dir, "exit"), []byte{byte('0' + exit)}, 0o644))
+}
+
+// prompt returns the content of the one stream-json user event the last run
+// read on stdin.
+func (f *fakeAgy) prompt(t *testing.T) string {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(f.dir, "stdin"))
+	require.NoError(t, err)
+	var ev struct {
+		Event   string `json:"event"`
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &ev))
+	require.Equal(t, "user", ev.Event)
+	return ev.Message.Content
 }
 
 func (f *fakeAgy) args(t *testing.T) []string {
@@ -146,17 +166,16 @@ func TestAgyCLIDoctor(t *testing.T) {
 	assert.False(t, d.Inference.Streamed)
 	assert.Zero(t, d.Inference.CostUSD)
 
-	args := f.args(t)
-	require.Len(t, args, 9)
 	assert.Equal(t, []string{
-		"--output-format", "json",
+		"--input-format", "stream-json",
+		"--output-format", "stream-json",
 		"--model", "gemini-4-neon-medium",
+		"--mode", "plan",
 		"--disable-slash-commands",
 		"--sandbox",
 		"--effort", "high",
-	}, args[:8], "--effort overrides the config's low")
-	assert.True(t, strings.HasPrefix(args[8], "-p="), "prompt passed via -p= form")
-	assert.Contains(t, args[8], doctorPrompt)
+	}, f.args(t), "--effort overrides the config's low; the prompt is not in argv")
+	assert.Contains(t, f.prompt(t), doctorPrompt, "the prompt arrives on stdin")
 
 	// An effort level agy-cli does not have is refused before anything runs.
 	jr = runFast(t, env, dir, "doctor", "--effort", "none")
@@ -222,10 +241,10 @@ func TestAgyCLIAnalyze(t *testing.T) {
 	assert.Equal(t, 16117, inf.TotalTokens)
 	assert.Zero(t, inf.CostUSD)
 
-	args := f.args(t)
-	require.NotEmpty(t, args)
-	promptArg := args[len(args)-1]
-	assert.True(t, strings.HasPrefix(promptArg, "-p="))
+	for _, a := range f.args(t) {
+		assert.Less(t, len(a), 256, "no prompt text in argv")
+	}
+	promptArg := f.prompt(t)
 	assert.Contains(t, promptArg, "<system_instructions>")
 	assert.Contains(t, promptArg, "QUANTITIES")
 	assert.Contains(t, promptArg, "Do not invoke any tools or modify files; answer directly.")
