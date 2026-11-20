@@ -476,14 +476,14 @@ provider and sends it one tiny request (a missing key is `warn`, since the stage
 whether its model pass is on, and how many verdicts its cache holds.
 `status` is `ok`, `warn`, `fail` or `skipped`; `fix` says how to repair a `warn` or `fail`.
 `provider_key` checks the provider chosen by `--provider` (else `default`): that it exists, that
-the variables its `base_url` and `api_key_env` name are set, and for `kind = "claude-cli"` or
-`"codex-cli"` that its `command` is found (and that `--effort` is a level of the kind). `inference` sends that provider one
+the variables its `base_url` and `api_key_env` name are set, and for `kind = "claude-cli"`,
+`"codex-cli"` or `"agy-cli"` that its `command` is found (and that `--effort` is a level of the kind). `inference` sends that provider one
 request ("Reply with the single word OK", at most 8 tokens) and reports latency, the model id the
 provider echoed (`echoed_model`, `""` when none) and the tokens used; `--engine` replaces the model.
 `kind` is the provider's kind, `effort` the effort level spec set (`""` when none), and `cost_usd`
-the cost the provider reported (claude-cli; `0` otherwise). A claude-cli or codex-cli provider has
-no reply cap: it runs `claude -p` or `codex exec` once (`streamed` is false) and its login is what
-`inference` checks; `codex exec` echoes no model id, so `echoed_model` is `""`.
+the cost the provider reported (claude-cli; `0` otherwise). A claude-cli, codex-cli or agy-cli provider has
+no reply cap: it runs `claude -p`, `codex exec` or `agy -p` once (`streamed` is false) and its login is what
+`inference` checks; `codex exec` and `agy -p` echo no model id, so `echoed_model` is `""`.
 A reasoning model may spend all 8 tokens thinking: `reply` is then `""` with `finish_reason`
 `"length"`, which still passes. The request takes the path every check takes: `streamed` says
 whether the reply came back as a stream (false with `stream = false`, or when the provider

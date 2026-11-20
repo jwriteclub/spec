@@ -21,12 +21,15 @@ In `spec ui`, press ^G, then ^T for Settings, and choose Add connection:
 - **Claude account:** uses the Claude Code CLI on your own login (`claude auth login`), so no API
   key is needed.
 - **ChatGPT / Codex:** uses the Codex CLI on your own login (`codex login`).
+- **Google Antigravity:** uses the Antigravity CLI (`agy`) on your own login (`kind = "agy-cli"`),
+  so no API key is needed.
 - **Custom API endpoint:** any OpenAI-compatible chat-completions API, such as DeepSeek, OpenAI,
   Cloudflare Workers AI or a local server.
 
-OpenRouter needs an API key with credit. For a Claude or ChatGPT connection, install the
-[Claude Code CLI](https://code.claude.com/docs/en/quickstart) or the
-[Codex CLI](https://developers.openai.com/codex/cli/) first and log in with it. A chat account alone
+OpenRouter needs an API key with credit. For a Claude, ChatGPT or Antigravity connection, install the
+[Claude Code CLI](https://code.claude.com/docs/en/quickstart), the
+[Codex CLI](https://developers.openai.com/codex/cli/) or the Antigravity CLI (`agy`) first and log
+in with it. A chat account alone
 does not install the CLI. After you save the settings, run `spec doctor` in the project. It sends one
 small test request to the configured provider and reports the result.
 
@@ -38,21 +41,22 @@ full check runs only when neither clears the edit. Settings are saved to
 `~/.config/spec/config.toml` (or under `$XDG_CONFIG_HOME`), and keys can live in a private `env_file`. `spec explain config` has
 every option.
 
-## Using Jev as a gate with Claude Code or Codex
+## Using Jev as a gate with Claude Code, Codex or Antigravity
 
 The gate is configured separately from the check model, so Jev on OpenRouter can screen edits while
-Claude Code or Codex, on your own login, does the triage and the full check. You need an OpenRouter
-API key with a little credit for Jev; the checks themselves run on your Claude or ChatGPT plan.
+Claude Code, Codex or Antigravity, on your own login, does the triage and the full check. You need
+an OpenRouter API key with a little credit for Jev; the checks themselves run on your Claude,
+ChatGPT or Antigravity plan.
 
 In `spec ui` (^G, then ^T for Settings):
 
-1. Add connection, then **Claude account** (or **ChatGPT / Codex**). Set its check model and its
-   triage model (for example `sonnet` and `haiku`). The first chat connection you add becomes the default
-   check provider.
+1. Add connection, then **Claude account**, **ChatGPT / Codex** or **Google Antigravity**. Set its
+   check model and its triage model (for example `sonnet` and `haiku`, or `gemini-4-neon-medium` and
+   `gemini-3.8-flash-low`). The first chat connection you add becomes the default check provider.
 2. Add connection again, then **OpenRouter API**. In the Decision (gate) model row choose
    `typesafe/jev-1.14`. In the Triage model and Inference (check) model rows choose
-   **Keep existing**, so they stay on your Claude or Codex connection. Keep existing is offered only
-   for a role that is already set, so give the Claude or Codex connection its triage model first;
+   **Keep existing**, so they stay on your CLI connection. Keep existing is offered only
+   for a role that is already set, so give the CLI connection its triage model first;
    otherwise the triage row has only OpenRouter models to choose from.
 3. Give the key as `OPENROUTER_API_KEY` in your environment or your `env_file`, or type it for the
    session. Review and save, then press ^T in Model routing to test each role, or run `spec doctor`.
@@ -62,7 +66,7 @@ The same thing by hand in `~/.config/spec/config.toml`:
     default = "claude"
     env_file = "~/.config/spec/keys.env"         # optional: holds OPENROUTER_API_KEY=...
 
-    [providers.claude]                           # or kind = "codex-cli"
+    [providers.claude]                           # or kind = "codex-cli", or kind = "agy-cli"
     kind = "claude-cli"
     model = "sonnet"
     triage_model = "haiku"
@@ -77,7 +81,7 @@ The same thing by hand in `~/.config/spec/config.toml`:
     escalate_class_at = 0.45
     skip_material_below = 0
 
-With this, Jev screens each changed anchor first, the Claude or Codex `triage_model` screens what
+With this, Jev screens each changed anchor first, the CLI provider's `triage_model` screens what
 Jev passes on, and the full check runs on `model` only when neither clears the edit. A gate that
 fails passes the edit on to the next stage. The spell check's model pass runs only when both
 `[gate]` and a `[triage]` provider are set; add `[triage]` with `provider = "claude"` if you want

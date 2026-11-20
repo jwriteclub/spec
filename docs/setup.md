@@ -93,5 +93,5 @@ An agent proposes an edit of a TLA+ model the same way, with
 | `agent`        | rules for agents; read before editing any `*.spec.md`                 |
 | `citations`    | citing the spec from code, tests and TLA+ models                      |
 | `config`       | `spec.toml` and the user config file                                  |
-| `integrations` | the `commit-msg` hook, the Claude Code hook, editors (`spec lsp`)     |
+| `integrations` | the `commit-msg` hook, agent hooks (Claude Code, Antigravity), editors (`spec lsp`) |
 | `json`         | the `--json` envelope and every command's output                      |
