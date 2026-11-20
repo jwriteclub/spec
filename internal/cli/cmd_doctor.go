@@ -39,7 +39,7 @@ type doctorData struct {
 // doctorInference is what the live check measured.
 type doctorInference struct {
 	Provider string `json:"provider"`
-	// Kind is the provider's kind: openai, claude-cli or codex-cli.
+	// Kind is the provider's kind: openai, claude-cli, codex-cli or agy-cli.
 	Kind  string `json:"kind"`
 	Model string `json:"model"`
 	// Effort is the effort level spec set ("" when none).
@@ -291,6 +291,8 @@ func (s *session) doctorProvider(add func(name, status, detail, fix string)) *do
 		via = "via claude -p"
 	case info.Kind == config.KindCodexCLI:
 		via = "via codex exec"
+	case info.Kind == config.KindAgyCLI:
+		via = "via agy -p"
 	case !resp.Streamed:
 		via = "not streamed"
 	}

@@ -64,8 +64,9 @@ tested _except_ for Terminal.app on Mac, where it falls back to 256 color mode.
 ### Supported Providers
 
 `spec` is designed to work with your existing Claude Code (via `claude -p`,
-[setup video](https://youtu.be/L_bGdPLAYek)) or OpenAI Codex (via `codex exec`,
-[setup video](https://youtu.be/BbWamXRYsjs)). If you have one of these tools set up, pick it in
+[setup video](https://youtu.be/L_bGdPLAYek)), OpenAI Codex (via `codex exec`,
+[setup video](https://youtu.be/BbWamXRYsjs)) or Google Antigravity CLI (via `agy -p`,
+`kind = "agy-cli"`). If you have one of these tools set up, pick it in
 settings and `spec` will check to confirm that you have a supported version.
 
 Alternatively, you can use OpenRouter ([setup video](https://youtu.be/tYKEDGLEhCs)), DeepSeek ([setup video](https://youtu.be/Jcp0z4ZBU-0)) or an OpenAI Compatible Provider.
@@ -77,8 +78,8 @@ pennies and saves a lot of time and tokens.
 
 Spec also supports Gemini Decision 1, Google's decision model ([setup](docs/providers.md#using-gemini-decision-1-through-google)).
 
-There are [detailed instructions on setting up Jev alongside your local agent as a provider, like Codex
-or Claude Code](docs/providers.md).
+There are [detailed instructions on setting up Jev alongside your local agent as a provider, like Codex,
+Claude Code or Antigravity](docs/providers.md).
 
 Detailed provider results, based on our own testing over the last couple of weeks, are in [docs/models.md](docs/models.md).
 

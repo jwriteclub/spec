@@ -196,3 +196,6 @@ offers for OpenRouter, and this table is all we have measured for it in that rol
 - **ScaleDown classify-1** as a gate: it needs a request shape `spec` does not send yet.
 - The DeepSeek endpoint pinned to OpenRouter's `fireworks/ultrafast`, offered in `spec ui`, has not been
   measured.
+- Google Antigravity CLI (`kind = "agy-cli"`, for example `gemini-4-neon-medium` and
+  `gemini-3.8-flash-low`) is supported as a login-based CLI provider, and has not been measured on this
+  corpus yet.

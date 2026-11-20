@@ -76,11 +76,13 @@ comments: words the spell check always accepts (`spec explain spell`).
 ## User config
 
 `$XDG_CONFIG_HOME/spec/config.toml`, or `~/.config/spec/config.toml` when `XDG_CONFIG_HOME` is unset
-(on macOS too). It names inference providers of three kinds (and gates, `kind = "decisions"`, and canned
+(on macOS too). It names inference providers of four kinds (and gates, `kind = "decisions"`, and canned
 replies for UI scenes, `kind = "canned"`, below): any OpenAI-compatible
 chat-completions endpoint (`kind = "openai"`, the default), the Claude Code CLI on your own login
-(`kind = "claude-cli"`, below), so a Claude subscription needs no API key, or the Codex CLI on your
-own ChatGPT login (`kind = "codex-cli"`, below), so a ChatGPT plan with Codex needs none either.
+(`kind = "claude-cli"`, below), so a Claude subscription needs no API key, the Codex CLI on your
+own ChatGPT login (`kind = "codex-cli"`, below), so a ChatGPT plan with Codex needs none either,
+or the Antigravity CLI on your own login (`kind = "agy-cli"`, below), so an Antigravity login needs
+no API key.
 Consistency analysis and the invariant change checks call the provider; `spec doctor` checks it
 with one tiny request and reports the latency and the model id the provider echoed. Commands that call a
 model take `--provider NAME` (instead of `default`), `--engine ID` (the LLM model id, instead of
@@ -105,10 +107,10 @@ example `spec doctor --provider deepseek` or `spec analyze --all --effort high`.
 - `default`: the provider used without `--provider`.
 - `env_file`: a private file that supplies the variables named by `api_key_env` and by `${VAR}`
   references in `base_url`, when the environment lacks them (**Keys in a file**, below).
-- `kind`: `"openai"` (the default), `"claude-cli"` or `"codex-cli"` (`"decisions"` and `"canned"` are
-  below). The keys below are for `openai`; a `claude-cli` or `codex-cli` provider takes only
-  `model`, `triage_model`, `effort`, `timeout`, `command` and `pass_env`, and any other provider key
-  is an error.
+- `kind`: `"openai"` (the default), `"claude-cli"`, `"codex-cli"` or `"agy-cli"` (`"decisions"` and
+  `"canned"` are below). The keys below are for `openai`; a `claude-cli`, `codex-cli` or `agy-cli`
+  provider takes only `model`, `triage_model`, `effort`, `timeout`, `command` and `pass_env`, and
+  any other provider key is an error.
 - `base_url` (required): the API root; requests go to `base_url` + `/chat/completions`. Each
   `${VAR}` is replaced from the environment when the provider is used (Cloudflare's account id).
   Only the `${VAR}` form expands.
@@ -198,9 +200,9 @@ CLOUDFLARE_ACCOUNT_ID="0123abcd"
 - **Precedence**: the environment wins. The file supplies a variable only when the environment
   has it unset or empty.
 - It applies only to provider settings: `api_key_env`, the `${VAR}` references in `base_url`,
-  gates (`kind = "decisions"`) and `[triage]` providers, and `spec doctor`. A `claude-cli` or
-  `codex-cli` provider's `pass_env` never forwards a value from it: the CLI sees only the real
-  environment.
+  gates (`kind = "decisions"`) and `[triage]` providers, and `spec doctor`. A `claude-cli`,
+  `codex-cli` or `agy-cli` provider's `pass_env` never forwards a value from it: the CLI sees only
+  the real environment.
 - The file must be a regular file (not a symbolic link) that only you can read or write: spec
   refuses one whose group or others have any access (mode `0600` or `0400`; fix: `chmod 600 PATH`).
   A missing file is an error too.
@@ -423,6 +425,76 @@ and the whole process group is killed on timeout or interrupt. Not logged in, a 
 limit, an unknown model, an effort the model rejects and a Codex too old for these settings each
 fail with `provider_failed` and a fix line.
 
+### Google Antigravity (kind agy-cli)
+
+    [providers.agy]                              # the Antigravity CLI, on your own login
+    kind = "agy-cli"
+    model = "gemini-4-neon-medium"               # `agy models` lists available ids
+    triage_model = "gemini-3.8-flash-low"        # smaller and faster
+    effort = "low"                               # optional: low, medium, high, xhigh, max
+    # command = "/usr/local/bin/agy"             # default "agy", found on PATH
+    # pass_env = ["GEMINI_API_KEY"]              # optional extra variables from your shell
+    # timeout = 900                              # seconds per request (default 900)
+
+Each request runs `agy` once in headless mode, with the prompt on stdin, and reads its JSON events:
+the reply and the token usage (Antigravity reports no cost and echoes no model id). Log in once
+with `agy`; `spec doctor` then checks it. Model ids come from `agy models` (for example
+`gemini-4-neon-medium`, `gemini-3.8-flash-medium`, `gemini-3.8-flash-low`); an id your Antigravity
+CLI does not know fails with a fix line naming `agy models`. spec runs exactly:
+
+    $ agy --input-format stream-json --output-format stream-json --model MODEL --mode plan
+        --disable-slash-commands --sandbox [--effort LEVEL]
+
+- `--input-format stream-json`: the prompt and the spec text come on stdin as one JSON `user`
+  event, never in the arguments; agy exits once stdin closes and the turn ends.
+- `--output-format stream-json`: JSON events on stdout (the run's settings, each step including
+  any tool step, and the result: `status`, `response`, `usage`, `error`).
+- `--model MODEL`: the provider's model id (`agy models`).
+- `--mode plan`: pins the execution mode over your `agentMode`. Without it, since `agy` 1.5.7 a
+  headless run uses auto mode, which approves workspace file edits and safe commands by itself.
+  Plan mode is the one mode Antigravity describes as investigating with read-only tools before
+  any edit.
+- `--disable-slash-commands`: turns off skills and custom commands.
+- `--sandbox`: terminal commands, should any run, are contained by Antigravity's terminal sandbox.
+  It covers only terminal commands, and has no effect where that sandbox is not available.
+- `--effort LEVEL`: Antigravity's effort control, when `effort` or `--effort` sets one; without it
+  Antigravity uses the model's default. Not every model has every level; one it lacks fails with
+  a fix line.
+
+`agy` 1.5.x has no `--system-prompt` flag, so spec wraps its system instructions in
+`<system_instructions>...</system_instructions>` above the prompt and asks the model not to invoke
+tools (a request, not a control). The contributor verified `--output-format`, `--model`,
+`--disable-slash-commands`, `--sandbox` and `--effort` on `agy` 1.5.13; the stream-json input,
+the stream output and `--mode plan` follow Antigravity's CLI reference and headless docs and
+await a live check.
+
+What Antigravity cannot turn off, unlike `claude-cli` and `codex-cli`:
+
+- Your settings: there is no flag or variable to skip `~/.gemini/antigravity-cli/settings.json`,
+  so its `toolPermission` (for example `always-proceed`), permission rules and custom models still
+  apply.
+- Your MCP servers, hooks and plugins (`~/.gemini/config/mcp_config.json`, `hooks.json`,
+  `plugins/`) and custom agents still load; no flag removes them or the built-in tool catalog.
+- History: each request is saved in agy's conversation history (resumable by its
+  `conversation_id`, with a transcript under `~/.gemini/antigravity-cli/brain/`); agy has no flag
+  to skip that, so spec text you check accumulates there.
+- Overhead: the contributor measured about 16,000 input tokens per request besides spec's own on
+  `agy` 1.5.13 (Antigravity's agent prompt and tool catalog), against about 640 for `claude-cli`
+  and 1690 for `codex-cli`; that was before `--mode plan` and has not been re-measured.
+
+A tool that needs approval agy cannot get in headless mode is refused, and agy prints a notice on
+stderr; spec warns when a run took a tool step or printed such a notice.
+
+`agy` runs in a fresh empty temporary directory (removed afterwards), with the same minimal
+environment as `claude-cli` (without `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`) plus
+`XDG_CONFIG_HOME` and any variables `pass_env` names; API keys in your shell are left out unless
+`pass_env` names them, so your login pays. As for `claude-cli` and `codex-cli`: no JSON mode (the
+prompt asks for JSON and the reply is parsed leniently), no reply cap from `max_output_tokens` (so
+no runaway guard), no retries by spec, and the whole process group is killed on timeout or
+interrupt. Not logged in, a usage or rate limit, an unknown model, an effort the model lacks, and
+an `agy` too old for these flags or output format (fix: `agy update`) each fail with
+`provider_failed` and a fix line.
+
 **Effort, by kind.** `effort` and `--effort` take the levels of the provider's kind:
 
 | kind | levels | sent as |
@@ -430,6 +502,7 @@ fail with `provider_failed` and a fix line.
 | `openai` | `none`, `minimal`, `low`, `medium`, `high`, `xhigh` | `reasoning_effort` in the request body (an `extra` that sets it wins over `effort`; `--effort` wins over both) |
 | `claude-cli` | `low`, `medium`, `high`, `xhigh`, `max` | `claude --effort LEVEL` |
 | `codex-cli` | `none`, `low`, `medium`, `high`, `xhigh`, `max` | `codex exec -c model_reasoning_effort="LEVEL"` |
+| `agy-cli` | `low`, `medium`, `high`, `xhigh`, `max` | `agy --effort LEVEL` |
 
 Codex's `ultra` is left out (it hands work to sub-agents) and so is `minimal` (GPT-6 Luna rejects
 it).

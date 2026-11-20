@@ -173,7 +173,7 @@ model = "m"
 func TestEnvFileNotPassedToCLI(t *testing.T) {
 	script := filepath.Join(t.TempDir(), "claude")
 	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\nexit 0\n"), 0o755))
-	for _, kind := range []string{config.KindClaudeCLI, config.KindCodexCLI} {
+	for _, kind := range []string{config.KindClaudeCLI, config.KindCodexCLI, config.KindAgyCLI} {
 		t.Run(kind, func(t *testing.T) {
 			h := newEnvFileHome(t, `default = "cli"
 env_file = "env"
@@ -192,6 +192,8 @@ pass_env = ["KEY", "SHELL_ONLY"]
 			case *infer.ClaudeCLI:
 				env = p.Env
 			case *infer.CodexCLI:
+				env = p.Env
+			case *infer.AgyCLI:
 				env = p.Env
 			default:
 				t.Fatalf("unexpected provider %T", c)

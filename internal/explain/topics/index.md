@@ -14,7 +14,7 @@
     spec explain agent         rules for agents; read before editing any *.spec.md
     spec explain citations     citing the spec from code, tests and TLA+ models
     spec explain config        spec.toml and the user config file
-    spec explain integrations  commit-msg hook, Claude Code hook, editors (spec lsp)
+    spec explain integrations  commit-msg hook, agent hooks, editors (spec lsp)
     spec explain json          the --json envelope and every command's output
 
 If the project has specs, read `agent`, then `markup`; if it has none, read `adopt`.

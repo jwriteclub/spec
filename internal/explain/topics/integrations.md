@@ -3,10 +3,10 @@
 
 # Integrations
 
-Two hooks: a git `commit-msg` hook that refuses a commit whose message lacks the required trailers,
-and a Claude Code hook that runs `spec status` after an agent edits a spec file. Neither is installed
-by `spec init`; ask the user before installing either. Editors connect through the language server
-(last section).
+Hooks: a git `commit-msg` hook that refuses a commit whose message lacks the required trailers,
+and agent `PostToolUse` hooks (for Claude Code and Antigravity CLI) that run `spec status` after an
+agent edits a spec file. None are installed by `spec init`; ask the user before installing any.
+Editors connect through the language server (last section).
 
 ## git commit-msg hook
 
@@ -69,6 +69,45 @@ and register it in `.claude/settings.json`:
 
 `spec status` finds the project by walking up from the edited file's directory. Its `data.next`
 (`spec explain json`) tells the agent what to do next.
+
+## Antigravity CLI PostToolUse hook
+
+Runs `spec status --json` after every edit to a `*.spec.md` file. Save as
+`.agents/hooks/spec-status.sh` (executable with `chmod +x .agents/hooks/spec-status.sh`; needs
+`jq`):
+
+    #!/bin/sh
+    # After an edit to a *.spec.md file, run spec status --json.
+    f=$(jq -r '.toolCall.args.TargetFile // empty')
+    case "$f" in
+        *.spec.md) ;;
+        *) printf '{}\n'; exit 0 ;;
+    esac
+    out=$(cd "$(dirname "$f")" && spec status --json 2>&1)
+    printf 'spec status --json after editing a spec file:\n%s\n' "$out" >&2
+    printf '{}\n'
+
+and register it in `.agents/hooks.json` (workspace) or `~/.gemini/config/hooks.json` (global),
+using the script's absolute path:
+
+    {
+      "spec-status": {
+        "PostToolUse": [
+          {
+            "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+            "hooks": [
+              { "type": "command", "command": "/abs/path/to/project/.agents/hooks/spec-status.sh" }
+            ]
+          }
+        ]
+      }
+    }
+
+The matcher names Antigravity's file-writing tools, whose path argument is `TargetFile`.
+`spec status` finds the project by walking up from the edited file's directory. Its `data.next`
+(`spec explain json`) tells the agent what to do next. Antigravity's hooks reference defines a
+PostToolUse hook's output only as `{}`, so whether the agent sees the text on stderr is not
+confirmed yet.
 
 ## Editors: `spec lsp`
 
