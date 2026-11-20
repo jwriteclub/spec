@@ -35,6 +35,7 @@ const (
 	setupOpenRouter = iota
 	setupClaude
 	setupCodex
+	setupAgy
 	setupCustom
 	setupGemini
 	setupContinue
@@ -44,6 +45,7 @@ var connectionChoices = []struct{ label, desc, name string }{
 	setupOpenRouter: {"OpenRouter API", "One key, three models: a decision (gate), a triage and an inference (check) model, each from a short recommended list or any model id.", ""},
 	setupClaude:     {"Claude account", "Installed Claude Code CLI; sign in with claude auth login in your terminal.", "claude"},
 	setupCodex:      {"ChatGPT / Codex", "Installed Codex CLI; sign in with codex login in your terminal.", "codex"},
+	setupAgy:        {"Antigravity CLI", "Installed Antigravity CLI; sign in with agy in your terminal.", "agy"},
 	setupCustom:     {"Custom API endpoint", "Any compatible HTTP(S) API, including local servers.", "custom"},
 	setupGemini:     {"Google Gemini Decisions", "Use Gemini Decision 1 as the gate with a Google API key.", "gemini"},
 	setupContinue:   {"Continue editing", "Setup is optional; local editing remains available.", ""},
@@ -237,7 +239,7 @@ func (s *settingsScreen) fields() []settingsField {
 	}
 	switch s.section {
 	case 0:
-		fields := []settingsField{{label: "Connection", kind: "provider", choices: s.providerNames(), help: "Choose an existing connection; its settings stay in User config."}, {label: "Add connection", kind: "action", action: "add", help: "OpenRouter API, Claude account, ChatGPT / Codex, a custom endpoint, or Google Gemini Decisions."}}
+		fields := []settingsField{{label: "Connection", kind: "provider", choices: s.providerNames(), help: "Choose an existing connection; its settings stay in User config."}, {label: "Add connection", kind: "action", action: "add", help: "OpenRouter API, Claude account, ChatGPT / Codex, Antigravity CLI, a custom endpoint, or Google Gemini Decisions."}}
 		if s.provider == "" {
 			return fields
 		}
@@ -267,8 +269,8 @@ func (s *settingsScreen) fields() []settingsField {
 			}
 			fields = append(fields, p("base_url", "API endpoint", "text", endpoint, "HTTP(S) API root; ${VARIABLE} references resolve only when used."), p("api_key_env", "API key environment variable", "text", "No key required", "Store a variable name only, never the key itself."), settingsField{label: "Key for this session", kind: "secret", help: s.theme.uiText("Session only · masked. Save activates it; never written to config.")})
 		}
-		if kind == config.KindClaudeCLI || kind == config.KindCodexCLI {
-			fields = append(fields, p("command", "CLI command", "text", map[bool]string{true: "codex", false: "claude"}[kind == config.KindCodexCLI], "Uses the CLI's own login. Sign in in your terminal, then choose Test."), p("pass_env", "Additional environment variables", "list", "None", "One variable name per comma-separated entry; no values."))
+		if (config.Provider{Kind: kind}).IsCLI() {
+			fields = append(fields, p("command", "CLI command", "text", (config.Provider{Kind: kind}).CommandOrDefault(), "Uses the CLI's own login. Sign in in your terminal, then choose Test."), p("pass_env", "Additional environment variables", "list", "None", "One variable name per comma-separated entry; no values."))
 		}
 		if kind != config.KindDecisions && kind != config.KindCanned {
 			x := p("effort", "Reasoning effort", "select", "Provider default", "Only supported effort levels for this provider kind.")
@@ -921,6 +923,8 @@ func (s *settingsScreen) addPreset(choice int) {
 		p["kind"] = config.KindClaudeCLI
 	case setupCodex:
 		p["kind"] = config.KindCodexCLI
+	case setupAgy:
+		p["kind"] = config.KindAgyCLI
 	case setupCustom:
 		p["kind"] = config.KindOpenAI
 	case setupGemini:

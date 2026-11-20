@@ -673,3 +673,68 @@ func TestSettingsGoogleDecisionsReplacesOnlyGate(t *testing.T) {
 	assert.Equal(t, 0.6, cfg.Gate.EscalateClassAt)
 	assert.Equal(t, 0.2, cfg.Gate.SkipMaterialBelow)
 }
+
+func TestSettingsAddAgyCLI(t *testing.T) {
+	dir := t.TempDir()
+	user := config.NewDocument(filepath.Join(dir, "user.toml"), nil, false, userSettingsValidate)
+	project := config.NewDocument(filepath.Join(dir, "project.toml"), nil, false, projectSettingsValidate)
+	s := newSettingsWithDocuments(user, project)
+	a := &App{theme: NewTheme(true, false)}
+
+	assert.Contains(t, settingsFieldNamed(t, s, "Add connection").help, "Antigravity CLI")
+
+	s.setup = true
+	assert.Contains(t, strings.Join(s.view(a, 100, 30), "\n"), "Antigravity CLI")
+	for s.setupChoice < setupAgy {
+		s.setupKey(key("down"))
+	}
+	s.setupKey(key("enter"))
+	require.False(t, s.setup)
+	assert.Equal(t, "agy", s.provider)
+
+	assert.Equal(t, config.KindAgyCLI, settingsFieldNamed(t, s, "Connection type").defaultValue)
+	assert.Equal(t, "agy", settingsFieldNamed(t, s, "CLI command").defaultValue)
+	settingsFieldNamed(t, s, "Additional environment variables")
+	effort := settingsFieldNamed(t, s, "Reasoning effort")
+	assert.Equal(t, append([]string{"Use default"}, config.EffortLevels(config.KindAgyCLI)...), effort.choices)
+
+	s.edit(settingsFieldNamed(t, s, "Model ID"), "gemini-4-neon-medium")
+	s.openSave(false)
+	require.Equal(t, "save", s.confirm)
+	require.NotNil(t, s.save(a, "User"), s.notice)
+
+	b, err := os.ReadFile(user.Path)
+	require.NoError(t, err)
+	cfg, ds := config.Parse(user.Path, b)
+	require.Empty(t, ds)
+	assert.Equal(t, "agy", cfg.Default)
+	assert.Equal(t, config.Provider{Kind: config.KindAgyCLI, Model: "gemini-4-neon-medium"}, cfg.Providers["agy"])
+
+	s.openTest(a)
+	require.Equal(t, "test", s.confirm)
+	require.Len(t, s.probes, 1)
+	assert.Equal(t, "check", s.probes[0].role)
+	assert.Equal(t, "agy", s.probes[0].name)
+	assert.True(t, s.probes[0].provider.IsCLI())
+	assert.Contains(t, strings.Join(s.view(a, 120, 30), "\n"), "Runs the configured CLI using its own login")
+}
+
+func TestSettingsCLICommandPlaceholders(t *testing.T) {
+	for _, tc := range []struct {
+		choice int
+		kind   string
+		cmd    string
+	}{
+		{setupClaude, config.KindClaudeCLI, "claude"},
+		{setupCodex, config.KindCodexCLI, "codex"},
+		{setupAgy, config.KindAgyCLI, "agy"},
+	} {
+		dir := t.TempDir()
+		user := config.NewDocument(filepath.Join(dir, "user.toml"), nil, false, userSettingsValidate)
+		project := config.NewDocument(filepath.Join(dir, "project.toml"), nil, false, projectSettingsValidate)
+		s := newSettingsWithDocuments(user, project)
+		s.addPreset(tc.choice)
+		assert.Equal(t, tc.kind, settingsFieldNamed(t, s, "Connection type").defaultValue)
+		assert.Equal(t, tc.cmd, settingsFieldNamed(t, s, "CLI command").defaultValue)
+	}
+}
