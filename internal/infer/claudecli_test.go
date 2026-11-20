@@ -24,15 +24,18 @@ import (
 // provider passes it through because the test config names it in pass_env.
 const fakeClaudeVar = "SPEC_FAKE_CLAUDE"
 
-// TestMain lets the test binary stand in for `claude` and `codex`: with
-// SPEC_FAKE_CLAUDE (SPEC_FAKE_CODEX) set it runs fakeClaude (fakeCodex)
-// instead of the tests.
+// TestMain lets the test binary stand in for `claude`, `codex` and `agy`:
+// with SPEC_FAKE_CLAUDE (SPEC_FAKE_CODEX, SPEC_FAKE_AGY) set it runs
+// fakeClaude (fakeCodex, fakeAgy) instead of the tests.
 func TestMain(m *testing.M) {
 	if mode := os.Getenv(fakeClaudeVar); mode != "" {
 		os.Exit(fakeClaude(mode))
 	}
 	if mode := os.Getenv(fakeCodexVar); mode != "" {
 		os.Exit(fakeCodex(mode))
+	}
+	if mode := os.Getenv(fakeAgyVar); mode != "" {
+		os.Exit(fakeAgy(mode))
 	}
 	os.Exit(m.Run())
 }

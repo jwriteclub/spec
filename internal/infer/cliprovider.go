@@ -19,7 +19,7 @@ const DefaultCLITimeout = 900 * time.Second
 // (spec doctor's): a CLI provider always replaces the CLI's own long one.
 const cliDefaultSystem = "Answer the user's message directly."
 
-// cliBase is what the CLI providers (claude-cli, codex-cli) share: the
+// cliBase is what the CLI providers (claude-cli, codex-cli, agy-cli) share: the
 // configuration, the overrides and the Provider methods that only set
 // them. Each provider builds its own argv and reads its own output.
 type cliBase struct {

@@ -8,11 +8,12 @@
 //
 // A provider has a kind: "openai" (the default), any OpenAI-compatible
 // chat-completions endpoint over HTTP; "claude-cli", the installed Claude
-// Code CLI run in print mode on the user's own login; or "codex-cli", the
+// Code CLI run in print mode on the user's own login; "codex-cli", the
 // installed Codex CLI run with `codex exec` on the user's own ChatGPT login;
-// or "decisions", a gate that scores an edit on yes/no questions through
-// the OpenRouter or Google Decisions API; or
-// "canned", hand-written replies read from a file (UI scenes and tests).
+// "agy-cli", the installed Antigravity CLI run in print mode (`agy -p`) on
+// the user's own login; "decisions", a gate that scores an edit on yes/no
+// questions through the OpenRouter or Google Decisions API; or "canned",
+// hand-written replies read from a file (UI scenes and tests).
 package config
 
 import (
@@ -46,6 +47,9 @@ const (
 	// user's own login, so a ChatGPT plan that includes Codex needs no API
 	// key.
 	KindCodexCLI = "codex-cli"
+	// KindAgyCLI runs the installed Antigravity CLI (`agy -p`) on the
+	// user's own login, so an Antigravity login needs no API key.
+	KindAgyCLI = "agy-cli"
 	// KindDecisions scores yes/no questions through a Decisions API.
 	// Open it with infer.OpenGate.
 	KindDecisions = "decisions"
@@ -83,13 +87,15 @@ func (api DecisionsAPI) DefaultBaseURL() string {
 
 // effortLevels are the effort values each kind accepts. For openai they are
 // sent as reasoning_effort; for claude-cli as Claude Code's --effort; for
-// codex-cli as Codex's model_reasoning_effort. Codex's "ultra" is left out:
+// codex-cli as Codex's model_reasoning_effort; for agy-cli as Antigravity's
+// --effort. Codex's "ultra" is left out:
 // it hands work to sub-agents, which a single turn has no use for, and
 // "minimal" is left out because the GPT-6 models reject it.
 var effortLevels = map[string][]string{
 	KindOpenAI:    {"none", "minimal", "low", "medium", "high", "xhigh"},
 	KindClaudeCLI: {"low", "medium", "high", "xhigh", "max"},
 	KindCodexCLI:  {"none", "low", "medium", "high", "xhigh", "max"},
+	KindAgyCLI:    {"low", "medium", "high", "xhigh", "max"},
 }
 
 // EffortLevels returns the effort values a provider kind accepts, in order
@@ -106,14 +112,15 @@ func ValidEffort(kind, level string) bool {
 // Provider is one inference provider.
 type Provider struct {
 	// Kind is KindOpenAI ("" means it too), KindClaudeCLI, KindCodexCLI,
-	// KindDecisions or KindCanned.
+	// KindAgyCLI, KindDecisions or KindCanned.
 	Kind string `toml:"kind"`
 	// API selects the Decisions API for a gate (default OpenRouter).
 	API DecisionsAPI `toml:"api,omitempty"`
 	// Path is a canned provider's replies file (kind canned only).
 	Path string `toml:"path"`
 	// Command is the CLI a CLI provider runs: a name looked up on PATH or a
-	// path (default "claude" for claude-cli, "codex" for codex-cli).
+	// path (default "claude" for claude-cli, "codex" for codex-cli, "agy"
+	// for agy-cli).
 	Command string `toml:"command"`
 	// Effort is the reasoning effort (see EffortLevels); "" leaves the
 	// provider's default. --effort overrides it.
@@ -172,7 +179,7 @@ func (p Provider) KindOrDefault() string {
 // an HTTP endpoint.
 func (p Provider) IsCLI() bool {
 	k := p.KindOrDefault()
-	return k == KindClaudeCLI || k == KindCodexCLI
+	return k == KindClaudeCLI || k == KindCodexCLI || k == KindAgyCLI
 }
 
 // IsGate reports whether the provider is a gate (kind decisions): it scores
@@ -390,7 +397,7 @@ func Parse(file string, src []byte) (Config, []diag.Diagnostic) {
 				if len(key) > 0 {
 					length = len(key[len(key)-1])
 				}
-				bad(at(row, col, length), "unknown key %q (known: default, env_file, max_context_tokens, max_output_tokens, underline_color, foreground_profile, color_capability, glyph_profile, color_scheme, color_scheme_dir, [prompts] with change, analyze, commit, gate and triage, [gate] with provider, escalate_class_at and skip_material_below, [triage] with provider, [providers.<name>] with kind, model, triage_model, triage, effort, timeout; for kind openai also base_url, api_key_env, json_mode, extra, triage_extra, max_tokens_param, idle_timeout, stream; for kinds claude-cli and codex-cli also command, pass_env; kind decisions takes only api, model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)", strings.Join(key, "."))
+				bad(at(row, col, length), "unknown key %q (known: default, env_file, max_context_tokens, max_output_tokens, underline_color, foreground_profile, color_capability, glyph_profile, color_scheme, color_scheme_dir, [prompts] with change, analyze, commit, gate and triage, [gate] with provider, escalate_class_at and skip_material_below, [triage] with provider, [providers.<name>] with kind, model, triage_model, triage, effort, timeout; for kind openai also base_url, api_key_env, json_mode, extra, triage_extra, max_tokens_param, idle_timeout, stream; for kinds claude-cli, codex-cli and agy-cli also command, pass_env; kind decisions takes only api, model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)", strings.Join(key, "."))
 			}
 		case errors.As(err, &derr):
 			row, col := derr.Position()
@@ -511,7 +518,7 @@ func checkProvider(n string, p Provider) []string {
 		return append(msgs, checkCanned(n, p)...)
 	}
 	if _, ok := effortLevels[kind]; !ok {
-		bad("kind %q must be %q (the default), %q, %q, %q or %q", p.Kind, KindOpenAI, KindClaudeCLI, KindCodexCLI, KindDecisions, KindCanned)
+		bad("kind %q must be %q (the default), %q, %q, %q, %q or %q", p.Kind, KindOpenAI, KindClaudeCLI, KindCodexCLI, KindAgyCLI, KindDecisions, KindCanned)
 		return msgs
 	}
 	if kind == KindOpenAI {
@@ -572,13 +579,13 @@ func checkHTTP(n string, p Provider) []string {
 		}
 	}
 	if p.Command != "" {
-		bad("command applies only to kinds %s and %s", KindClaudeCLI, KindCodexCLI)
+		bad("command applies only to kinds %s, %s and %s", KindClaudeCLI, KindCodexCLI, KindAgyCLI)
 	}
 	if p.Path != "" {
 		bad("path applies only to kind %s", KindCanned)
 	}
 	if p.PassEnv != nil {
-		bad("pass_env applies only to kinds %s and %s", KindClaudeCLI, KindCodexCLI)
+		bad("pass_env applies only to kinds %s, %s and %s", KindClaudeCLI, KindCodexCLI, KindAgyCLI)
 	}
 	return msgs
 }
@@ -871,13 +878,15 @@ func (e *EnvError) Fix() string {
 }
 
 // CommandOrDefault returns Command, or the kind's CLI when it sets none:
-// "codex" for codex-cli, "claude" otherwise.
+// "codex" for codex-cli, "agy" for agy-cli, "claude" otherwise.
 func (p Provider) CommandOrDefault() string {
 	switch {
 	case p.Command != "":
 		return p.Command
 	case p.KindOrDefault() == KindCodexCLI:
 		return "codex"
+	case p.KindOrDefault() == KindAgyCLI:
+		return "agy"
 	}
 	return "claude"
 }

@@ -387,7 +387,7 @@ func TestParseStreamAndIdleTimeout(t *testing.T) {
 	ds = problems(t, "default = \"a\"\n[providers.a]\nbase_url = \"http://x\"\nmodel = \"m\"\nstreaming = true\n")
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, "idle_timeout, stream;", "the known keys list the new ones")
-	assert.Contains(t, ds[0].Message, "for kinds claude-cli and codex-cli also command, pass_env; kind decisions takes only api, model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)")
+	assert.Contains(t, ds[0].Message, "for kinds claude-cli, codex-cli and agy-cli also command, pass_env; kind decisions takes only api, model, base_url, api_key_env, timeout; kind canned takes path, model, triage_model, triage)")
 }
 
 func TestParseKinds(t *testing.T) {
@@ -406,6 +406,14 @@ kind = "codex-cli"
 model = "gpt-6-luna"
 effort = "none"
 
+[providers.agy]
+kind = "agy-cli"
+model = "gemini-4-neon-medium"
+triage_model = "gemini-3.8-flash-low"
+effort = "high"
+timeout = 600
+pass_env = ["CUSTOM_VAR"]
+
 [providers.cf]
 base_url = "http://x"
 model = "m"
@@ -423,19 +431,32 @@ effort = "low"
 	assert.Equal(t, "codex", x.CommandOrDefault())
 	x.Command = "/opt/codex"
 	assert.Equal(t, "/opt/codex", x.CommandOrDefault())
+	g := cfg.Providers["agy"]
+	assert.Equal(t, KindAgyCLI, g.KindOrDefault())
+	assert.True(t, g.IsCLI())
+	assert.Equal(t, "agy", g.CommandOrDefault())
+	assert.Equal(t, []string{"CUSTOM_VAR"}, g.PassEnv)
+	assert.Equal(t, "gemini-3.8-flash-low", g.TriageModel)
+	assert.Equal(t, "high", g.Effort)
+	g.Command = "/opt/agy"
+	assert.Equal(t, "/opt/agy", g.CommandOrDefault())
 	assert.Equal(t, KindOpenAI, cfg.Providers["cf"].KindOrDefault())
 	assert.False(t, cfg.Providers["cf"].IsCLI())
 	assert.Equal(t, "low", cfg.Providers["cf"].Effort)
 
 	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"gemini-cli\"\nmodel = \"m\"\n")
 	require.Len(t, ds, 1)
-	assert.Contains(t, ds[0].Message, `kind "gemini-cli" must be "openai" (the default), "claude-cli", "codex-cli", "decisions" or "canned"`)
+	assert.Contains(t, ds[0].Message, `kind "gemini-cli" must be "openai" (the default), "claude-cli", "codex-cli", "agy-cli", "decisions" or "canned"`)
 
 	ds = problems(t, "default = \"a\"\n[providers.a]\nbase_url = \"http://x\"\nmodel = \"m\"\n[providers.j]\nkind = \"jev\"\nmodel = \"m\"\n")
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, `kind "jev" must be`, "the kind's old name is no name")
 
 	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"claude-cli\"\n")
+	require.Len(t, ds, 1)
+	assert.Contains(t, ds[0].Message, "model is required")
+
+	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"agy-cli\"\n")
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, "model is required")
 
@@ -447,14 +468,26 @@ effort = "low"
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, "json_mode does not apply to kind codex-cli")
 
+	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"agy-cli\"\nmodel = \"gemini-4-neon-medium\"\nbase_url = \"http://x\"\napi_key_env = \"K\"\njson_mode = true\nstream = false\npath = \"r.toml\"\n")
+	require.Len(t, ds, 1)
+	assert.Contains(t, ds[0].Message, "base_url, api_key_env, json_mode, stream, path do not apply to kind agy-cli")
+
+	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"agy-cli\"\nmodel = \"gemini-4-neon-medium\"\ncommand = \"   \"\n")
+	require.Len(t, ds, 1)
+	assert.Contains(t, ds[0].Message, "command is blank")
+
+	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"agy-cli\"\nmodel = \"gemini-4-neon-medium\"\npass_env = [\"not a name\"]\n")
+	require.Len(t, ds, 1)
+	assert.Contains(t, ds[0].Message, `pass_env entry "not a name"`)
+
 	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"claude-cli\"\nmodel = \"haiku\"\npass_env = [\"not a name\"]\n")
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, `pass_env entry "not a name"`)
 
 	ds = problems(t, "default = \"a\"\n[providers.a]\nbase_url = \"http://x\"\nmodel = \"m\"\ncommand = \"claude\"\npass_env = []\n")
 	require.Len(t, ds, 2)
-	assert.Contains(t, ds[0].Message, "command applies only to kinds claude-cli and codex-cli")
-	assert.Contains(t, ds[1].Message, "pass_env applies only to kinds claude-cli and codex-cli")
+	assert.Contains(t, ds[0].Message, "command applies only to kinds claude-cli, codex-cli and agy-cli")
+	assert.Contains(t, ds[1].Message, "pass_env applies only to kinds claude-cli, codex-cli and agy-cli")
 }
 
 func TestParseEffort(t *testing.T) {
@@ -470,11 +503,21 @@ func TestParseEffort(t *testing.T) {
 	require.Len(t, ds, 1)
 	assert.Contains(t, ds[0].Message, `effort "ultra" is not a level of kind codex-cli (none, low, medium, high, xhigh, max)`)
 
+	ds = problems(t, "default = \"a\"\n[providers.a]\nkind = \"agy-cli\"\nmodel = \"m\"\neffort = \"none\"\n")
+	require.Len(t, ds, 1)
+	assert.Contains(t, ds[0].Message, `effort "none" is not a level of kind agy-cli (low, medium, high, xhigh, max)`)
+
 	assert.True(t, ValidEffort(KindClaudeCLI, "xhigh"))
 	assert.True(t, ValidEffort(KindCodexCLI, "none"))
 	assert.False(t, ValidEffort(KindCodexCLI, "minimal"))
+	assert.True(t, ValidEffort(KindAgyCLI, "low"))
+	assert.True(t, ValidEffort(KindAgyCLI, "xhigh"))
+	assert.True(t, ValidEffort(KindAgyCLI, "max"))
+	assert.False(t, ValidEffort(KindAgyCLI, "none"))
+	assert.False(t, ValidEffort(KindAgyCLI, "minimal"))
 	assert.False(t, ValidEffort("nope", "low"))
 	assert.Equal(t, []string{"low", "medium", "high", "xhigh", "max"}, EffortLevels(KindClaudeCLI))
+	assert.Equal(t, []string{"low", "medium", "high", "xhigh", "max"}, EffortLevels(KindAgyCLI))
 	assert.Nil(t, EffortLevels("nope"))
 }
 
@@ -697,7 +740,7 @@ provider = "gemini"
 	_, err = p.DecisionsBaseURL("gemini", nil)
 	assert.ErrorContains(t, err, "unknown decisions api")
 
-	for _, kind := range []string{KindOpenAI, KindClaudeCLI, KindCodexCLI, KindCanned} {
+	for _, kind := range []string{KindOpenAI, KindClaudeCLI, KindCodexCLI, KindAgyCLI, KindCanned} {
 		assert.Contains(t, CheckProvider("other", Provider{Kind: kind, API: DecisionsGoogle}), `provider "other": api only applies to kind decisions`)
 	}
 	// A chat provider still requires a default; the suggested provider can run checks.
