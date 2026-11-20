@@ -45,7 +45,7 @@ var connectionChoices = []struct{ label, desc, name string }{
 	setupOpenRouter: {"OpenRouter API", "One key, three models: a decision (gate), a triage and an inference (check) model, each from a short recommended list or any model id.", ""},
 	setupClaude:     {"Claude account", "Installed Claude Code CLI; sign in with claude auth login in your terminal.", "claude"},
 	setupCodex:      {"ChatGPT / Codex", "Installed Codex CLI; sign in with codex login in your terminal.", "codex"},
-	setupAgy:        {"Antigravity CLI", "Installed Antigravity CLI; sign in with agy in your terminal.", "agy"},
+	setupAgy:        {"Google Antigravity", "Installed Antigravity CLI; sign in with agy in your terminal.", "agy"},
 	setupCustom:     {"Custom API endpoint", "Any compatible HTTP(S) API, including local servers.", "custom"},
 	setupGemini:     {"Google Gemini Decisions", "Use Gemini Decision 1 as the gate with a Google API key.", "gemini"},
 	setupContinue:   {"Continue editing", "Setup is optional; local editing remains available.", ""},
@@ -239,7 +239,7 @@ func (s *settingsScreen) fields() []settingsField {
 	}
 	switch s.section {
 	case 0:
-		fields := []settingsField{{label: "Connection", kind: "provider", choices: s.providerNames(), help: "Choose an existing connection; its settings stay in User config."}, {label: "Add connection", kind: "action", action: "add", help: "OpenRouter API, Claude account, ChatGPT / Codex, Antigravity CLI, a custom endpoint, or Google Gemini Decisions."}}
+		fields := []settingsField{{label: "Connection", kind: "provider", choices: s.providerNames(), help: "Choose an existing connection; its settings stay in User config."}, {label: "Add connection", kind: "action", action: "add", help: "OpenRouter API, Claude account, ChatGPT / Codex, Google Antigravity, a custom endpoint, or Google Gemini Decisions."}}
 		if s.provider == "" {
 			return fields
 		}

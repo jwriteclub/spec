@@ -681,10 +681,10 @@ func TestSettingsAddAgyCLI(t *testing.T) {
 	s := newSettingsWithDocuments(user, project)
 	a := &App{theme: NewTheme(true, false)}
 
-	assert.Contains(t, settingsFieldNamed(t, s, "Add connection").help, "Antigravity CLI")
+	assert.Contains(t, settingsFieldNamed(t, s, "Add connection").help, "Google Antigravity")
 
 	s.setup = true
-	assert.Contains(t, strings.Join(s.view(a, 100, 30), "\n"), "Antigravity CLI")
+	assert.Contains(t, strings.Join(s.view(a, 100, 30), "\n"), "Google Antigravity")
 	for s.setupChoice < setupAgy {
 		s.setupKey(key("down"))
 	}

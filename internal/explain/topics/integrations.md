@@ -78,7 +78,7 @@ Runs `spec status --json` after every edit to a `*.spec.md` file. Save as
 
     #!/bin/sh
     # After an edit to a *.spec.md file, run spec status --json.
-    f=$(jq -r '.toolCall.args.Path // empty')
+    f=$(jq -r '.toolCall.args.TargetFile // empty')
     case "$f" in
         *.spec.md) ;;
         *) printf '{}\n'; exit 0 ;;
@@ -94,7 +94,7 @@ using the script's absolute path:
       "spec-status": {
         "PostToolUse": [
           {
-            "matcher": "edit_file|write_file",
+            "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
             "hooks": [
               { "type": "command", "command": "/abs/path/to/project/.agents/hooks/spec-status.sh" }
             ]
@@ -103,8 +103,11 @@ using the script's absolute path:
       }
     }
 
+The matcher names Antigravity's file-writing tools, whose path argument is `TargetFile`.
 `spec status` finds the project by walking up from the edited file's directory. Its `data.next`
-(`spec explain json`) tells the agent what to do next.
+(`spec explain json`) tells the agent what to do next. Antigravity's hooks reference defines a
+PostToolUse hook's output only as `{}`, so whether the agent sees the text on stderr is not
+confirmed yet.
 
 ## Editors: `spec lsp`
 
