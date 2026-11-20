@@ -277,17 +277,18 @@ func TestIntegrationCodexCLI(t *testing.T) {
 	assert.Contains(t, v, "ok")
 }
 
-// TestAgyCLIIntegration sends two tiny requests through the installed
-// Antigravity CLI (`agy`) on the developer's own login, at low effort. It runs
-// only when SPEC_INTEGRATION=1 and SPEC_IT_AGY_MODEL is set, and is skipped
-// when agy is not on PATH.
-func TestAgyCLIIntegration(t *testing.T) {
+// TestIntegrationAgyCLI sends the same two tiny requests through the
+// installed Antigravity CLI (`agy`) on the developer's own login, at low
+// effort. It is skipped when agy is not on PATH. SPEC_IT_AGY_MODEL overrides
+// the model (default gemini-3.8-flash-medium) and SPEC_IT_AGY_COMMAND the
+// executable.
+func TestIntegrationAgyCLI(t *testing.T) {
 	if os.Getenv("SPEC_INTEGRATION") != "1" {
 		t.Skip("set SPEC_INTEGRATION=1 (scripts/integration.sh) to call real providers")
 	}
 	model := os.Getenv("SPEC_IT_AGY_MODEL")
 	if model == "" {
-		t.Skip("set SPEC_IT_AGY_MODEL to run the Antigravity CLI integration test")
+		model = "gemini-3.8-flash-medium"
 	}
 	p := config.Provider{Kind: config.KindAgyCLI, Model: model, Effort: "low", Command: os.Getenv("SPEC_IT_AGY_COMMAND")}
 	c, err := NewAgyCLI("agy", p, os.Getenv)
