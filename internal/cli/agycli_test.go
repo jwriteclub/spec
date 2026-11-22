@@ -51,6 +51,8 @@ func (f *fakeAgy) reply(t *testing.T, exit int, text string) {
 	t.Helper()
 	var res map[string]any
 	if exit == 0 {
+		// Usage as a live agy 1.5.14 result reported it: input_tokens
+		// excludes cache_read_tokens, so the prompt is 11528 + 7358.
 		res = map[string]any{
 			"conversation_id":  "conv-1",
 			"status":           "SUCCESS",
@@ -58,11 +60,11 @@ func (f *fakeAgy) reply(t *testing.T, exit int, text string) {
 			"duration_seconds": 1.23,
 			"num_turns":        1,
 			"usage": map[string]any{
-				"input_tokens":      16054,
-				"output_tokens":     63,
+				"input_tokens":      11528,
+				"output_tokens":     104,
 				"thinking_tokens":   0,
-				"cache_read_tokens": 11451,
-				"total_tokens":      16117,
+				"cache_read_tokens": 7358,
+				"total_tokens":      11632,
 			},
 		}
 	} else {
@@ -152,15 +154,15 @@ func TestAgyCLIDoctor(t *testing.T) {
 	d, c := doctorChecks(t, jr)
 	assert.Equal(t, "provider agy runs "+f.script+" on its own login (no key needed)", c["provider_key"].Detail)
 	assert.Contains(t, c["inference"].Detail, "provider agy, model gemini-4-neon-medium: answered in")
-	assert.Contains(t, c["inference"].Detail, "(via agy -p, effort high; model id echoed: none; 16054 prompt + 63 completion tokens)")
+	assert.Contains(t, c["inference"].Detail, "(via agy -p, effort high; model id echoed: none; 18886 prompt + 104 completion tokens)")
 	require.NotNil(t, d.Inference)
 	assert.Equal(t, "agy", d.Inference.Provider)
 	assert.Equal(t, "agy-cli", d.Inference.Kind)
 	assert.Equal(t, "gemini-4-neon-medium", d.Inference.Model)
 	assert.Equal(t, "high", d.Inference.Effort)
-	assert.Equal(t, 16054, d.Inference.PromptTokens)
-	assert.Equal(t, 63, d.Inference.CompletionTokens)
-	assert.Equal(t, 16117, d.Inference.TotalTokens)
+	assert.Equal(t, 18886, d.Inference.PromptTokens)
+	assert.Equal(t, 104, d.Inference.CompletionTokens)
+	assert.Equal(t, 18990, d.Inference.TotalTokens)
 	assert.Equal(t, "stop", d.Inference.FinishReason)
 	assert.Equal(t, "OK", d.Inference.Reply)
 	assert.False(t, d.Inference.Streamed)
@@ -170,7 +172,7 @@ func TestAgyCLIDoctor(t *testing.T) {
 		"--input-format", "stream-json",
 		"--output-format", "stream-json",
 		"--model", "gemini-4-neon-medium",
-		"--mode", "plan",
+		"--settings", `{"agentMode":"","toolPermission":"strict","allowNonWorkspaceAccess":false,"permissions":{"deny":["command(*)","read_file(*)","write_file(*)","read_url(*)","execute_url(*)","mcp(*)"]}}`,
 		"--disable-slash-commands",
 		"--sandbox",
 		"--effort", "high",
@@ -236,9 +238,9 @@ func TestAgyCLIAnalyze(t *testing.T) {
 	assert.Equal(t, "low", inf.Effort)
 	assert.Equal(t, "gemini-4-neon-medium", inf.Model)
 	assert.Equal(t, 1, inf.Calls)
-	assert.Equal(t, 16054, inf.PromptTokens)
-	assert.Equal(t, 63, inf.CompletionTokens)
-	assert.Equal(t, 16117, inf.TotalTokens)
+	assert.Equal(t, 18886, inf.PromptTokens)
+	assert.Equal(t, 104, inf.CompletionTokens)
+	assert.Equal(t, 18990, inf.TotalTokens)
 	assert.Zero(t, inf.CostUSD)
 
 	for _, a := range f.args(t) {
