@@ -431,7 +431,7 @@ fail with `provider_failed` and a fix line.
     kind = "agy-cli"
     model = "gemini-4-neon-medium"               # `agy models` lists available ids
     triage_model = "gemini-3.8-flash-low"        # smaller and faster
-    effort = "low"                               # optional: low, medium, high, xhigh, max
+    # effort = "low"                             # only with ids that name no level (see below)
     # command = "/usr/local/bin/agy"             # default "agy", found on PATH
     # pass_env = ["GEMINI_API_KEY"]              # optional extra variables from your shell
     # timeout = 900                              # seconds per request (default 900)
@@ -440,50 +440,61 @@ Each request runs `agy` once in headless mode, with the prompt on stdin, and rea
 the reply and the token usage (Antigravity reports no cost and echoes no model id). Log in once
 with `agy`; `spec doctor` then checks it. Model ids come from `agy models` (for example
 `gemini-4-neon-medium`, `gemini-3.8-flash-medium`, `gemini-3.8-flash-low`); an id your Antigravity
-CLI does not know fails with a fix line naming `agy models`. spec runs exactly:
+CLI does not know fails with a fix line naming `agy models`. An id that ends in a level already
+fixes the effort: `agy` refuses any other `--effort` with it ("conflicts with --effort"), so leave
+`effort` unset, or give the id without the level (`gemini-3.8-flash`) and set `effort`. spec runs
+exactly:
 
-    $ agy --input-format stream-json --output-format stream-json --model MODEL --mode plan
-        --disable-slash-commands --sandbox [--effort LEVEL]
+    $ agy --input-format stream-json --output-format stream-json --model MODEL
+        --settings SETTINGS --disable-slash-commands --sandbox [--effort LEVEL]
 
 - `--input-format stream-json`: the prompt and the spec text come on stdin as one JSON `user`
-  event, never in the arguments; agy exits once stdin closes and the turn ends.
-- `--output-format stream-json`: JSON events on stdout (the run's settings, each step including
-  any tool step, and the result: `status`, `response`, `usage`, `error`).
+  event, never in the arguments; agy runs that one turn and exits once stdin closes.
+- `--output-format stream-json`: JSON events on stdout (the run's settings, each step as it
+  starts, including any tool step, and the result: `status`, `response`, `usage`, `error`).
 - `--model MODEL`: the provider's model id (`agy models`).
-- `--mode plan`: pins the execution mode over your `agentMode`. Without it, since `agy` 1.5.7 a
-  headless run uses auto mode, which approves workspace file edits and safe commands by itself.
-  Plan mode is the one mode Antigravity describes as investigating with read-only tools before
-  any edit.
-- `--disable-slash-commands`: turns off skills and custom commands.
-- `--sandbox`: terminal commands, should any run, are contained by Antigravity's terminal sandbox.
-  It covers only terminal commands, and has no effect where that sandbox is not available.
+- `--settings SETTINGS`: settings for this run only, applied over your `settings.json` and never
+  saved: `{"agentMode":"","toolPermission":"strict","allowNonWorkspaceAccess":false,
+  "permissions":{"deny":["command(*)","read_file(*)","write_file(*)","read_url(*)",
+  "execute_url(*)","mcp(*)"]}}`. Deny rules win over any allow or ask rule of yours and block a
+  call at once: no command (inside or outside the sandbox), no file read or write anywhere, no
+  web page, no MCP tool. The default agent mode means auto mode never approves anything.
+- `--disable-slash-commands`: a prompt that starts with `/` is text, not a skill or command.
+- `--sandbox`: terminal commands, were any allowed, would run in Antigravity's terminal sandbox.
 - `--effort LEVEL`: Antigravity's effort control, when `effort` or `--effort` sets one; without it
-  Antigravity uses the model's default. Not every model has every level; one it lacks fails with
-  a fix line.
+  Antigravity uses the model's default. A model that lacks the level, or whose id names another
+  one, fails with a fix line.
+
+`--mode plan` is not used: `agy` ignores it when slash commands are disabled, and says so.
+
+The deny rules stop a tool from running, but the model may still try one, and a tool outside
+them would wait for an approval headless mode cannot give (seen on `agy` 1.5.13, where such a
+run hung until spec's timeout). So spec reads the events as they arrive and kills `agy` the
+moment a tool or subagent step starts, a step waits for input, or a second model turn begins;
+the request then fails at once with `provider_failed` and a fix line, instead of returning a
+reply stitched together from several turns. A run that reports success with an empty reply, or
+with tool calls agy refused, fails the same way.
 
 `agy` 1.5.x has no `--system-prompt` flag, so spec wraps its system instructions in
 `<system_instructions>...</system_instructions>` above the prompt and asks the model not to invoke
-tools (a request, not a control). The contributor verified `--output-format`, `--model`,
-`--disable-slash-commands`, `--sandbox` and `--effort` on `agy` 1.5.13; the stream-json input,
-the stream output and `--mode plan` follow Antigravity's CLI reference and headless docs and
-await a live check.
+tools. All of the above was checked against a live `agy` 1.5.14.
 
 What Antigravity cannot turn off, unlike `claude-cli` and `codex-cli`:
 
-- Your settings: there is no flag or variable to skip `~/.gemini/antigravity-cli/settings.json`,
-  so its `toolPermission` (for example `always-proceed`), permission rules and custom models still
-  apply.
-- Your MCP servers, hooks and plugins (`~/.gemini/config/mcp_config.json`, `hooks.json`,
-  `plugins/`) and custom agents still load; no flag removes them or the built-in tool catalog.
+- Your hooks, plugins and custom agents: global hooks (`~/.gemini/config/hooks.json`) still run
+  on every request, and one that tells the agent to run commands makes requests fail as above
+  (the deny rules keep the command from running). No flag skips them or removes the built-in
+  tool catalog (about 60 tools are offered), and a separate `HOME` loses the login.
 - History: each request is saved in agy's conversation history (resumable by its
   `conversation_id`, with a transcript under `~/.gemini/antigravity-cli/brain/`); agy has no flag
   to skip that, so spec text you check accumulates there.
-- Overhead: the contributor measured about 16,000 input tokens per request besides spec's own on
-  `agy` 1.5.13 (Antigravity's agent prompt and tool catalog), against about 640 for `claude-cli`
-  and 1690 for `codex-cli`; that was before `--mode plan` and has not been re-measured.
+- Overhead: measured on `agy` 1.5.14 with `gemini-3.8-flash-low`, each request carries about
+  9,400 input tokens besides spec's own (Antigravity's agent prompt and tool catalog), against
+  about 640 for `claude-cli` and 1690 for `codex-cli`, and a one-word reply takes 3 to 6 s.
 
-A tool that needs approval agy cannot get in headless mode is refused, and agy prints a notice on
-stderr; spec warns when a run took a tool step or printed such a notice.
+Token usage is summed over the run's steps. The prompt count includes cache reads, which `agy`
+reports apart from `input_tokens`, and the completion count is `output_tokens`, which includes
+thinking.
 
 `agy` runs in a fresh empty temporary directory (removed afterwards), with the same minimal
 environment as `claude-cli` (without `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`) plus

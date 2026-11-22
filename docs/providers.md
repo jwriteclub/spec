@@ -22,7 +22,11 @@ In `spec ui`, press ^G, then ^T for Settings, and choose Add connection:
   key is needed.
 - **ChatGPT / Codex:** uses the Codex CLI on your own login (`codex login`).
 - **Google Antigravity:** uses the Antigravity CLI (`agy`) on your own login (`kind = "agy-cli"`),
-  so no API key is needed.
+  so no API key is needed. spec denies every tool for the run and stops a run that tries one.
+  Checked on `agy` 1.5.14: each request carries about 9,400 tokens of Antigravity's own agent
+  prompt besides spec's and takes a few seconds even for a one-word reply; your global agy hooks
+  still run, and every request is saved in agy's history. A model id that ends in a level
+  (`gemini-3.8-flash-low`) fixes the effort, so leave `effort` unset with it.
 - **Custom API endpoint:** any OpenAI-compatible chat-completions API, such as DeepSeek, OpenAI,
   Cloudflare Workers AI or a local server.
 
