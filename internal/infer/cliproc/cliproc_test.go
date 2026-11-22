@@ -87,6 +87,22 @@ func fake(mode string) int {
 	case "sleep":
 		time.Sleep(time.Minute)
 		return 0
+	case "events":
+		// Write a line in two pieces, then a stop line, start a grandchild
+		// and hang: only a Watch that stops the run ends it early.
+		fmt.Fprint(os.Stdout, "first ")
+		time.Sleep(20 * time.Millisecond)
+		fmt.Fprintln(os.Stdout, "line")
+		child := exec.Command(os.Args[0])
+		child.Env = []string{fakeMode + "=sleep"}
+		if err := child.Start(); err != nil {
+			return 9
+		}
+		_ = os.WriteFile(os.Getenv("CLIPROC_PIDFILE"), []byte(strconv.Itoa(child.Process.Pid)), 0o644)
+		fmt.Fprintln(os.Stdout, "STOP")
+		fmt.Fprintln(os.Stdout, "after")
+		time.Sleep(time.Minute)
+		return 0
 	case "parent":
 		// Play spec: run a hanging CLI (which starts a grandchild) and
 		// wait to be interrupted.
@@ -204,6 +220,46 @@ func TestInterruptKillsTheGroup(t *testing.T) {
 	ws, _ := ee.Sys().(syscall.WaitStatus)
 	assert.True(t, ws.Signaled() && ws.Signal() == syscall.SIGINT, "re-raised: %v", err)
 	assert.Eventually(t, func() bool { return !alive(pid) }, 5*time.Second, 20*time.Millisecond, "the grandchild was killed with the group")
+}
+
+func TestRunWatchStopsTheRun(t *testing.T) {
+	pidFile := filepath.Join(t.TempDir(), "pid")
+	errStop := errors.New("saw STOP")
+	var lines []string
+	start := time.Now()
+	_, err := Run(context.Background(), Command{
+		Path: self(t),
+		Env:  []string{fakeMode + "=events", "CLIPROC_PIDFILE=" + pidFile},
+		Watch: func(line []byte) error {
+			lines = append(lines, string(line))
+			if string(line) == "STOP" {
+				return errStop
+			}
+			return nil
+		},
+		Timeout: time.Minute,
+	})
+	require.ErrorIs(t, err, errStop, "the watch's own error comes back")
+	assert.NotErrorIs(t, err, ErrTimeout)
+	assert.Less(t, time.Since(start), 10*time.Second, "stopped at once, not at the timeout")
+	assert.Equal(t, []string{"first line", "STOP"}, lines, "whole lines in order, none after the stop")
+	raw, rerr := os.ReadFile(pidFile)
+	require.NoError(t, rerr)
+	pid, _ := strconv.Atoi(string(raw))
+	require.Positive(t, pid)
+	assert.Eventually(t, func() bool { return !alive(pid) }, 5*time.Second, 20*time.Millisecond, "the grandchild was killed with the group")
+}
+
+func TestRunWatchSeesEveryLine(t *testing.T) {
+	var n int
+	res, err := Run(context.Background(), Command{
+		Path:  self(t),
+		Env:   []string{fakeMode + "=echo"},
+		Watch: func([]byte) error { n++; return nil },
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, n, "one JSON line")
+	assert.Contains(t, string(res.Stdout), `"args"`, "stdout is still kept in full")
 }
 
 func TestRunCallerCancel(t *testing.T) {

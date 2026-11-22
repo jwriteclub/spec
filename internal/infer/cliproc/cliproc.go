@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -74,6 +75,12 @@ type Command struct {
 	// Args can name them by relative path: Codex reads its instructions
 	// from a file, for example.
 	Files map[string][]byte
+	// Watch, when set, sees each line of stdout (without its newline) as
+	// the program writes it, on one goroutine, in order. A non-nil error
+	// stops the run at once: the whole process group is killed and Run
+	// returns that error. It lets a provider end a run whose event stream
+	// shows something it must not wait out, such as a tool call.
+	Watch func(line []byte) error
 }
 
 // Result is a run that finished (whatever its exit code).
@@ -124,6 +131,9 @@ func Run(ctx context.Context, c Command) (*Result, error) {
 		rctx, cancel = context.WithTimeoutCause(ctx, c.Timeout, ErrTimeout)
 		defer cancel()
 	}
+	var stop context.CancelCauseFunc
+	rctx, stop = context.WithCancelCause(rctx)
+	defer stop(nil)
 	cmd := exec.CommandContext(rctx, c.Path, c.Args...)
 	cmd.Dir = dir
 	cmd.Env = c.Env
@@ -134,6 +144,11 @@ func Run(ctx context.Context, c Command) (*Result, error) {
 	stdout := &capped{limit: MaxStdout}
 	stderr := &capped{limit: MaxStderr}
 	cmd.Stdout = stdout
+	var watched *lineWatch
+	if c.Watch != nil {
+		watched = &lineWatch{dst: stdout, watch: c.Watch, stop: stop}
+		cmd.Stdout = watched
+	}
 	cmd.Stderr = stderr
 	cmd.WaitDelay = waitDelay
 	ownGroup(cmd)
@@ -154,6 +169,8 @@ func Run(ctx context.Context, c Command) (*Result, error) {
 	switch {
 	case ctx.Err() != nil:
 		return nil, ctx.Err()
+	case watched != nil && watched.err != nil:
+		return nil, watched.err
 	case rctx.Err() != nil:
 		return nil, context.Cause(rctx)
 	case stdout.over:
@@ -202,6 +219,46 @@ func (w *capped) Write(p []byte) (int, error) {
 		return len(p), nil
 	}
 	return w.buf.Write(p)
+}
+
+// lineWatch passes stdout through to dst and hands each complete line to
+// watch. The first error watch returns is kept, cancels the run (which kills
+// the process group) and ends the watching; output keeps draining into dst.
+// exec.Cmd copies stdout on a single goroutine, so Write is never called
+// concurrently, and err is read only after Wait returns.
+type lineWatch struct {
+	dst     io.Writer
+	watch   func([]byte) error
+	stop    context.CancelCauseFunc
+	partial []byte
+	err     error
+}
+
+func (w *lineWatch) Write(p []byte) (int, error) {
+	n, err := w.dst.Write(p)
+	if w.err != nil {
+		return n, err
+	}
+	w.partial = append(w.partial, p...)
+	for {
+		i := bytes.IndexByte(w.partial, '\n')
+		if i < 0 {
+			break
+		}
+		line := w.partial[:i]
+		w.partial = w.partial[i+1:]
+		if werr := w.watch(line); werr != nil {
+			w.err = werr
+			w.partial = nil
+			w.stop(werr)
+			break
+		}
+	}
+	// A line longer than MaxStdout is never a whole event; drop it.
+	if len(w.partial) > MaxStdout {
+		w.partial = nil
+	}
+	return n, err
 }
 
 // Lookup resolves a command for Command.Path: a name with no slash is
