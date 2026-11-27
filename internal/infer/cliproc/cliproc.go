@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package cliproc runs a local inference CLI (Claude Code's `claude -p`,
-// Codex's `codex exec`) as one bounded subprocess: an explicit argv with no
-// shell, the prompt on stdin, a fresh temporary directory as the working
+// Codex's `codex exec`, Antigravity's `agy`) as one bounded subprocess: an
+// explicit argv with no shell, the prompt on stdin, a fresh temporary directory as the working
 // directory, holding only the files the caller puts there (so the CLI finds
 // no project instruction files such as CLAUDE.md or AGENTS.md), only the
 // environment the caller lists, and a timeout. When the timeout passes, the caller's context ends, or spec
