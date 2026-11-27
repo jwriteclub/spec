@@ -365,7 +365,7 @@ func shortQuestion(id string) string {
 }
 
 // ShortModel is a model id without its vendor path
-// ("@cf/zai-org/glm-5.3-flash" is "glm-5.3-flash").
+// ("@cf/thinkingmachines/inkling-2-small" is "inkling-2-small").
 func ShortModel(m string) string {
 	if i := strings.LastIndexByte(m, '/'); i >= 0 && i < len(m)-1 {
 		return m[i+1:]

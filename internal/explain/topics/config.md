@@ -95,12 +95,12 @@ example `spec doctor --provider deepseek` or `spec analyze --all --effort high`.
 
     [providers.cf]                               # Cloudflare Workers AI
     base_url = "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/v1"
-    model = "@cf/zai-org/glm-5.3-flash"
-    triage_model = "@cf/zai-org/glm-5.3-flash"
+    model = "@cf/zai-org/glm-5.3"
+    triage_model = "@cf/thinkingmachines/inkling-2-small"
     api_key_env = "CLOUDFLARE_AI_TOKEN"
     json_mode = true
     extra = { reasoning_effort = "low" }
-    triage_extra = { reasoning_effort = "low" }   # GLM ignores "none"; the guard retries at low
+    triage_extra = { reasoning_effort = "low" }   # low is the floor; the guard retries at low
 
 - `default`: the provider used without `--provider`.
 - `env_file`: a private file that supplies the variables named by `api_key_env` and by `${VAR}`
@@ -217,14 +217,13 @@ even after part of the reply arrived (the retry starts the reply over). An error
 stream is retried unless its code is a client error (4xx other than 408, 409, 425 and 429). The API
 key is redacted from every error, streamed or not.
 
-**Reasoning models.** GLM 5.3 Flash always reasons, on Cloudflare and OpenRouter alike:
-`reasoning_effort = "none"` only shortens the reasoning on Cloudflare, and OpenRouter rejects
-`reasoning = { enabled = false }` with HTTP 400. Its reasoning tokens count against the reply cap,
-so `spec doctor`'s 8-token check may come back with no visible reply; that still passes. Keep
-`extra = { reasoning_effort = "low" }` for it: on a whole-spec `spec analyze` (about 7k tokens of
-spec) its default effort, and `"medium"` too, thought through all 16384 reply tokens in about five
-minutes without answering, while `"low"` answered in under 100 s with about 2-3k tokens. Streamed
-with a 32768-token cap, `"medium"` still spent the whole cap (about 11 minutes) in 2 of 2 runs.
+**Reasoning models.** GLM 5.3 and Inkling 2 Small on Cloudflare always reason: neither can turn
+it off, and `reasoning_effort = "none"` reasons more than `"low"` (GLM 5.3 maps it to its maximum),
+so `"low"` is the floor. Their reasoning tokens count against the reply cap, so `spec doctor`'s
+8-token check may come back with no visible reply; that still passes. Keep
+`extra = { reasoning_effort = "low" }` for them: on a whole-spec `spec analyze` (about 7k tokens of
+spec), GLM models at their default effort, and at `"medium"` too, thought through all 16384 reply
+tokens in minutes without answering, while `"low"` answered with about 2-3k tokens.
 
 **Runaway guard.** A reasoning model sometimes thinks until `max_output_tokens` and never answers
 (finish reason `length`, no JSON). When the provider has a `triage_extra`, the check is sent once
@@ -290,8 +289,9 @@ OpenRouter API sets up a decision (gate) model, a triage model and an inference 
 from a short list of recommended models or any model id you paste:
 
 - Gate: `typesafe/jev-1.14` (default) or `morph/reflex`.
-- Triage: `z-ai/glm-5.3-flash` at effort low (default), `deepseek/deepseek-v4.1-flash-1017` at
-  low, or `qwen/qwen3.8-27b` pinned to Cerebras (no JSON mode there).
+- Triage: `thinkingmachines/inkling-2-small` at effort low (default), `z-ai/glm-5.3` at low,
+  `deepseek/deepseek-v4.1-flash-1017` at low, or `qwen/qwen3.8-27b` pinned to Cerebras (no JSON
+  mode there).
 - Check: `deepseek/deepseek-v4.1-flash-1017` at effort low (default), the same model pinned to
   OpenRouter's `fireworks/ultrafast` endpoint (faster and dearer, with no fallback), `z-ai/glm-5.3`
   at low, or `qwen/qwen3.8-27b` on Cerebras at medium.
@@ -488,7 +488,8 @@ its JSON replies came back malformed in testing.
 
     [providers.openrouter]                       # OpenRouter
     base_url = "https://openrouter.ai/api/v1"
-    model = "z-ai/glm-5.3-flash"
+    model = "deepseek/deepseek-v4.1-flash-1017"
+    triage_model = "thinkingmachines/inkling-2-small"
     api_key_env = "OPENROUTER_API_KEY"
     json_mode = true
     extra = { reasoning = { effort = "low" } }

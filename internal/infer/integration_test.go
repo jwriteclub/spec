@@ -44,10 +44,10 @@ type liveProvider struct {
 var liveProviders = []liveProvider{
 	{"cloudflare", config.Provider{
 		BaseURL:   "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/v1",
-		Model:     "@cf/zai-org/glm-5.3-flash",
+		Model:     "@cf/zai-org/glm-5.3",
 		APIKeyEnv: "CLOUDFLARE_AI_TOKEN",
 		JSONMode:  true,
-		Extra:     map[string]any{"reasoning_effort": "none"},
+		Extra:     map[string]any{"reasoning_effort": "low"},
 	}, 256},
 	{"deepseek", config.Provider{
 		BaseURL:   "https://api.deepseek.com",
@@ -60,11 +60,11 @@ var liveProviders = []liveProvider{
 	}, 128},
 	{"openrouter", config.Provider{
 		BaseURL:   "https://openrouter.ai/api/v1",
-		Model:     "z-ai/glm-5.3-flash",
+		Model:     "thinkingmachines/inkling-2-small",
 		APIKeyEnv: "OPENROUTER_API_KEY",
 		JSONMode:  true,
 		Extra:     map[string]any{"reasoning": map[string]any{"effort": "low"}},
-	}, 64},
+	}, 256},
 	{"openai", config.Provider{
 		BaseURL:        "https://api.openai.com/v1",
 		Model:          "gpt-5.4-nano",

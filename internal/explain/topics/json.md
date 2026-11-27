@@ -464,8 +464,8 @@ true when the file's bytes contain OLD, so it may hold references to fix by hand
 **`spec doctor [--provider NAME] [--engine ID] [--effort LEVEL]`**
 
     {"checks": [{"name": "project", "status": "ok", "detail": "spec.toml at .", "fix": ""}, ...],
-     "inference": {"provider": "cf", "kind": "openai", "model": "@cf/zai-org/glm-5.3-flash",
-                   "effort": "", "echoed_model": "@cf/zai-org/glm-5.3-flash", "latency_ms": 812,
+     "inference": {"provider": "cf", "kind": "openai", "model": "@cf/zai-org/glm-5.3",
+                   "effort": "", "echoed_model": "@cf/zai-org/glm-5.3", "latency_ms": 812,
                    "prompt_tokens": 18, "completion_tokens": 8, "total_tokens": 26,
                    "finish_reason": "length", "reply": "", "streamed": true, "cost_usd": 0}}
 
@@ -506,7 +506,7 @@ nothing differs from HEAD); `saved` says whether it was filed (only when it has 
                 "word": "recieve", "fix": "receive", "by": "known"}],
      "stats": {"candidates": 6, "cached": 2, "asked": 4, "gate_calls": 1, "triage_calls": 1,
                "escalated": 1, "cost_usd": 0.0001, "latency_ms": 1800, "skipped": 0},
-     "models": "typesafe/jev-1.14|@cf/zai-org/glm-5.3-flash|1a2b3c4d", "error": "..."}
+     "models": "typesafe/jev-1.14|@cf/thinkingmachines/inkling-2-small|1a2b3c4d", "error": "..."}
 
 `by` is `known` (the known-misspellings list) or `model`. `models` is `""` when the model pass is
 off (no `[gate]` or `[triage]`); `error`, present only when the model pass failed, says why (it fails

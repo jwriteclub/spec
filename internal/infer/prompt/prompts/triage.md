@@ -6,8 +6,9 @@
 The per-edit cascade's second stage, asked of a chat model (`triage_model`). The system prompt is
 the `policy` block, then each question under its id, then the `reply` block; the user message is
 the rendered edit. These are the texts GLM 5.3 Flash answered in
-notes/evals/2026-10-30-gate-classifier.md (11 of 11 problems, 0 false alarms of 30). An override
-keeps this layout: a `## name` heading, a blank line, a `text` code block.
+notes/evals/2026-10-30-gate-classifier.md (11 of 11 problems, 0 false alarms of 30), and that Inkling 2
+Small, the current triage model, answered on a later 31-edit set (16 of 16 problems). An override keeps
+this layout: a `## name` heading, a blank line, a `text` code block.
 
 ## policy
 

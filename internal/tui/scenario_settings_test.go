@@ -30,16 +30,17 @@ func TestScenarioOpenRouterSetupSelectors(t *testing.T) {
 	s.Press("enter")
 	s.ExpectText("This sets up a decision (gate) model, a triage model and an inference (check) model")
 	s.ExpectText("Jev 1.14 · typesafe/jev-1.14 · recommended")
-	s.ExpectText("GLM 5.3 Flash, low effort · z-ai/glm-5.3-flash · recommended")
+	s.ExpectText("Inkling 2 Small, low effort · thinkingmachines/inkling-2-small · recommended")
 	s.ExpectText(`Keep existing · default = "cf"`)
 	s.ExpectHelp("Esc Back", "Ret Choose")
 
 	// The triage picker: the recommended list, then free entry.
 	s.Press("down", "enter")
 	s.ExpectText("Choose the triage model")
+	s.ExpectText("GLM 5.3, low effort · z-ai/glm-5.3")
 	s.ExpectText("DeepSeek V4.1 Flash, low effort · deepseek/deepseek-v4.1-flash-1017")
 	s.ExpectText("Qwen3.8 27B on Cerebras, low effort · qwen/qwen3.8-27b")
-	s.Press("down", "down", "down", "enter")
+	s.Press("down", "down", "down", "down", "enter")
 	s.Type("vendor/triage-1")
 	s.ExpectText("vendor/triage-1_")
 
