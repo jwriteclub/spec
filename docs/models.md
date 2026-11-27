@@ -156,8 +156,8 @@ Claude Haiku and GPT-6 Luna were not measured in the triage role.
 
 Cloudflare retired GLM 5.3 Flash, so triage was measured again on 26 November 2026 on the corpus's 31 edit
 cases (16 that cause a problem, 5 editorial, 10 material edits that conflict with nothing), twice each,
-through the cascade's own triage call, one call at a time. Counts are cases; a case is sent on if any of its
-calls is.
+through the cascade's own triage call, one call at a time. Counts are cases per run, so a range such as 1-2
+spans the two runs; a case is sent on if any of its calls in that run is.
 
 | Model | Route | Effort | Problems sent on | Editorial sent on | Material, no conflict, sent on | p50 / p95 latency |
 |---|---|---|---:|---:|---:|---:|
