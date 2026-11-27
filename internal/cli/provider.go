@@ -33,10 +33,11 @@ func (s *session) addProviderFlags(cmd *cobra.Command) {
 
 // effortHelp lists the --effort levels per provider kind.
 func effortHelp() string {
-	return fmt.Sprintf("%s for kind %s (sent as reasoning_effort), %s for kind %s (claude --effort), %s for kind %s (codex model_reasoning_effort)",
+	return fmt.Sprintf("%s for kind %s (sent as reasoning_effort), %s for kind %s (claude --effort), %s for kind %s (codex model_reasoning_effort), %s for kind %s (agy --effort)",
 		strings.Join(config.EffortLevels(config.KindOpenAI), "|"), config.KindOpenAI,
 		strings.Join(config.EffortLevels(config.KindClaudeCLI), "|"), config.KindClaudeCLI,
-		strings.Join(config.EffortLevels(config.KindCodexCLI), "|"), config.KindCodexCLI)
+		strings.Join(config.EffortLevels(config.KindCodexCLI), "|"), config.KindCodexCLI,
+		strings.Join(config.EffortLevels(config.KindAgyCLI), "|"), config.KindAgyCLI)
 }
 
 // userConfigPath is where the user config lives in s's environment ("" when

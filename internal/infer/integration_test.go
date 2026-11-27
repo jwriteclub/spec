@@ -276,3 +276,67 @@ func TestIntegrationCodexCLI(t *testing.T) {
 		resp.Latency.Round(time.Millisecond), resp.Content)
 	assert.Contains(t, v, "ok")
 }
+
+// TestIntegrationAgyCLI sends the same two tiny requests through the
+// installed Antigravity CLI (`agy`) on the developer's own login, then a
+// prompt that invites a tool and one past 128 KiB. It is skipped when agy is
+// not on PATH. SPEC_IT_AGY_MODEL overrides the model (default
+// gemini-3.8-flash-low, whose id names its effort) and SPEC_IT_AGY_COMMAND
+// the executable.
+func TestIntegrationAgyCLI(t *testing.T) {
+	if os.Getenv("SPEC_INTEGRATION") != "1" {
+		t.Skip("set SPEC_INTEGRATION=1 (scripts/integration.sh) to call real providers")
+	}
+	model := os.Getenv("SPEC_IT_AGY_MODEL")
+	if model == "" {
+		// A model id names its effort; --effort must match it.
+		model = "gemini-3.8-flash-low"
+	}
+	p := config.Provider{Kind: config.KindAgyCLI, Model: model, Command: os.Getenv("SPEC_IT_AGY_COMMAND")}
+	c, err := NewAgyCLI("agy", p, os.Getenv)
+	var se *SetupError
+	if errors.As(err, &se) {
+		t.Skipf("%v", se)
+	}
+	require.NoError(t, err)
+	c.Timeout = 60 * time.Second
+	ctx := context.Background()
+
+	resp, err := c.Chat(ctx, Request{Messages: []Message{User("Reply with the single word OK")}})
+	require.NoError(t, err)
+	t.Logf("plain: model %s, %d+%d tokens, %s, reply %q",
+		resp.RequestedModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Latency.Round(time.Millisecond), resp.Content)
+	assert.Contains(t, strings.ToUpper(resp.Content), "OK")
+	assert.Positive(t, resp.Usage.TotalTokens)
+
+	var v map[string]any
+	resp, err = ChatJSON(ctx, c, Request{Messages: []Message{User(`Return exactly this JSON object and nothing else: {"ok": true}`)}}, &v)
+	require.NoError(t, err)
+	t.Logf("json: %d+%d tokens, %s, reply %q", resp.Usage.PromptTokens, resp.Usage.CompletionTokens,
+		resp.Latency.Round(time.Millisecond), resp.Content)
+	assert.Contains(t, v, "ok")
+
+	// A prompt that invites a tool: agy answers without one, or spec stops
+	// the run as soon as a tool step starts, never waiting for an approval.
+	start := time.Now()
+	resp, err = c.Chat(ctx, Request{Messages: []Message{User("Run `ls -la` in the current directory and tell me the output.")}})
+	elapsed := time.Since(start)
+	if err != nil {
+		var e *Error
+		require.ErrorAs(t, err, &e)
+		assert.Contains(t, e.Error(), "spec stopped it")
+		t.Logf("tool: stopped after %s: %v", elapsed.Round(time.Millisecond), err)
+	} else {
+		t.Logf("tool: answered without tools in %s: %q", elapsed.Round(time.Millisecond), resp.Content)
+	}
+	assert.Less(t, elapsed, 10*time.Second, "never waits out an approval")
+
+	// A prompt past Linux's 128 KiB limit on one argument goes on stdin.
+	huge := strings.Repeat("The queue MUST hold at most 8 items.\n", 4000) + "\nReply with the single word OK"
+	require.Greater(t, len(huge), 128<<10)
+	resp, err = c.Chat(ctx, Request{Messages: []Message{User(huge)}})
+	require.NoError(t, err)
+	t.Logf("huge: %d bytes, %d+%d tokens, %s, reply %q", len(huge), resp.Usage.PromptTokens, resp.Usage.CompletionTokens,
+		resp.Latency.Round(time.Millisecond), resp.Content)
+	assert.Contains(t, strings.ToUpper(resp.Content), "OK")
+}

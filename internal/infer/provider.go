@@ -14,8 +14,8 @@ import (
 // Provider is one inference backend, whatever its kind: the workflow sends
 // it a Request and gets back a Response (content, model, usage, cost when
 // reported, latency and finish reason) or an error. *Client (kind openai),
-// *ClaudeCLI (kind claude-cli), *CodexCLI (kind codex-cli) and *Canned
-// (kind canned) implement it.
+// *ClaudeCLI (kind claude-cli), *CodexCLI (kind codex-cli), *AgyCLI (kind
+// agy-cli) and *Canned (kind canned) implement it.
 type Provider interface {
 	// Chat sends one request and returns the reply. A provider failure is
 	// an *Error; the context's own cancellation is returned as is.
@@ -43,7 +43,8 @@ type Info struct {
 	// Name is the provider's config name.
 	Name string
 	// Kind is config.KindOpenAI, config.KindClaudeCLI,
-	// config.KindCodexCLI, config.KindDecisions or config.KindCanned.
+	// config.KindCodexCLI, config.KindAgyCLI, config.KindDecisions or
+	// config.KindCanned.
 	Kind string
 	// Model and TriageModel are the model ids requests use.
 	Model       string
@@ -82,13 +83,15 @@ func Open(name string, p config.Provider, getenv func(string) string) (Provider,
 		return NewClaudeCLI(name, p, getenv)
 	case config.KindCodexCLI:
 		return NewCodexCLI(name, p, getenv)
+	case config.KindAgyCLI:
+		return NewAgyCLI(name, p, getenv)
 	case config.KindCanned:
 		return NewCanned(name, p, getenv)
 	case config.KindDecisions:
 		return nil, &SetupError{
 			Provider: name,
 			Msg:      "kind decisions is a gate: it scores edits and cannot run checks",
-			FixText:  "pick a chat provider (kind openai, claude-cli or codex-cli) with --provider, or name one as default",
+			FixText:  "pick a chat provider (kind openai, claude-cli, codex-cli or agy-cli) with --provider, or name one as default",
 		}
 	}
 	return nil, fmt.Errorf("provider %q: unknown kind %q", name, p.Kind)
