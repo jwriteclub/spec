@@ -220,7 +220,7 @@ func TestDocumentSourceInsertsSiblingTablesUnderExistingParent(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			d := NewDocument("config.toml", []byte(src), true, nil)
 			d.Set(map[string]any{"kind": "decisions", "model": "typesafe/jev-1.14"}, "providers", "gate.one")
-			d.Set(map[string]any{"model": "z-ai/glm-5.3-flash", "extra": map[string]any{"reasoning": map[string]any{"effort": "low"}}}, "providers", "triage")
+			d.Set(map[string]any{"model": "thinkingmachines/inkling-2-small", "extra": map[string]any{"reasoning": map[string]any{"effort": "low"}}}, "providers", "triage")
 			d.Set(map[string]any{"provider": "gate.one"}, "gate")
 			b, err := d.Bytes()
 			require.NoError(t, err)

@@ -3,7 +3,7 @@
 
 # Choosing models
 
-These numbers come from our own testing between 30 October and 5 November 2026, on a small corpus of spec
+These numbers come from our own testing between 30 October and 26 November 2026, on a small corpus of spec
 edits with known answers. An automated, reproducible harness is planned. Results vary by spec, and with
 two runs per case, differences of a few points are noise.
 
@@ -59,6 +59,9 @@ $0.0075, and one whole-spec check at high effort about $0.03 off-peak.
 an earlier run in the 8-model batch gave 85% recall, 77% all found and 11% false alarm.
 
 [4] Estimated from one spec of about 7.5k tokens, not measured on the corpus.
+
+Cloudflare retired GLM 5.3 Flash on 20 November 2026 (requests now fail with HTTP 410). Its rows here and
+below are kept as records.
 
 An earlier pass on 31 October gave DeepSeek at low effort 100% recall with no false alarms, Sonnet 97%,
 Haiku 95% and GLM 5.3 Flash 81%. The ranking held between the two passes.
@@ -149,16 +152,34 @@ an edit on at a class score of 0.5 or more. Run 30 October 2026.
 catches and both false alarms come from parse failures.
 
 In the corpus runs, GLM 5.3 Flash triage cleared 10 of 20 edit runs and none of those hid a planted issue.
-On Cloudflare Workers AI, GLM 5.3 Flash answered triage in 1.1-8.4 s in a live check; two early Cloudflare
-probes took 5 s and 43 s, so measure Cloudflare's queueing before relying on it for speed. Claude Haiku and
-GPT-6 Luna were not measured in the triage role.
+Claude Haiku and GPT-6 Luna were not measured in the triage role.
+
+Cloudflare retired GLM 5.3 Flash, so triage was measured again on 26 November 2026 on the corpus's 31 edit
+cases (16 that cause a problem, 5 editorial, 10 material edits that conflict with nothing), twice each,
+through the cascade's own triage call, one call at a time. Counts are cases per run, so a range such as 1-2
+spans the two runs; a case is sent on if any of its calls in that run is.
+
+| Model | Route | Effort | Problems sent on | Editorial sent on | Material, no conflict, sent on | p50 / p95 latency |
+|---|---|---|---:|---:|---:|---:|
+| Inkling 2 Small (`@cf/thinkingmachines/inkling-2-small`) | Cloudflare Workers AI | low | 16/16 | 0/5 | 1-2/10 | 2.0 / 4.2 s |
+| GLM 5.3 (`@cf/zai-org/glm-5.3`) | Cloudflare Workers AI | low | 16/16 | 0/5 | 1-2/10 | 2.0 / 5.9 s |
+| DeepSeek V4.1 Flash (`deepseek-flash`) | DeepSeek API | low | 16/16 | 0/5 | 1-2/10 | 7.7 / 24 s |
+| DeepSeek V4.1 Flash, thinking off | DeepSeek API | none | 16/16 | 0-1/5 | 4-5/10 | 0.9 / 1.2 s |
+
+All four catch every problem, so this set ranks latency, not accuracy. Reasoning cannot be turned off for
+Inkling or GLM 5.3 on Cloudflare: `"none"` still reasons (for GLM it means the maximum), so low is the floor.
+DeepSeek with thinking off is the fastest but sends on about three times as many harmless edits, each costing
+a full check. Cloudflare limits each model to about 20 requests a minute; past that, triage fails open and the
+check runs.
 
 ### What we use
 
-GLM 5.3 Flash at low effort. It cleared every harmless edit in the set and passed every problem, for about a
-hundredth of a cent per call. DeepSeek V4.1 Flash at low effort scored the same at the same cost with a
-longer tail. Qwen3.8-27B on Cerebras is the fastest of the three but costs about 19 times as much per call,
-and needs `json_mode = false`. We do not recommend gpt-oss-120b for triage.
+Inkling 2 Small at low effort on Cloudflare Workers AI. It passed every problem with the fastest, tightest
+latency (p95 4.2 s, worst 5.1 s). GLM 5.3 at low effort is the fallback: the same accuracy, a longer tail (p95
+5.9 s), on the same Cloudflare account. On OpenRouter, `spec ui` offers Inkling 2 Small
+(`thinkingmachines/inkling-2-small`) first; it has not been measured on that route. DeepSeek V4.1 Flash at low
+effort is accurate but too slow for triage. Qwen3.8-27B on Cerebras was fast on the earlier set but costs
+about 19 times as much per call and needs `json_mode = false`. We do not recommend gpt-oss-120b for triage.
 
 ## One spec, three planted issues
 

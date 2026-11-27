@@ -507,14 +507,14 @@ func TestCascadeCancelled(t *testing.T) {
 }
 
 func TestStageText(t *testing.T) {
-	assert.Equal(t, "glm-5.3-flash", ShortModel("@cf/zai-org/glm-5.3-flash"))
+	assert.Equal(t, "inkling-2-small", ShortModel("@cf/thinkingmachines/inkling-2-small"))
 	assert.Equal(t, "deepseek-flash", ShortModel("deepseek-flash"))
 	assert.Equal(t, "0.3 s", Seconds(300*time.Millisecond))
 	assert.Equal(t, "14 s", Seconds(14*time.Second))
 	assert.Equal(t, "4 min 2 s", Seconds(242*time.Second))
-	st := proposal.Stage{Name: proposal.StageTriage, Provider: "cf", Model: "@cf/zai-org/glm-5.3-flash", LatencyMS: 1900,
+	st := proposal.Stage{Name: proposal.StageTriage, Provider: "cf", Model: "@cf/thinkingmachines/inkling-2-small", LatencyMS: 1900,
 		Outcome: proposal.OutcomeClear, Scores: map[string]float64{infer.QuestionNumericMismatch: 0.1}}
-	assert.Equal(t, "triage cf/glm-5.3-flash 1.9 s: clear (max class 0.10)", StageLine(st))
+	assert.Equal(t, "triage cf/inkling-2-small 1.9 s: clear (max class 0.10)", StageLine(st))
 	assert.Equal(t, "No conflict found (1.9 s)", ClearedText(st))
 	gate := proposal.Stage{Name: proposal.StageGate, LatencyMS: 300, Outcome: proposal.OutcomeClear}
 	assert.Equal(t, "No logically significant change found (0.3 s)", ClearedText(gate))

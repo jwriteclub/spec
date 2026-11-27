@@ -175,8 +175,8 @@ const cloudflare = `default = "cf"
 
 [providers.cf]
 base_url = "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/v1"
-model = "@cf/zai-org/glm-5.3-flash"
-triage_model = "@cf/zai-org/glm-5.3-flash"
+model = "@cf/zai-org/glm-5.3"
+triage_model = "@cf/thinkingmachines/inkling-2-small"
 api_key_env = "CLOUDFLARE_AI_TOKEN"
 json_mode = true
 extra = { max_completion_tokens = 4, nested = { a = "b" } }

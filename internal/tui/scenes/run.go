@@ -352,7 +352,7 @@ func applyEdits(dir string, edits []Edit) error {
 const (
 	checkProvider = "cf"
 	checkModel    = "glm-5.3"
-	triageModel   = "glm-5.3-flash"
+	triageModel   = "inkling-2-small"
 	gateProvider  = "jev"
 	gateModel     = "typesafe/jev-1.14"
 )

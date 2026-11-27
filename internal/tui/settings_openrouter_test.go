@@ -65,7 +65,7 @@ func TestOpenRouterSetupStagesAllThreeRoles(t *testing.T) {
 	s := openRouterSettings(t, "")
 	a := &App{theme: NewTheme(true, false)}
 	screen := strings.Join(s.view(a, 100, 40), "\n")
-	for _, want := range []string{"decision (gate) model", "triage model", "inference (check) model", "Jev 1.14", "GLM 5.3 Flash", "DeepSeek V4.1 Flash", "OPENROUTER_API_KEY"} {
+	for _, want := range []string{"decision (gate) model", "triage model", "inference (check) model", "Jev 1.14", "Inkling 2 Small", "DeepSeek V4.1 Flash", "OPENROUTER_API_KEY"} {
 		assert.Contains(t, screen, want)
 	}
 
@@ -88,8 +88,8 @@ func TestOpenRouterSetupStagesAllThreeRoles(t *testing.T) {
 	require.NotNil(t, cfg.Triage)
 	assert.Equal(t, "openrouter-triage", cfg.Triage.Provider)
 	triage := cfg.Providers["openrouter-triage"]
-	assert.Equal(t, "z-ai/glm-5.3-flash", triage.Model)
-	assert.Equal(t, map[string]any{"effort": "low"}, triage.Extra["reasoning"], "GLM needs effort low")
+	assert.Equal(t, "thinkingmachines/inkling-2-small", triage.Model)
+	assert.Equal(t, map[string]any{"effort": "low"}, triage.Extra["reasoning"], "low is the floor")
 	assert.True(t, triage.JSONMode)
 
 	require.NotNil(t, cfg.Gate)
@@ -264,7 +264,7 @@ func TestOpenRouterModelsTable(t *testing.T) {
 	require.GreaterOrEqual(t, len(gates), 2)
 	assert.Equal(t, "typesafe/jev-1.14", gates[0].Model)
 	assert.Equal(t, "google/gemini-decision-1", gates[1].Model)
-	assert.Equal(t, "z-ai/glm-5.3-flash", config.OpenRouterChoices(config.RoleTriage)[0].Model)
+	assert.Equal(t, "thinkingmachines/inkling-2-small", config.OpenRouterChoices(config.RoleTriage)[0].Model)
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", config.OpenRouterChoices(config.RoleCheck)[0].Model)
 	// Provider must hand out copies: editing a staged table cannot change the table.
 	p := config.OpenRouterChoices(config.RoleCheck)[0].Provider()
