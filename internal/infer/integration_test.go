@@ -237,30 +237,6 @@ func TestIntegrationClaudeCLI(t *testing.T) {
 	t.Logf("json: %d+%d tokens, $%.6f, %s, reply %q", resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.CostUSD,
 		resp.Latency.Round(time.Millisecond), resp.Content)
 	assert.Contains(t, v, "ok")
-
-	// A prompt that invites a tool: agy answers without one, or spec stops
-	// the run as soon as a tool step starts, never waiting for an approval.
-	start := time.Now()
-	resp, err = c.Chat(ctx, Request{Messages: []Message{User("Run `ls -la` in the current directory and tell me the output.")}})
-	elapsed := time.Since(start)
-	if err != nil {
-		var e *Error
-		require.ErrorAs(t, err, &e)
-		assert.Contains(t, e.Error(), "spec stopped it")
-		t.Logf("tool: stopped after %s: %v", elapsed.Round(time.Millisecond), err)
-	} else {
-		t.Logf("tool: answered without tools in %s: %q", elapsed.Round(time.Millisecond), resp.Content)
-	}
-	assert.Less(t, elapsed, 10*time.Second, "never waits out an approval")
-
-	// A prompt past Linux's 128 KiB limit on one argument goes on stdin.
-	huge := strings.Repeat("The queue MUST hold at most 8 items.\n", 4000) + "\nReply with the single word OK"
-	require.Greater(t, len(huge), 128<<10)
-	resp, err = c.Chat(ctx, Request{Messages: []Message{User(huge)}})
-	require.NoError(t, err)
-	t.Logf("huge: %d bytes, %d+%d tokens, %s, reply %q", len(huge), resp.Usage.PromptTokens, resp.Usage.CompletionTokens,
-		resp.Latency.Round(time.Millisecond), resp.Content)
-	assert.Contains(t, strings.ToUpper(resp.Content), "OK")
 }
 
 // TestIntegrationCodexCLI sends the same two tiny requests through the
@@ -299,37 +275,14 @@ func TestIntegrationCodexCLI(t *testing.T) {
 	t.Logf("json: %d+%d tokens, %s, reply %q", resp.Usage.PromptTokens, resp.Usage.CompletionTokens,
 		resp.Latency.Round(time.Millisecond), resp.Content)
 	assert.Contains(t, v, "ok")
-
-	// A prompt that invites a tool: agy answers without one, or spec stops
-	// the run as soon as a tool step starts, never waiting for an approval.
-	start := time.Now()
-	resp, err = c.Chat(ctx, Request{Messages: []Message{User("Run `ls -la` in the current directory and tell me the output.")}})
-	elapsed := time.Since(start)
-	if err != nil {
-		var e *Error
-		require.ErrorAs(t, err, &e)
-		assert.Contains(t, e.Error(), "spec stopped it")
-		t.Logf("tool: stopped after %s: %v", elapsed.Round(time.Millisecond), err)
-	} else {
-		t.Logf("tool: answered without tools in %s: %q", elapsed.Round(time.Millisecond), resp.Content)
-	}
-	assert.Less(t, elapsed, 10*time.Second, "never waits out an approval")
-
-	// A prompt past Linux's 128 KiB limit on one argument goes on stdin.
-	huge := strings.Repeat("The queue MUST hold at most 8 items.\n", 4000) + "\nReply with the single word OK"
-	require.Greater(t, len(huge), 128<<10)
-	resp, err = c.Chat(ctx, Request{Messages: []Message{User(huge)}})
-	require.NoError(t, err)
-	t.Logf("huge: %d bytes, %d+%d tokens, %s, reply %q", len(huge), resp.Usage.PromptTokens, resp.Usage.CompletionTokens,
-		resp.Latency.Round(time.Millisecond), resp.Content)
-	assert.Contains(t, strings.ToUpper(resp.Content), "OK")
 }
 
 // TestIntegrationAgyCLI sends the same two tiny requests through the
-// installed Antigravity CLI (`agy`) on the developer's own login, at low
-// effort. It is skipped when agy is not on PATH. SPEC_IT_AGY_MODEL overrides
-// the model (default gemini-3.8-flash-medium) and SPEC_IT_AGY_COMMAND the
-// executable.
+// installed Antigravity CLI (`agy`) on the developer's own login, then a
+// prompt that invites a tool and one past 128 KiB. It is skipped when agy is
+// not on PATH. SPEC_IT_AGY_MODEL overrides the model (default
+// gemini-3.8-flash-low, whose id names its effort) and SPEC_IT_AGY_COMMAND
+// the executable.
 func TestIntegrationAgyCLI(t *testing.T) {
 	if os.Getenv("SPEC_INTEGRATION") != "1" {
 		t.Skip("set SPEC_INTEGRATION=1 (scripts/integration.sh) to call real providers")
