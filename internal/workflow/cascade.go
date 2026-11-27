@@ -33,7 +33,7 @@ const (
 	// waiting for while it is fast.
 	GateTimeout = 10 * time.Second
 	// TriageTimeout bounds the whole triage stage, retries included
-	// (measured: 1.8 s p50, 5.5 s p95, 8.2 s max).
+	// (Inkling 2 Small at low effort, measured: 2.0 s p50, 4.2 s p95, 5.1 s max).
 	TriageTimeout = 60 * time.Second
 	// TriagePassAt is the class score at or above which triage passes an
 	// edit on to the check.
