@@ -163,6 +163,9 @@ func Run(ctx context.Context, c Command) (*Result, error) {
 	lg.Debugf("started %s (pid %d) with %d arguments, %d bytes on stdin, in %s", filepath.Base(c.Path), pid, len(c.Args), len(c.Stdin), dir)
 	werr := cmd.Wait()
 	elapsed := time.Since(start)
+	if watched != nil {
+		watched.flush()
+	}
 	// Whatever the CLI left running in its group goes with it.
 	killGroup(pid)
 
@@ -259,6 +262,20 @@ func (w *lineWatch) Write(p []byte) (int, error) {
 		w.partial = nil
 	}
 	return n, err
+}
+
+// flush hands watch a last line that has no trailing newline. Call it once
+// Wait has returned.
+func (w *lineWatch) flush() {
+	if w.err != nil || len(w.partial) == 0 {
+		return
+	}
+	line := w.partial
+	w.partial = nil
+	if werr := w.watch(line); werr != nil {
+		w.err = werr
+		w.stop(werr)
+	}
 }
 
 // Lookup resolves a command for Command.Path: a name with no slash is

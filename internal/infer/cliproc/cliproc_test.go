@@ -87,6 +87,9 @@ func fake(mode string) int {
 	case "sleep":
 		time.Sleep(time.Minute)
 		return 0
+	case "nonewline":
+		fmt.Fprint(os.Stdout, "first line\nlast line")
+		return 0
 	case "events":
 		// Write a line in two pieces, then a stop line, start a grandchild
 		// and hang: only a Watch that stops the run ends it early.
@@ -260,6 +263,31 @@ func TestRunWatchSeesEveryLine(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, n, "one JSON line")
 	assert.Contains(t, string(res.Stdout), `"args"`, "stdout is still kept in full")
+}
+
+func TestRunWatchSeesALastLineWithoutNewline(t *testing.T) {
+	var lines []string
+	res, err := Run(context.Background(), Command{
+		Path:  self(t),
+		Env:   []string{fakeMode + "=nonewline"},
+		Watch: func(line []byte) error { lines = append(lines, string(line)); return nil },
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"first line", "last line"}, lines, "the unterminated last line is flushed")
+	assert.Equal(t, "first line\nlast line", string(res.Stdout))
+
+	errStop := errors.New("saw last line")
+	_, err = Run(context.Background(), Command{
+		Path: self(t),
+		Env:  []string{fakeMode + "=nonewline"},
+		Watch: func(line []byte) error {
+			if string(line) == "last line" {
+				return errStop
+			}
+			return nil
+		},
+	})
+	require.ErrorIs(t, err, errStop, "a stop on the flushed line comes back")
 }
 
 func TestRunCallerCancel(t *testing.T) {
